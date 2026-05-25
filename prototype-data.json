@@ -1,0 +1,416 @@
+{
+  "company": {
+    "name": "Krishna Cabs",
+    "address": "592- FF, HBC, Sector 51, Gurugram- 122001 (HR)",
+    "phone": "+91 9999 00 4016",
+    "email": "s9999004016@gmail.com",
+    "gstin": "06AAKFK3109Q2ZY",
+    "state": "Haryana",
+    "next_invoice_number": 2121,
+    "next_quotation_number": 1,
+    "quotation_prefix": "Q-2026-",
+    "terms_invoice": [
+      "Subjected to Gurugram Jurisdiction.",
+      "Our Responsibility of the signed duty slip rests till we handover the same to you with the bill.",
+      "Interest @ 18% will be charged if payment is not received within 15 days from the date of bill.",
+      "System generated invoice, needs no signature."
+    ],
+    "terms_quotation": [
+      "Rates are exclusive of GST as applicable.",
+      "Toll, parking and state taxes will be charged extra at actuals.",
+      "Driver allowance applicable for outstation duties.",
+      "Rates valid until the validity date mentioned. Subject to revision thereafter.",
+      "Subjected to Gurugram Jurisdiction."
+    ]
+  },
+  "clients": [
+    {
+      "id": "cl_paras",
+      "name": "Paras RE Facilities Management Pvt Ltd",
+      "gstin": "06AAECP5013H1ZQ",
+      "address": "",
+      "state": "Haryana",
+      "is_rcm": true,
+      "default_booked_by": "Mr. Rakesh Verma"
+    },
+    {
+      "id": "cl_fhpl",
+      "name": "Family Health Plan Insurance TPA Ltd",
+      "gstin": "06AAACF1740R1ZH",
+      "address": "",
+      "state": "Haryana",
+      "is_rcm": true,
+      "default_booked_by": "Ms. Gagandeep"
+    },
+    {
+      "id": "cl_bharti",
+      "name": "Bharti Foundation",
+      "gstin": "",
+      "address": "",
+      "state": "Haryana",
+      "is_rcm": false,
+      "default_booked_by": "Mr. Vinod Kumar"
+    },
+    {
+      "id": "cl_metalman",
+      "name": "Metalman Auto Ltd",
+      "gstin": "07AABCM5441M2ZA",
+      "address": "JMK Tower, 1st Floor, 44/5, NH 8, Kapashehra Estate, (Ggn-Delhi Border), ND- 110037",
+      "state": "Delhi",
+      "is_rcm": false,
+      "default_booked_by": "Mr. Sunny Pandey"
+    }
+  ],
+  "vehicles": [
+    {
+      "id": "v_9083",
+      "number": "HR 26 ED 9083",
+      "type": "Sonet",
+      "ownership": "own"
+    },
+    {
+      "id": "v_6253",
+      "number": "HR 55 AZ 6253",
+      "type": "Crysta",
+      "ownership": "own"
+    },
+    {
+      "id": "v_6403",
+      "number": "HR 26 CD 6403",
+      "type": "Dzire",
+      "ownership": "attached"
+    },
+    {
+      "id": "v_3874",
+      "number": "HR 26 BE 3874",
+      "type": "Dzire",
+      "ownership": "attached"
+    },
+    {
+      "id": "v_8630",
+      "number": "HR 26 BX 8630",
+      "type": "Dzire",
+      "ownership": "own"
+    },
+    {
+      "id": "v_703",
+      "number": "HR 26 CG 0703",
+      "type": "Dzire",
+      "ownership": "attached"
+    },
+    {
+      "id": "v_6281",
+      "number": "HR 26 AT 6281",
+      "type": "Dzire",
+      "ownership": "attached"
+    },
+    {
+      "id": "v_8053",
+      "number": "HR 26 BS 8053",
+      "type": "Dzire",
+      "ownership": "attached"
+    },
+    {
+      "id": "v_6131",
+      "number": "HR 26 CN 6131",
+      "type": "Dzire",
+      "ownership": "attached"
+    },
+    {
+      "id": "v_4972",
+      "number": "HR 26 AG 4972",
+      "type": "Dzire",
+      "ownership": "attached"
+    }
+  ],
+  "rate_cards": [
+    {
+      "id": "wcgeqdpp",
+      "client_id": "cl_paras",
+      "car_type": "Sonet",
+      "mode": "outstation",
+      "per_km": 15,
+      "driver_ta": 300
+    },
+    {
+      "id": "3ea0l3lt",
+      "client_id": "cl_paras",
+      "car_type": "Crysta",
+      "mode": "outstation",
+      "per_km": 24,
+      "driver_ta": 300
+    },
+    {
+      "id": "7ilpy1nl",
+      "client_id": "cl_fhpl",
+      "car_type": "Sonet",
+      "mode": "local",
+      "base_rate": 1500,
+      "base_kms": 80,
+      "base_hours": 8,
+      "extra_km": 15,
+      "extra_hour": 100,
+      "night": 300,
+      "driver_ta": 300
+    },
+    {
+      "id": "hneumihd",
+      "client_id": "cl_fhpl",
+      "car_type": "Dzire",
+      "mode": "local",
+      "base_rate": 1500,
+      "base_kms": 80,
+      "base_hours": 8,
+      "extra_km": 15,
+      "extra_hour": 100,
+      "night": 300,
+      "driver_ta": 300
+    },
+    {
+      "id": "xn8pdvd3",
+      "client_id": "cl_bharti",
+      "car_type": "Dzire",
+      "mode": "local",
+      "base_rate": 1400,
+      "base_kms": 80,
+      "base_hours": 8,
+      "extra_km": 14,
+      "extra_hour": 100,
+      "night": 300,
+      "driver_ta": 300
+    },
+    {
+      "id": "37rqjxrm",
+      "client_id": "cl_bharti",
+      "car_type": "Dzire",
+      "mode": "outstation",
+      "per_km": 14,
+      "driver_ta": 300
+    },
+    {
+      "id": "lx72vquk",
+      "client_id": "cl_metalman",
+      "car_type": "Dzire",
+      "mode": "local",
+      "base_rate": 1500,
+      "base_kms": 80,
+      "base_hours": 8,
+      "extra_km": 15,
+      "extra_hour": 150,
+      "night": 300,
+      "driver_ta": 300
+    },
+    {
+      "id": "2vrr6z5z",
+      "client_id": "cl_metalman",
+      "car_type": "Sonet",
+      "mode": "local",
+      "base_rate": 1600,
+      "base_kms": 80,
+      "base_hours": 8,
+      "extra_km": 16,
+      "extra_hour": 150,
+      "night": 300,
+      "driver_ta": 300
+    },
+    {
+      "id": "mys0kfmh",
+      "client_id": "cl_metalman",
+      "car_type": "Crysta",
+      "mode": "local",
+      "base_rate": 2400,
+      "base_kms": 80,
+      "base_hours": 8,
+      "extra_km": 24,
+      "extra_hour": 200,
+      "night": 300,
+      "driver_ta": 300
+    }
+  ],
+  "trips": [
+    {
+      "id": "f7m51c5i",
+      "date": "2026-04-06",
+      "client_id": "cl_fhpl",
+      "vehicle_id": "v_9083",
+      "car_type": "Sonet",
+      "mode": "local",
+      "total_kms": 105,
+      "total_hours": 11,
+      "night": false,
+      "driver_ta": 0,
+      "toll": 0,
+      "invoiced": false,
+      "invoice_id": null
+    },
+    {
+      "id": "8lnsqb62",
+      "date": "2026-04-08",
+      "client_id": "cl_fhpl",
+      "vehicle_id": "v_9083",
+      "car_type": "Sonet",
+      "mode": "local",
+      "total_kms": 80,
+      "total_hours": 8,
+      "night": true,
+      "driver_ta": 0,
+      "toll": 0,
+      "invoiced": false,
+      "invoice_id": null
+    },
+    {
+      "id": "2icd3wta",
+      "date": "2026-04-09",
+      "client_id": "cl_fhpl",
+      "vehicle_id": "v_9083",
+      "car_type": "Sonet",
+      "mode": "local",
+      "total_kms": 80,
+      "total_hours": 8,
+      "night": false,
+      "driver_ta": 0,
+      "toll": 0,
+      "invoiced": false,
+      "invoice_id": null
+    },
+    {
+      "id": "ihqsry5w",
+      "date": "2026-04-17",
+      "client_id": "cl_fhpl",
+      "vehicle_id": "v_9083",
+      "car_type": "Sonet",
+      "mode": "local",
+      "total_kms": 149,
+      "total_hours": 9.5,
+      "night": true,
+      "driver_ta": 0,
+      "toll": 0,
+      "invoiced": false,
+      "invoice_id": null
+    },
+    {
+      "id": "rb8qddd5",
+      "date": "2026-04-20",
+      "client_id": "cl_fhpl",
+      "vehicle_id": "v_9083",
+      "car_type": "Sonet",
+      "mode": "local",
+      "total_kms": 257,
+      "total_hours": 14,
+      "night": false,
+      "driver_ta": 1,
+      "toll": 0,
+      "invoiced": false,
+      "invoice_id": null
+    },
+    {
+      "id": "dq2qz3g3",
+      "date": "2026-04-21",
+      "client_id": "cl_fhpl",
+      "vehicle_id": "v_9083",
+      "car_type": "Sonet",
+      "mode": "local",
+      "total_kms": 195,
+      "total_hours": 15,
+      "night": true,
+      "driver_ta": 0,
+      "toll": 0,
+      "invoiced": false,
+      "invoice_id": null
+    },
+    {
+      "id": "e7t3o3zn",
+      "date": "2026-04-15",
+      "client_id": "cl_paras",
+      "vehicle_id": "v_9083",
+      "car_type": "Sonet",
+      "mode": "outstation",
+      "total_kms": 707,
+      "total_hours": 0,
+      "night": false,
+      "driver_ta": 2,
+      "toll": 1200,
+      "invoiced": false,
+      "invoice_id": null,
+      "notes": "15-16 April outstation"
+    },
+    {
+      "id": "b5jhl4it",
+      "date": "2026-04-16",
+      "client_id": "cl_paras",
+      "vehicle_id": "v_6253",
+      "car_type": "Crysta",
+      "mode": "outstation",
+      "total_kms": 358,
+      "total_hours": 0,
+      "night": false,
+      "driver_ta": 1,
+      "toll": 500,
+      "invoiced": false,
+      "invoice_id": null
+    },
+    {
+      "id": "wdquef0m",
+      "date": "2026-04-22",
+      "client_id": "cl_paras",
+      "vehicle_id": "v_9083",
+      "car_type": "Sonet",
+      "mode": "outstation",
+      "total_kms": 627,
+      "total_hours": 0,
+      "night": false,
+      "driver_ta": 2,
+      "toll": 835,
+      "invoiced": false,
+      "invoice_id": null,
+      "notes": "22-23 April"
+    },
+    {
+      "id": "xt8gg78r",
+      "date": "2026-04-01",
+      "client_id": "cl_bharti",
+      "vehicle_id": "v_9083",
+      "car_type": "Dzire",
+      "mode": "local",
+      "total_kms": 80,
+      "total_hours": 8,
+      "night": true,
+      "driver_ta": 0,
+      "toll": 0,
+      "invoiced": false,
+      "invoice_id": null
+    },
+    {
+      "id": "hiuanofb",
+      "date": "2026-04-04",
+      "client_id": "cl_bharti",
+      "vehicle_id": "v_6403",
+      "car_type": "Dzire",
+      "mode": "local",
+      "total_kms": 80,
+      "total_hours": 8,
+      "night": true,
+      "driver_ta": 0,
+      "toll": 0,
+      "invoiced": false,
+      "invoice_id": null
+    },
+    {
+      "id": "dm1a50zd",
+      "date": "2026-04-22",
+      "client_id": "cl_bharti",
+      "vehicle_id": "v_3874",
+      "car_type": "Dzire",
+      "mode": "outstation",
+      "total_kms": 474,
+      "total_hours": 0,
+      "night": false,
+      "driver_ta": 1,
+      "toll": 1280,
+      "invoiced": false,
+      "invoice_id": null
+    }
+  ],
+  "invoices": [],
+  "quotations": []
+}

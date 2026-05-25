@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krishna Cabs — Billing & Quotations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --ink:#1a1a1a;
+    --ink-soft:#4a4a48;
+    --ink-mute:#8a8a86;
+    --paper:#fafaf7;
+    --paper-2:#f3f1e9;
+    --line:#dcd9cf;
+    --line-soft:#e8e5db;
+    --accent:#7a2e2e;
+    --accent-soft:#fbe9e9;
+    --ok:#2d6a4f;
+    --warn:#b45309;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.5}
+  h1,h2{font-family:'Fraunces',Georgia,serif;font-weight:500;letter-spacing:-0.01em;margin:0}
+  h1{font-size:24px}
+  h2{font-size:19px}
+  h3{font-size:11px;font-family:'Inter',sans-serif;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-mute);margin:0}
+  button{font-family:inherit;font-size:13px;cursor:pointer;border:1px solid var(--line);background:white;padding:8px 14px;border-radius:6px;color:var(--ink);transition:all .15s}
+  button:hover{border-color:var(--ink);background:var(--paper-2)}
+  button.primary{background:var(--ink);color:white;border-color:var(--ink)}
+  button.primary:hover{background:#000}
+  button.danger{color:var(--accent);border-color:var(--line)}
+  button.danger:hover{background:var(--accent-soft);border-color:var(--accent)}
+  button.ghost{border-color:transparent;background:transparent}
+  button.ghost:hover{background:var(--paper-2)}
+  input,select,textarea{font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:white;color:var(--ink);width:100%}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink)}
+  input[type=checkbox]{width:auto}
+  label{font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-mute);font-weight:500;display:block;margin-bottom:4px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-mute);padding:10px 12px;border-bottom:1px solid var(--line);background:var(--paper-2)}
+  td{padding:11px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  tr:hover td{background:var(--paper-2)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .muted{color:var(--ink-mute)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;background:var(--paper-2);color:var(--ink-soft);font-weight:500}
+  .pill.ok{background:#e7f4ec;color:var(--ok)}
+  .pill.warn{background:#fef3e2;color:var(--warn)}
+  .pill.accent{background:var(--accent-soft);color:var(--accent)}
+
+  .shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+  .nav{background:#1a1a1a;color:#e8e6df;padding:24px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:4px}
+  .nav .brand{font-family:'Fraunces',serif;font-size:20px;color:white;padding:0 8px 24px;border-bottom:1px solid #333;margin-bottom:12px}
+  .nav .brand small{display:block;font-family:'Inter',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#8a8a86;margin-top:2px}
+  .nav button{background:transparent;border:none;color:#bdbab1;padding:10px 12px;text-align:left;border-radius:6px;font-size:13px;display:flex;align-items:center;gap:10px;width:100%}
+  .nav button:hover{background:#2a2a28;color:white}
+  .nav button.active{background:#3a3937;color:white}
+  .nav button .dot{width:6px;height:6px;border-radius:50%;background:transparent}
+  .nav button.active .dot{background:#d4a017}
+  .nav .spacer{flex:1}
+  .nav .footer{font-size:11px;color:#6a6a66;padding:12px 8px;border-top:1px solid #333}
+  .nav .footer a{color:#bdbab1;display:block;margin-top:4px}
+
+  .main{padding:32px 40px;max-width:1180px}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--line);gap:16px;flex-wrap:wrap}
+  .page-head h1 small{display:block;font-family:'Inter',sans-serif;font-size:12px;font-weight:400;color:var(--ink-mute);margin-top:4px;letter-spacing:0;text-transform:none}
+  .page-head .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  .card{background:white;border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:16px}
+  .card .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+  .stat{background:white;border:1px solid var(--line);border-radius:10px;padding:18px}
+  .stat .label{font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-mute);margin-bottom:6px}
+  .stat .value{font-family:'Fraunces',serif;font-size:24px;font-weight:500}
+  .stat .sub{font-size:12px;color:var(--ink-mute);margin-top:4px}
+
+  .empty{text-align:center;padding:40px 20px;color:var(--ink-mute);font-size:13px}
+  .empty h3{margin-bottom:6px;color:var(--ink-soft);text-transform:none;letter-spacing:0;font-size:14px;font-weight:600}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-bg.open{display:flex}
+  .modal{background:white;border-radius:12px;padding:24px;max-width:720px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+  .modal h2{margin-bottom:18px}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+
+  .toolbar{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px}
+  .toolbar > div{min-width:140px}
+  .toolbar .sep{flex:1}
+  .row-actions{display:flex;gap:4px;justify-content:flex-end}
+  .help{font-size:12px;color:var(--ink-mute);margin-top:6px;line-height:1.5}
+
+  .pdf-preview{background:var(--paper-2);border-radius:8px;padding:14px;max-height:240px;overflow:auto;font-family:monospace;font-size:11px;line-height:1.5;white-space:pre-wrap;color:var(--ink-soft);border:1px solid var(--line)}
+  .extract-tip{background:#fff8dd;border:1px solid #f4d35e;border-radius:6px;padding:8px 12px;font-size:12px;color:#7a5c00;margin-bottom:12px}
+
+  /* Bulk entry table */
+  .bulk-wrap{max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:8px;background:white}
+  .bulk-table{width:100%;border-collapse:separate;border-spacing:0}
+  .bulk-table thead th{position:sticky;top:0;background:var(--paper-2);font-size:10px;padding:8px 6px;z-index:2;border-bottom:1px solid var(--line)}
+  .bulk-table td{padding:3px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  .bulk-table input,.bulk-table select{font-size:12px;padding:5px 7px;border-radius:4px;border:1px solid transparent;background:transparent;width:100%}
+  .bulk-table input:focus,.bulk-table select:focus{background:white;border-color:var(--ink)}
+  .bulk-table tr.row-saved td{background:#f4f9f5}
+  .bulk-table tr.row-invalid td{background:#fdf6f6}
+  .bulk-table .row-total{font-variant-numeric:tabular-nums;font-weight:500;color:var(--ink-soft);padding-right:8px;text-align:right;min-width:80px}
+  .bulk-table .row-total.computed{color:var(--ok)}
+  .bulk-table .row-total.warning{color:var(--warn);font-size:10.5px}
+
+  /* =========================================================
+     PRINT — invoice & quotation
+     ========================================================= */
+  .print-doc{
+    background:white;color:#000;
+    font-family:'Inter',sans-serif;font-size:11.5px;line-height:1.45;
+    padding:24px 28px;
+    border:1px solid var(--line);border-radius:8px;
+  }
+  .print-doc h1{font-family:'Fraunces',serif;font-size:24px;margin:0}
+  .pd-head{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px;align-items:flex-end}
+  .pd-head .right{text-align:right;font-size:11px}
+  .pd-head .right .biz-addr{margin-top:4px;max-width:280px;margin-left:auto}
+  .pd-meta-row{display:flex;justify-content:space-between;gap:24px;margin-bottom:12px;font-size:11.5px}
+  .pd-meta-row .to{max-width:60%}
+  .pd-meta-row .label{font-size:9.5px;text-transform:uppercase;letter-spacing:0.05em;color:#666;font-weight:600;margin-bottom:3px}
+  .pd-meta-row .right{text-align:right}
+  .pd-table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:11px}
+  .pd-table th{background:#f4f2eb;font-weight:600;text-align:left;padding:6px 8px;border:1px solid #999;font-size:9.5px;text-transform:uppercase;letter-spacing:0.03em;color:#000}
+  .pd-table td{padding:5px 8px;border:1px solid #c4c4c4;vertical-align:top;white-space:pre-line}
+  .pd-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .pd-totals{margin-left:auto;width:320px;font-size:11.5px;margin-top:6px}
+  .pd-totals .row{display:flex;justify-content:space-between;padding:3px 0}
+  .pd-totals .row.grand{font-weight:600;border-top:2px solid #000;padding-top:6px;margin-top:4px;font-size:13px}
+  .pd-words{font-style:italic;font-size:11px;margin-top:10px;padding-top:8px;border-top:1px solid #ccc}
+  .pd-foot{margin-top:20px;font-size:9.5px;color:#444;border-top:1px solid #ccc;padding-top:8px;line-height:1.55}
+  .pd-foot strong{color:#000}
+
+  /* Hide print-only blocks in screen view */
+  .print-page-num{display:none}
+
+  @media print {
+    @page{
+      size: A4;
+      margin: 14mm 12mm 16mm 12mm;
+    }
+    body { background:white }
+    .nav, .page-head, .modal-actions, .no-print, button { display:none !important }
+    .main { padding:0; max-width:none }
+    .shell { display:block }
+    .modal-bg.open { position:static !important; background:white !important; padding:0 !important; display:block !important; height:auto !important }
+    .modal { box-shadow:none !important; padding:0 !important; max-width:none !important; max-height:none !important; overflow:visible !important; border-radius:0 !important }
+
+    .print-doc {
+      border:none !important; padding:0 !important; border-radius:0 !important;
+      font-size:10.5px;
+    }
+    .print-doc h1 { font-size:22px }
+
+    /* Repeat the table header on every page */
+    .pd-table thead { display: table-header-group }
+    .pd-table tfoot { display: table-footer-group }
+
+    /* Don't break a trip group across pages */
+    .trip-group { page-break-inside: avoid; break-inside: avoid }
+
+    /* Keep totals + words + terms together on the last page */
+    .pd-bottom { page-break-inside: avoid; break-inside: avoid }
+
+    /* Repeating header on each page using running element */
+    .pd-running-head { position: running(rh) }
+
+    /* Page numbers */
+    .print-page-num{
+      display:block;
+      position:running(pf);
+      text-align:right;
+      font-size:9px;
+      color:#666;
+    }
+    @page {
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-family:'Inter',sans-serif;
+        font-size:9px;
+        color:#666;
+      }
+    }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="nav">
+    <div class="brand">Krishna Cabs<small>Billing & quotations</small></div>
+    <button data-tab="dashboard" class="active"><span class="dot"></span>Dashboard</button>
+    <button data-tab="trips"><span class="dot"></span>Trips</button>
+    <button data-tab="invoices"><span class="dot"></span>Invoices</button>
+    <button data-tab="quotations"><span class="dot"></span>Quotations</button>
+    <button data-tab="clients"><span class="dot"></span>Clients</button>
+    <button data-tab="vehicles"><span class="dot"></span>Vehicles</button>
+    <button data-tab="settings"><span class="dot"></span>Settings</button>
+    <div class="spacer"></div>
+    <div class="footer">
+      Data saved in your browser.
+      <a href="#" id="exportData">↓ Export backup</a>
+      <a href="#" id="importData">↑ Import backup</a>
+      <a href="#" id="resetData">⟳ Reset to sample</a>
+    </div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<div class="modal-bg" id="modal"><div class="modal" id="modalContent"></div></div>
+<input type="file" id="importFile" accept="application/json" style="display:none">
+<input type="file" id="pdfFile" accept="application/pdf" style="display:none">
+
+<script>
+// =========================================================================
+// PDF.js setup
+// =========================================================================
+if(typeof pdfjsLib !== 'undefined'){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// =========================================================================
+// DATA
+// =========================================================================
+const LS_KEY = 'krishna_cabs_v2';
+let DB = {
+  company: { name: 'Krishna Cabs', address: '592- FF, HBC, Sector 51, Gurugram- 122001 (HR)',
+             phone: '+91 9999 00 4016', email: 's9999004016@gmail.com',
+             gstin: '06AAKFK3109Q2ZY', state: 'Haryana',
+             next_invoice_number: 2121, next_quotation_number: 1,
+             quotation_prefix: 'Q-2026-',
+             terms_invoice: ['Subjected to Gurugram Jurisdiction.',
+                     'Our Responsibility of the signed duty slip rests till we handover the same to you with the bill.',
+                     'Interest @ 18% will be charged if payment is not received within 15 days from the date of bill.',
+                     'System generated invoice, needs no signature.'],
+             terms_quotation: ['Rates are exclusive of GST as applicable.',
+                     'Toll, parking and state taxes will be charged extra at actuals.',
+                     'Driver allowance applicable for outstation duties.',
+                     'Rates valid until the validity date mentioned. Subject to revision thereafter.',
+                     'Subjected to Gurugram Jurisdiction.'] },
+  clients: [], vehicles: [], rate_cards: [], trips: [], invoices: [], quotations: []
+};
+
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(DB)) }
+function load(){
+  const raw = localStorage.getItem(LS_KEY);
+  if(raw){ try { DB = JSON.parse(raw); return true } catch(e){} }
+  return false;
+}
+function uid(){ return Math.random().toString(36).slice(2,10) }
+
+function seed(){
+  DB.clients = [
+    { id:'cl_paras', name:'Paras RE Facilities Management Pvt Ltd', gstin:'06AAECP5013H1ZQ',
+      address:'', state:'Haryana', is_rcm:true, default_booked_by:'Mr. Rakesh Verma' },
+    { id:'cl_fhpl', name:'Family Health Plan Insurance TPA Ltd', gstin:'06AAACF1740R1ZH',
+      address:'', state:'Haryana', is_rcm:true, default_booked_by:'Ms. Gagandeep' },
+    { id:'cl_bharti', name:'Bharti Foundation', gstin:'', address:'', state:'Haryana',
+      is_rcm:false, default_booked_by:'Mr. Vinod Kumar' },
+    { id:'cl_metalman', name:'Metalman Auto Ltd',
+      gstin:'07AABCM5441M2ZA',
+      address:'JMK Tower, 1st Floor, 44/5, NH 8, Kapashehra Estate, (Ggn-Delhi Border), ND- 110037',
+      state:'Delhi', is_rcm:false, default_booked_by:'Mr. Sunny Pandey' }
+  ];
+  DB.vehicles = [
+    { id:'v_9083', number:'HR 26 ED 9083', type:'Sonet', ownership:'own' },
+    { id:'v_6253', number:'HR 55 AZ 6253', type:'Crysta', ownership:'own' },
+    { id:'v_6403', number:'HR 26 CD 6403', type:'Dzire', ownership:'attached' },
+    { id:'v_3874', number:'HR 26 BE 3874', type:'Dzire', ownership:'attached' },
+    { id:'v_8630', number:'HR 26 BX 8630', type:'Dzire', ownership:'own' },
+    { id:'v_703',  number:'HR 26 CG 0703', type:'Dzire', ownership:'attached' },
+    { id:'v_6281', number:'HR 26 AT 6281', type:'Dzire', ownership:'attached' },
+    { id:'v_8053', number:'HR 26 BS 8053', type:'Dzire', ownership:'attached' },
+    { id:'v_6131', number:'HR 26 CN 6131', type:'Dzire', ownership:'attached' },
+    { id:'v_4972', number:'HR 26 AG 4972', type:'Dzire', ownership:'attached' }
+  ];
+  DB.rate_cards = [
+    { id:uid(), client_id:'cl_paras', car_type:'Sonet', mode:'outstation', per_km:15, driver_ta:300 },
+    { id:uid(), client_id:'cl_paras', car_type:'Crysta', mode:'outstation', per_km:24, driver_ta:300 },
+    { id:uid(), client_id:'cl_fhpl', car_type:'Sonet', mode:'local', base_rate:1500, base_kms:80, base_hours:8, extra_km:15, extra_hour:100, night:300, driver_ta:300 },
+    { id:uid(), client_id:'cl_fhpl', car_type:'Dzire', mode:'local', base_rate:1500, base_kms:80, base_hours:8, extra_km:15, extra_hour:100, night:300, driver_ta:300 },
+    { id:uid(), client_id:'cl_bharti', car_type:'Dzire', mode:'local', base_rate:1400, base_kms:80, base_hours:8, extra_km:14, extra_hour:100, night:300, driver_ta:300 },
+    { id:uid(), client_id:'cl_bharti', car_type:'Dzire', mode:'outstation', per_km:14, driver_ta:300 },
+    { id:uid(), client_id:'cl_metalman', car_type:'Dzire', mode:'local', base_rate:1500, base_kms:80, base_hours:8, extra_km:15, extra_hour:150, night:300, driver_ta:300 },
+    { id:uid(), client_id:'cl_metalman', car_type:'Sonet', mode:'local', base_rate:1600, base_kms:80, base_hours:8, extra_km:16, extra_hour:150, night:300, driver_ta:300 },
+    { id:uid(), client_id:'cl_metalman', car_type:'Crysta', mode:'local', base_rate:2400, base_kms:80, base_hours:8, extra_km:24, extra_hour:200, night:300, driver_ta:300 }
+  ];
+  DB.trips = [
+    { id:uid(), date:'2026-04-06', client_id:'cl_fhpl', vehicle_id:'v_9083', car_type:'Sonet', mode:'local', total_kms:105, total_hours:11, night:false, driver_ta:0, toll:0, invoiced:false, invoice_id:null },
+    { id:uid(), date:'2026-04-08', client_id:'cl_fhpl', vehicle_id:'v_9083', car_type:'Sonet', mode:'local', total_kms:80, total_hours:8, night:true, driver_ta:0, toll:0, invoiced:false, invoice_id:null },
+    { id:uid(), date:'2026-04-09', client_id:'cl_fhpl', vehicle_id:'v_9083', car_type:'Sonet', mode:'local', total_kms:80, total_hours:8, night:false, driver_ta:0, toll:0, invoiced:false, invoice_id:null },
+    { id:uid(), date:'2026-04-17', client_id:'cl_fhpl', vehicle_id:'v_9083', car_type:'Sonet', mode:'local', total_kms:149, total_hours:9.5, night:true, driver_ta:0, toll:0, invoiced:false, invoice_id:null },
+    { id:uid(), date:'2026-04-20', client_id:'cl_fhpl', vehicle_id:'v_9083', car_type:'Sonet', mode:'local', total_kms:257, total_hours:14, night:false, driver_ta:1, toll:0, invoiced:false, invoice_id:null },
+    { id:uid(), date:'2026-04-21', client_id:'cl_fhpl', vehicle_id:'v_9083', car_type:'Sonet', mode:'local', total_kms:195, total_hours:15, night:true, driver_ta:0, toll:0, invoiced:false, invoice_id:null },
+    { id:uid(), date:'2026-04-15', client_id:'cl_paras', vehicle_id:'v_9083', car_type:'Sonet', mode:'outstation', total_kms:707, total_hours:0, night:false, driver_ta:2, toll:1200, invoiced:false, invoice_id:null, notes:'15-16 April outstation' },
+    { id:uid(), date:'2026-04-16', client_id:'cl_paras', vehicle_id:'v_6253', car_type:'Crysta', mode:'outstation', total_kms:358, total_hours:0, night:false, driver_ta:1, toll:500, invoiced:false, invoice_id:null },
+    { id:uid(), date:'2026-04-22', client_id:'cl_paras', vehicle_id:'v_9083', car_type:'Sonet', mode:'outstation', total_kms:627, total_hours:0, night:false, driver_ta:2, toll:835, invoiced:false, invoice_id:null, notes:'22-23 April' },
+    { id:uid(), date:'2026-04-01', client_id:'cl_bharti', vehicle_id:'v_9083', car_type:'Dzire', mode:'local', total_kms:80, total_hours:8, night:true, driver_ta:0, toll:0, invoiced:false, invoice_id:null },
+    { id:uid(), date:'2026-04-04', client_id:'cl_bharti', vehicle_id:'v_6403', car_type:'Dzire', mode:'local', total_kms:80, total_hours:8, night:true, driver_ta:0, toll:0, invoiced:false, invoice_id:null },
+    { id:uid(), date:'2026-04-22', client_id:'cl_bharti', vehicle_id:'v_3874', car_type:'Dzire', mode:'outstation', total_kms:474, total_hours:0, night:false, driver_ta:1, toll:1280, invoiced:false, invoice_id:null }
+  ];
+  DB.quotations = [];
+  save();
+}
+
+// =========================================================================
+// LOGIC
+// =========================================================================
+function rateFor(client_id, car_type, mode){
+  return DB.rate_cards.find(r => r.client_id===client_id && r.car_type===car_type && r.mode===mode);
+}
+function clientById(id){ return DB.clients.find(c=>c.id===id) }
+function vehicleById(id){ return DB.vehicles.find(v=>v.id===id) }
+
+function tripToLines(trip){
+  const r = rateFor(trip.client_id, trip.car_type, trip.mode);
+  const lines = [];
+  const veh = vehicleById(trip.vehicle_id);
+  const lastFour = veh ? veh.number.split(' ').pop() : '';
+  const vehLabel = `${lastFour} ${trip.car_type}`.trim();
+  const dateStr = formatDate(trip.date);
+
+  if(!r){
+    lines.push({ date:dateStr, vehicle:vehLabel, hsn:'996601',
+      particulars:`(missing rate card for ${trip.car_type} ${trip.mode})`, rate:0, amount:0 });
+    return lines;
+  }
+  if(trip.mode === 'outstation'){
+    lines.push({ date:dateStr, vehicle:vehLabel, hsn:'996601',
+      particulars:`Total kms ${trip.total_kms}`, qty:trip.total_kms,
+      rate:r.per_km, amount:trip.total_kms * r.per_km });
+    if(trip.driver_ta > 0){
+      lines.push({ date:'', vehicle:'', hsn:'',
+        particulars:"Driver's TA", qty:trip.driver_ta, rate:r.driver_ta,
+        amount:trip.driver_ta * r.driver_ta });
+    }
+  } else {
+    const baseKms = r.base_kms || 80;
+    const baseHrs = r.base_hours || 8;
+    const label = trip.total_kms > baseKms
+      ? `Total ${trip.total_kms}kms\n${baseKms}kms/${baseHrs}hrs`
+      : `${baseKms}kms/${baseHrs}hrs`;
+    lines.push({ date:dateStr, vehicle:vehLabel, hsn:'996601',
+      particulars:label, rate:r.base_rate, amount:r.base_rate });
+
+    const ekm = Math.max(0, trip.total_kms - baseKms);
+    if(ekm > 0) lines.push({ date:'', vehicle:'', hsn:'', particulars:'Additional kms', qty:ekm, rate:r.extra_km, amount:ekm * r.extra_km });
+    const ehr = Math.max(0, (trip.total_hours||0) - baseHrs);
+    if(ehr > 0) lines.push({ date:'', vehicle:'', hsn:'', particulars:'Additional hrs', qty:ehr, rate:r.extra_hour, amount:ehr * r.extra_hour });
+    if(trip.night) lines.push({ date:'', vehicle:'', hsn:'', particulars:'Night Charges', rate:r.night, amount:r.night });
+    if(trip.driver_ta > 0) lines.push({ date:'', vehicle:'', hsn:'', particulars:"Driver's TA", qty:trip.driver_ta, rate:r.driver_ta, amount:trip.driver_ta * r.driver_ta });
+  }
+  return lines;
+}
+
+function gstFor(client, subtotal){
+  if(client.is_rcm){
+    return { mode:'RCM', cgst:0, sgst:0, igst:0,
+             cgst_label:'CGST @ 2.5% Under RCM', sgst_label:'SGST @ 2.5% Under RCM', igst_label:null };
+  }
+  if(client.state !== DB.company.state){
+    const igst = +(subtotal * 0.05).toFixed(2);
+    return { mode:'IGST', cgst:0, sgst:0, igst, igst_label:'IGST @ 5%', cgst_label:null, sgst_label:null };
+  }
+  const cgst = +(subtotal * 0.025).toFixed(2);
+  const sgst = +(subtotal * 0.025).toFixed(2);
+  return { mode:'CGST/SGST', cgst, sgst, igst:0, cgst_label:'CGST @ 2.5%', sgst_label:'SGST @ 2.5%', igst_label:null };
+}
+
+function buildInvoice(client_id, trip_ids, invoice_date, period_from, period_to, toll_override){
+  const client = clientById(client_id);
+  const trips = DB.trips.filter(t => trip_ids.includes(t.id))
+                       .sort((a,b)=>a.date.localeCompare(b.date));
+  const lineGroups = [];  // each group = lines from one trip, kept together
+  let subtotal = 0;
+  let tollTotal = 0;
+  trips.forEach(t => {
+    const ls = tripToLines(t);
+    ls.forEach(l => subtotal += l.amount);
+    lineGroups.push({ trip_id: t.id, lines: ls });
+    tollTotal += (+t.toll || 0);
+  });
+  if(toll_override !== undefined && toll_override !== null && toll_override !== ''){
+    tollTotal = +toll_override;
+  }
+  subtotal = +subtotal.toFixed(2);
+  const gst = gstFor(client, subtotal);
+  const net = +(subtotal + gst.cgst + gst.sgst + gst.igst + tollTotal).toFixed(2);
+  return {
+    client, lineGroups, subtotal, gst, toll_total: tollTotal,
+    net_amount: net, period_from, period_to, invoice_date,
+    trip_ids: trips.map(t=>t.id),
+    words: numberToWords(Math.round(net)) + ' Only.'
+  };
+}
+
+// =========================================================================
+// UTILITIES
+// =========================================================================
+function fmtMoney(n){
+  if(n === 0 || n === null || n === undefined) return '';
+  return '₹\u202F' + Number(n).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function fmtMoneyPlain(n){
+  return Number(n).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function formatDate(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${+d}/${+m}/${y.slice(2)}`;
+}
+function formatDateLong(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${+d} ${months[+m-1]} ${y}`;
+}
+function numberToWords(num){
+  if(num === 0) return 'Zero';
+  const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
+    'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const tens = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  function two(n){
+    if(n < 20) return ones[n];
+    const t = Math.floor(n/10), o = n%10;
+    return tens[t] + (o ? ' ' + ones[o] : '');
+  }
+  function three(n){
+    const h = Math.floor(n/100), r = n%100;
+    return (h ? ones[h] + ' Hundred' + (r ? ' & ' : '') : '') + (r ? two(r) : '');
+  }
+  let result = '';
+  const crore = Math.floor(num / 10000000); num %= 10000000;
+  const lakh  = Math.floor(num / 100000);   num %= 100000;
+  const thou  = Math.floor(num / 1000);     num %= 1000;
+  const rest  = num;
+  if(crore) result += two(crore) + ' Crore ';
+  if(lakh)  result += two(lakh)  + ' Lakh ';
+  if(thou)  result += two(thou)  + ' Thousand ';
+  if(rest){
+    const hadHigher = crore || lakh || thou;
+    if(hadHigher && Math.floor(rest/100) === 0) result += '& ';
+    result += three(rest);
+  }
+  return result.trim().replace(/\s+/g,' ');
+}
+
+// =========================================================================
+// PDF text extraction (used for quotation upload)
+// =========================================================================
+async function extractPdfText(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  const pages = [];
+  for(let i=1; i<=pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    pages.push(tc.items.map(it => it.str).join(' '));
+  }
+  return pages.join('\n\n--- PAGE BREAK ---\n\n');
+}
+
+// Best-effort guesses to pre-fill a rate form from raw PDF text
+function suggestRatesFromText(text){
+  const out = { car_rows: [], company_name:'', gstin:'' };
+  // GSTIN
+  const gst = text.match(/\b[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]{3}\b/);
+  if(gst) out.gstin = gst[0];
+  // Common car types and any number after them
+  const cars = ['Dzire','Sonet','Crysta','Innova','Ertiga','Etios','Indica','Sedan','SUV'];
+  cars.forEach(c => {
+    const re = new RegExp(c + '[^0-9]{0,40}(\\d{3,5})','gi');
+    let m, found = [];
+    while((m = re.exec(text)) !== null){ found.push(+m[1]) }
+    if(found.length) out.car_rows.push({ car_type:c, suggested:found.slice(0,4) });
+  });
+  return out;
+}
+
+// =========================================================================
+// ROUTING & STATE
+// =========================================================================
+let currentTab = 'dashboard';
+const main = document.getElementById('main');
+document.querySelectorAll('.nav button[data-tab]').forEach(b => {
+  b.addEventListener('click', () => setTab(b.dataset.tab));
+});
+function setTab(t){
+  currentTab = t;
+  document.querySelectorAll('.nav button[data-tab]').forEach(x => x.classList.toggle('active', x.dataset.tab===t));
+  render();
+}
+function render(){
+  ({
+    dashboard: renderDashboard, trips: renderTrips, invoices: renderInvoices,
+    quotations: renderQuotations, clients: renderClients, vehicles: renderVehicles,
+    settings: renderSettings
+  })[currentTab]();
+}
+
+// =========================================================================
+// DASHBOARD
+// =========================================================================
+function renderDashboard(){
+  const unbilled = DB.trips.filter(t=>!t.invoiced);
+  const byClient = {};
+  unbilled.forEach(t => { byClient[t.client_id] = (byClient[t.client_id]||0)+1 });
+  const totalRevenue = DB.invoices.reduce((s,i)=>s+i.net_amount, 0);
+  const unpaid = DB.invoices.filter(i=>i.status!=='paid');
+  const unpaidTotal = unpaid.reduce((s,i)=>s+i.net_amount, 0);
+  const pendingQuotes = DB.quotations.filter(q=>q.status==='draft' || q.status==='sent').length;
+
+  // Check for unsaved bulk-add draft
+  let draftBanner = '';
+  try {
+    const draftRaw = localStorage.getItem(BULK_KEY);
+    if(draftRaw){
+      const draft = JSON.parse(draftRaw);
+      if(draft.length > 0){
+        const okCount = draft.filter(r=>r.client_id && r.vehicle_id && rateFor(r.client_id, r.car_type, r.mode)).length;
+        draftBanner = `<div class="card" style="background:#fff8dd;border-color:#f4d35e;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><strong>You have ${draft.length} unsaved bulk-entry rows</strong> (${okCount} ready to save)<br><small class="muted">Picked up from your last session</small></div>
+            <div><button onclick="openBulkTrips()">Resume bulk entry</button></div>
+          </div>
+        </div>`;
+      }
+    }
+  } catch(e){}
+
+  main.innerHTML = `
+    <div class="page-head">
+      <h1>Dashboard<small>${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</small></h1>
+      <div class="actions">
+        <button onclick="setTab('trips')">+ Log a trip</button>
+        <button onclick="openBulkTrips()">Bulk add trips</button>
+        <button class="primary" onclick="setTab('invoices')">Generate invoice</button>
+      </div>
+    </div>
+    ${draftBanner}
+    <div class="grid-4" style="margin-bottom:20px">
+      <div class="stat"><div class="label">Unbilled trips</div><div class="value">${unbilled.length}</div><div class="sub">across ${Object.keys(byClient).length} clients</div></div>
+      <div class="stat"><div class="label">Pending quotes</div><div class="value">${pendingQuotes}</div><div class="sub">draft or sent</div></div>
+      <div class="stat"><div class="label">Outstanding</div><div class="value">${fmtMoney(unpaidTotal)||'—'}</div><div class="sub">${unpaid.length} unpaid invoices</div></div>
+      <div class="stat"><div class="label">Total billed</div><div class="value">${fmtMoney(totalRevenue)||'—'}</div><div class="sub">All time</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Unbilled trips by client</h3></div>
+      ${Object.keys(byClient).length===0
+        ? '<div class="empty">No unbilled trips.</div>'
+        : '<table><thead><tr><th>Client</th><th class="num">Trips ready</th><th></th></tr></thead><tbody>'+
+          Object.entries(byClient).map(([cid,n])=>{
+            const c = clientById(cid);
+            return `<tr><td><strong>${c.name}</strong>${c.is_rcm?' <span class="pill">RCM</span>':''}${c.state!==DB.company.state?' <span class="pill warn">Inter-state</span>':''}</td><td class="num">${n}</td><td class="row-actions"><button onclick="quickInvoice('${cid}')">Build invoice →</button></td></tr>`;
+          }).join('')+'</tbody></table>'
+      }
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Recent invoices</h3><button class="ghost" onclick="setTab('invoices')">See all →</button></div>
+      ${DB.invoices.length===0
+        ? '<div class="empty">No invoices yet.</div>'
+        : '<table><thead><tr><th>#</th><th>Date</th><th>Client</th><th class="num">Amount</th><th>Status</th></tr></thead><tbody>'+
+          [...DB.invoices].reverse().slice(0,5).map(i=>`<tr><td><strong>${i.invoice_number}</strong></td><td>${formatDateLong(i.invoice_date)}</td><td>${clientById(i.client_id)?.name||'—'}</td><td class="num">${fmtMoney(i.net_amount)}</td><td><span class="pill ${i.status==='paid'?'ok':'warn'}">${i.status}</span></td></tr>`).join('')+'</tbody></table>'
+      }
+    </div>
+  `;
+}
+function quickInvoice(cid){ setTab('invoices'); setTimeout(()=>openInvoiceBuilder(cid), 50) }
+
+// =========================================================================
+// TRIPS
+// =========================================================================
+let tripFilter = { client_id:'', invoiced:'all', from:'', to:'' };
+function renderTrips(){
+  let trips = [...DB.trips];
+  if(tripFilter.client_id) trips = trips.filter(t=>t.client_id===tripFilter.client_id);
+  if(tripFilter.invoiced==='no') trips = trips.filter(t=>!t.invoiced);
+  if(tripFilter.invoiced==='yes') trips = trips.filter(t=>t.invoiced);
+  if(tripFilter.from) trips = trips.filter(t=>t.date >= tripFilter.from);
+  if(tripFilter.to)   trips = trips.filter(t=>t.date <= tripFilter.to);
+  trips.sort((a,b)=>a.date.localeCompare(b.date));
+
+  main.innerHTML = `
+    <div class="page-head">
+      <h1>Trips<small>Each duty slip becomes a trip. Invoices are built from trips.</small></h1>
+      <div class="actions">
+        <button onclick="openBulkTrips()">Bulk add</button>
+        <button class="primary" onclick="openTripForm()">+ Log a trip</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="toolbar">
+        <div style="flex:1;min-width:200px"><label>Client</label>
+          <select onchange="tripFilter.client_id=this.value;renderTrips()">
+            <option value="">All clients</option>
+            ${DB.clients.map(c=>`<option value="${c.id}" ${tripFilter.client_id===c.id?'selected':''}>${c.name}</option>`).join('')}
+          </select>
+        </div>
+        <div><label>Status</label>
+          <select onchange="tripFilter.invoiced=this.value;renderTrips()">
+            <option value="all" ${tripFilter.invoiced==='all'?'selected':''}>All</option>
+            <option value="no" ${tripFilter.invoiced==='no'?'selected':''}>Unbilled</option>
+            <option value="yes" ${tripFilter.invoiced==='yes'?'selected':''}>Billed</option>
+          </select>
+        </div>
+        <div><label>From</label><input type="date" value="${tripFilter.from}" onchange="tripFilter.from=this.value;renderTrips()"></div>
+        <div><label>To</label><input type="date" value="${tripFilter.to}" onchange="tripFilter.to=this.value;renderTrips()"></div>
+        <button class="ghost" onclick="tripFilter={client_id:'',invoiced:'all',from:'',to:''};renderTrips()">Clear</button>
+      </div>
+      ${trips.length===0
+        ? '<div class="empty"><h3>No trips match</h3>Try clearing filters, or log a trip.</div>'
+        : `<table><thead><tr><th>Date</th><th>Client</th><th>Vehicle</th><th>Mode</th><th class="num">Km</th><th class="num">Hrs</th><th>Extras</th><th class="num">Computed</th><th>Status</th><th></th></tr></thead><tbody>`+
+          trips.map(t=>{
+            const total = tripToLines(t).reduce((s,l)=>s+l.amount,0);
+            const c = clientById(t.client_id);
+            const v = vehicleById(t.vehicle_id);
+            const extras = [];
+            if(t.night) extras.push('Night');
+            if(t.driver_ta>0) extras.push(`TA×${t.driver_ta}`);
+            if(t.toll>0) extras.push(`Toll ${t.toll}`);
+            return `<tr>
+              <td><strong>${formatDate(t.date)}</strong></td>
+              <td>${c?c.name:'?'}</td>
+              <td><small class="muted">${v?v.number:'?'}</small><br>${t.car_type}</td>
+              <td><span class="pill">${t.mode}</span></td>
+              <td class="num">${t.total_kms}</td>
+              <td class="num">${t.total_hours||'—'}</td>
+              <td><small>${extras.join(' · ')||'—'}</small></td>
+              <td class="num"><strong>${fmtMoneyPlain(total)}</strong></td>
+              <td>${t.invoiced?'<span class="pill ok">Billed</span>':'<span class="pill">Pending</span>'}</td>
+              <td class="row-actions">
+                <button class="ghost" onclick="openTripForm('${t.id}')">Edit</button>
+                <button class="ghost danger" onclick="deleteTrip('${t.id}')">×</button>
+              </td>
+            </tr>`;
+          }).join('')+'</tbody></table>'
+      }
+    </div>
+  `;
+}
+
+function openTripForm(id){
+  const t = id ? DB.trips.find(x=>x.id===id) : null;
+  const d = t || { date:new Date().toISOString().slice(0,10), client_id:'', vehicle_id:'',
+    car_type:'Dzire', mode:'local', total_kms:80, total_hours:8, night:false, driver_ta:0, toll:0, notes:'' };
+  showModal(`
+    <h2>${t?'Edit trip':'Log a trip'}</h2>
+    <div class="grid-2">
+      <div><label>Date</label><input type="date" id="f_date" value="${d.date}"></div>
+      <div><label>Client</label>
+        <select id="f_client">
+          <option value="">— select —</option>
+          ${DB.clients.map(c=>`<option value="${c.id}" ${d.client_id===c.id?'selected':''}>${c.name}</option>`).join('')}
+        </select>
+      </div>
+      <div><label>Vehicle</label>
+        <select id="f_vehicle" onchange="document.getElementById('f_cartype').value=DB.vehicles.find(v=>v.id===this.value)?.type||'Dzire';updateTripPreview()">
+          <option value="">— select —</option>
+          ${DB.vehicles.map(v=>`<option value="${v.id}" ${d.vehicle_id===v.id?'selected':''}>${v.number} (${v.type})</option>`).join('')}
+        </select>
+      </div>
+      <div><label>Car type</label>
+        <select id="f_cartype">${['Dzire','Sonet','Crysta','Innova','Ertiga','Other'].map(t=>`<option ${d.car_type===t?'selected':''}>${t}</option>`).join('')}</select>
+      </div>
+      <div><label>Mode</label>
+        <select id="f_mode">
+          <option value="local" ${d.mode==='local'?'selected':''}>Local (base + extras)</option>
+          <option value="outstation" ${d.mode==='outstation'?'selected':''}>Outstation (per km)</option>
+        </select>
+      </div>
+      <div><label>Total kms</label><input type="number" id="f_km" value="${d.total_kms}" step="1"></div>
+      <div><label>Total hours</label><input type="number" id="f_hr" value="${d.total_hours}" step="0.5"></div>
+      <div><label>Driver TA (count)</label><input type="number" id="f_ta" value="${d.driver_ta}" step="1" min="0"></div>
+      <div><label>Toll & parking (₹)</label><input type="number" id="f_toll" value="${d.toll}" step="1" min="0"></div>
+      <div><label>Night charge</label>
+        <select id="f_night">
+          <option value="false" ${!d.night?'selected':''}>No</option>
+          <option value="true" ${d.night?'selected':''}>Yes</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:14px"><label>Notes</label><textarea id="f_notes" rows="2">${d.notes||''}</textarea></div>
+    <div class="help" id="f_preview"></div>
+    <div class="modal-actions">
+      <button onclick="closeModal()">Cancel</button>
+      ${t?`<button class="danger" onclick="deleteTrip('${t.id}');closeModal()">Delete</button>`:''}
+      <button class="primary" onclick="saveTrip('${t?t.id:''}')">${t?'Save changes':'Log trip'}</button>
+    </div>
+  `);
+  updateTripPreview();
+  ['f_client','f_vehicle','f_cartype','f_mode','f_km','f_hr','f_ta','f_toll','f_night','f_date']
+    .forEach(id=>document.getElementById(id).addEventListener('input', updateTripPreview));
+}
+function updateTripPreview(){
+  const el = document.getElementById('f_preview'); if(!el) return;
+  const tmp = {
+    client_id: document.getElementById('f_client').value,
+    vehicle_id: document.getElementById('f_vehicle').value,
+    car_type: document.getElementById('f_cartype').value,
+    mode: document.getElementById('f_mode').value,
+    total_kms: +document.getElementById('f_km').value || 0,
+    total_hours: +document.getElementById('f_hr').value || 0,
+    driver_ta: +document.getElementById('f_ta').value || 0,
+    toll: +document.getElementById('f_toll').value || 0,
+    night: document.getElementById('f_night').value === 'true',
+    date: document.getElementById('f_date').value
+  };
+  if(!tmp.client_id){ el.innerHTML='Pick a client to see live breakdown.'; return }
+  const lines = tripToLines(tmp);
+  const total = lines.reduce((s,l)=>s+l.amount,0);
+  el.innerHTML = '<strong>Computed lines:</strong><br>' +
+    lines.map(l=>`${l.particulars.replace(/\n/g,' · ')} — ${fmtMoney(l.amount)}${l.qty?` <small class="muted">(${l.qty} @ ₹${l.rate})</small>`:''}`).join('<br>') +
+    `<br><strong>Trip subtotal: ${fmtMoney(total)}</strong>` + (tmp.toll?` + Toll ${fmtMoney(tmp.toll)}`:'');
+}
+function saveTrip(id){
+  const t = {
+    date: document.getElementById('f_date').value,
+    client_id: document.getElementById('f_client').value,
+    vehicle_id: document.getElementById('f_vehicle').value,
+    car_type: document.getElementById('f_cartype').value,
+    mode: document.getElementById('f_mode').value,
+    total_kms: +document.getElementById('f_km').value || 0,
+    total_hours: +document.getElementById('f_hr').value || 0,
+    driver_ta: +document.getElementById('f_ta').value || 0,
+    toll: +document.getElementById('f_toll').value || 0,
+    night: document.getElementById('f_night').value === 'true',
+    notes: document.getElementById('f_notes').value
+  };
+  if(!t.client_id){ alert('Please pick a client'); return }
+  if(id){
+    const e = DB.trips.find(x=>x.id===id);
+    if(e.invoiced){ alert('Trip is on an invoice. Reverse the invoice first.'); return }
+    Object.assign(e, t);
+  } else {
+    DB.trips.push({ id:uid(), ...t, invoiced:false, invoice_id:null });
+  }
+  save(); closeModal(); render();
+}
+function deleteTrip(id){
+  const t = DB.trips.find(x=>x.id===id);
+  if(t.invoiced){ alert('Trip is on an invoice. Reverse the invoice first.'); return }
+  if(!confirm('Delete this trip?')) return;
+  DB.trips = DB.trips.filter(x=>x.id!==id);
+  save(); render();
+}
+
+// ---- Bulk trip entry (the day-30 hero workflow) ----
+// Persisted to localStorage separately so a closed modal / browser crash doesn't lose work
+const BULK_KEY = 'krishna_cabs_v2_bulk_draft';
+let bulkRows = [];
+function loadBulkDraft(){
+  try { const r = localStorage.getItem(BULK_KEY); if(r){ bulkRows = JSON.parse(r) } } catch(e){}
+}
+function saveBulkDraft(){ localStorage.setItem(BULK_KEY, JSON.stringify(bulkRows)) }
+function clearBulkDraft(){ bulkRows = []; localStorage.removeItem(BULK_KEY) }
+
+function openBulkTrips(){
+  loadBulkDraft();
+  if(bulkRows.length === 0) addBulkRow();
+  renderBulkTrips();
+}
+function addBulkRow(template){
+  const last = bulkRows[bulkRows.length-1];
+  const seed = template || last || {};
+  bulkRows.push({
+    date: seed.date || new Date().toISOString().slice(0,10),
+    client_id: seed.client_id || '',
+    vehicle_id: seed.vehicle_id || '',
+    car_type: seed.car_type || 'Dzire',
+    mode: seed.mode || 'local',
+    total_kms: 80, total_hours: 8,
+    night: false, driver_ta: 0, toll: 0
+  });
+  saveBulkDraft();
+}
+// Update only one row's total cell + class — no full table redraw, focus and scroll preserved
+function updateBulkRow(i){
+  saveBulkDraft();
+  const tr = document.getElementById('brow_'+i);
+  if(!tr) return;
+  const st = bulkRowState(bulkRows[i]);
+  tr.className = st.status==='ok' ? 'row-saved' : (st.status==='no-rate' ? 'row-invalid' : '');
+  const totalCell = tr.querySelector('.row-total');
+  if(totalCell){
+    if(st.status==='ok'){
+      totalCell.textContent = fmtMoneyPlain(st.total);
+      totalCell.className = 'row-total computed';
+    } else {
+      totalCell.textContent = st.label;
+      totalCell.className = 'row-total warning';
+    }
+  }
+  refreshBulkFooter();
+}
+function refreshBulkFooter(){
+  const f = document.getElementById('bulk-footer-counts'); if(!f) return;
+  const ok = bulkRows.filter(r=>bulkRowState(r).status==='ok').length;
+  const noRate = bulkRows.filter(r=>bulkRowState(r).status==='no-rate').length;
+  const incomplete = bulkRows.filter(r=>!r.client_id||!r.vehicle_id).length;
+  const total = bulkRows.reduce((s,r)=>{const st=bulkRowState(r);return s+(st.status==='ok'?st.total+(+r.toll||0):0)},0);
+  f.innerHTML = `<strong>${ok}</strong> ready · ${noRate} missing rate card · ${incomplete} incomplete · Running total: <strong>${fmtMoney(total)}</strong>`;
+  const saveBtn = document.getElementById('bulk-save-btn');
+  if(saveBtn) saveBtn.textContent = `Save ${ok} ready trips`;
+}
+function duplicateBulkRow(i){
+  const r = bulkRows[i];
+  bulkRows.splice(i+1, 0, JSON.parse(JSON.stringify(r)));
+  saveBulkDraft();
+  renderBulkTrips();
+  setTimeout(()=>{
+    const el = document.querySelector(`#brow_${i+1} input[type="date"]`);
+    if(el) el.focus();
+  }, 50);
+}
+
+// Compute the row's total + status label
+function bulkRowState(r){
+  if(!r.client_id) return { status:'missing-client', label:'pick client' };
+  if(!r.vehicle_id) return { status:'missing-vehicle', label:'pick vehicle' };
+  const rate = rateFor(r.client_id, r.car_type, r.mode);
+  if(!rate) return { status:'no-rate', label:'no rate card' };
+  const lines = tripToLines(r);
+  const total = lines.reduce((s,l)=>s+l.amount,0);
+  return { status:'ok', total };
+}
+
+function renderBulkTrips(){
+  showModal(`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <h2 style="margin:0">Bulk add trips</h2>
+        <div class="help" style="margin-top:2px">Tab through cells · Enter on last row → add new · Duplicate to repeat similar trips · Drafts auto-saved</div>
+      </div>
+      <div>
+        <button class="ghost" onclick="if(confirm('Discard all draft rows?')){clearBulkDraft();closeModal()}">Discard draft</button>
+      </div>
+    </div>
+    <div class="bulk-wrap"><table class="bulk-table">
+      <thead><tr>
+        <th style="width:115px">Date</th>
+        <th style="width:160px">Client</th>
+        <th style="width:110px">Vehicle</th>
+        <th style="width:85px">Type</th>
+        <th style="width:90px">Mode</th>
+        <th style="width:65px">Km</th>
+        <th style="width:55px">Hr</th>
+        <th style="width:40px">Nt</th>
+        <th style="width:50px">TA</th>
+        <th style="width:65px">Toll</th>
+        <th style="width:95px;text-align:right">Computed</th>
+        <th style="width:60px"></th>
+      </tr></thead>
+      <tbody>
+        ${bulkRows.map((r,i)=>{
+          const st = bulkRowState(r);
+          const rowClass = st.status==='ok' ? 'row-saved' : (st.status==='no-rate' ? 'row-invalid' : '');
+          const totalCell = st.status==='ok'
+            ? `<span class="row-total computed">${fmtMoneyPlain(st.total)}</span>`
+            : `<span class="row-total warning">${st.label}</span>`;
+          const isLast = i === bulkRows.length-1;
+          return `<tr id="brow_${i}" class="${rowClass}">
+            <td><input type="date" value="${r.date}" onchange="bulkRows[${i}].date=this.value;saveBulkDraft();renderBulkTrips()"></td>
+            <td><select onchange="bulkRows[${i}].client_id=this.value;saveBulkDraft();renderBulkTrips()">
+              <option value="">—</option>
+              ${DB.clients.map(c=>`<option value="${c.id}" ${r.client_id===c.id?'selected':''}>${c.name.length>20?c.name.slice(0,18)+'…':c.name}</option>`).join('')}
+            </select></td>
+            <td><select onchange="bulkRows[${i}].vehicle_id=this.value;bulkRows[${i}].car_type=DB.vehicles.find(v=>v.id===this.value)?.type||bulkRows[${i}].car_type;saveBulkDraft();renderBulkTrips()">
+              <option value="">—</option>
+              ${DB.vehicles.map(v=>`<option value="${v.id}" ${r.vehicle_id===v.id?'selected':''}>${v.number.split(' ').pop()} ${v.type[0]}</option>`).join('')}
+            </select></td>
+            <td><select onchange="bulkRows[${i}].car_type=this.value;saveBulkDraft();renderBulkTrips()">${['Dzire','Sonet','Crysta','Innova','Ertiga','Other'].map(t=>`<option ${r.car_type===t?'selected':''}>${t}</option>`).join('')}</select></td>
+            <td><select onchange="bulkRows[${i}].mode=this.value;saveBulkDraft();renderBulkTrips()">
+              <option value="local" ${r.mode==='local'?'selected':''}>local</option>
+              <option value="outstation" ${r.mode==='outstation'?'selected':''}>outst.</option>
+            </select></td>
+            <td><input type="number" value="${r.total_kms}" onchange="bulkRows[${i}].total_kms=+this.value;updateBulkRow(${i})"></td>
+            <td><input type="number" value="${r.total_hours}" step="0.5" onchange="bulkRows[${i}].total_hours=+this.value;updateBulkRow(${i})"></td>
+            <td style="text-align:center"><input type="checkbox" ${r.night?'checked':''} onchange="bulkRows[${i}].night=this.checked;updateBulkRow(${i})"></td>
+            <td><input type="number" value="${r.driver_ta}" onchange="bulkRows[${i}].driver_ta=+this.value;updateBulkRow(${i})"></td>
+            <td><input type="number" value="${r.toll}" onchange="bulkRows[${i}].toll=+this.value;updateBulkRow(${i})" onkeydown="if(event.key==='Enter'&&${isLast}){addBulkRow();renderBulkTrips();setTimeout(()=>document.querySelector('#brow_${i+1} input[type=date]').focus(),50)}"></td>
+            <td>${totalCell}</td>
+            <td>
+              <button class="ghost" title="Duplicate row" onclick="duplicateBulkRow(${i})" style="padding:4px 6px">⎘</button>
+              <button class="ghost danger" title="Delete row" onclick="bulkRows.splice(${i},1);if(bulkRows.length===0)addBulkRow();saveBulkDraft();renderBulkTrips()" style="padding:4px 6px">×</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table></div>
+    <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <button onclick="addBulkRow();renderBulkTrips()">+ Add row</button>
+        <button onclick="bulkRows=bulkRows.filter(r=>bulkRowState(r).status!=='ok');saveBulkDraft();renderBulkTrips()" title="Remove rows that are ready, keep incomplete ones to fix">Remove ready rows</button>
+      </div>
+      <div class="help" id="bulk-footer-counts">
+        <strong>${bulkRows.filter(r=>bulkRowState(r).status==='ok').length}</strong> ready ·
+        ${bulkRows.filter(r=>bulkRowState(r).status==='no-rate').length} missing rate card ·
+        ${bulkRows.filter(r=>!r.client_id||!r.vehicle_id).length} incomplete ·
+        Running total: <strong>${fmtMoney(bulkRows.reduce((s,r)=>{const st=bulkRowState(r);return s+(st.status==='ok'?st.total+(+r.toll||0):0)},0))}</strong>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeModal()">Close (draft kept)</button>
+      <button class="primary" id="bulk-save-btn" onclick="saveBulkTrips()">Save ${bulkRows.filter(r=>bulkRowState(r).status==='ok').length} ready trips</button>
+    </div>
+  `, 'wide');
+}
+function saveBulkTrips(){
+  let saved = 0, kept = [];
+  bulkRows.forEach(r => {
+    if(bulkRowState(r).status === 'ok'){
+      DB.trips.push({ id:uid(), ...r, invoiced:false, invoice_id:null });
+      saved++;
+    } else {
+      kept.push(r);  // keep incomplete rows for next session
+    }
+  });
+  save();
+  bulkRows = kept;
+  saveBulkDraft();
+  if(kept.length === 0){
+    clearBulkDraft();
+    closeModal();
+  } else {
+    renderBulkTrips();
+  }
+  render();
+  if(saved > 0) alert(`${saved} trips saved.${kept.length?' ' + kept.length + ' incomplete row(s) kept for you to fix.':''}`);
+}
+
+// =========================================================================
+// INVOICES
+// =========================================================================
+function renderInvoices(){
+  const unbilled = DB.trips.filter(t=>!t.invoiced);
+  const cids = [...new Set(unbilled.map(t=>t.client_id))];
+  main.innerHTML = `
+    <div class="page-head">
+      <h1>Invoices<small>${DB.invoices.length} issued · Next: #${DB.company.next_invoice_number}</small></h1>
+      <div class="actions">
+        <select id="invClientPick" style="width:260px">
+          <option value="">— pick client to build new —</option>
+          ${cids.map(cid=>{const c=clientById(cid);const n=unbilled.filter(t=>t.client_id===cid).length;return `<option value="${cid}">${c.name} (${n} trips)</option>`}).join('')}
+        </select>
+        <button class="primary" onclick="openInvoiceBuilder(document.getElementById('invClientPick').value)">Build →</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>All invoices</h3></div>
+      ${DB.invoices.length===0
+        ? '<div class="empty"><h3>No invoices yet</h3>Pick a client above with unbilled trips.</div>'
+        : `<table><thead><tr><th>#</th><th>Date</th><th>Client</th><th>Period</th><th>GST</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead><tbody>`+
+          [...DB.invoices].reverse().map(i=>`<tr>
+            <td><strong>${i.invoice_number}</strong></td>
+            <td>${formatDate(i.invoice_date)}</td>
+            <td>${clientById(i.client_id)?.name||'—'}</td>
+            <td><small>${formatDate(i.period_from)} → ${formatDate(i.period_to)}</small></td>
+            <td><span class="pill">${i.gst.mode}</span></td>
+            <td class="num"><strong>${fmtMoney(i.net_amount)}</strong></td>
+            <td>${i.status==='paid'?'<span class="pill ok">Paid</span>':'<span class="pill warn">Unpaid</span>'}</td>
+            <td class="row-actions">
+              <button class="ghost" onclick="viewInvoice('${i.id}')">View / Print</button>
+              <button class="ghost" onclick="togglePaid('${i.id}')">${i.status==='paid'?'Mark unpaid':'Mark paid'}</button>
+              <button class="ghost danger" onclick="reverseInvoice('${i.id}')">Reverse</button>
+            </td>
+          </tr>`).join('')+'</tbody></table>'
+      }
+    </div>
+  `;
+}
+
+let invBuilder = {};
+function openInvoiceBuilder(client_id){
+  if(!client_id){ alert('Pick a client first'); return }
+  const trips = DB.trips.filter(t=>t.client_id===client_id && !t.invoiced);
+  if(trips.length===0){ alert('No unbilled trips.'); return }
+  const dates = trips.map(t=>t.date).sort();
+  invBuilder = {
+    client_id, selected: trips.map(t=>t.id),
+    invoice_date: new Date().toISOString().slice(0,10),
+    period_from: dates[0], period_to: dates[dates.length-1],
+    toll_override:''
+  };
+  renderInvBuilder();
+}
+function renderInvBuilder(){
+  const client = clientById(invBuilder.client_id);
+  const trips = DB.trips.filter(t=>t.client_id===invBuilder.client_id && !t.invoiced).sort((a,b)=>a.date.localeCompare(b.date));
+  const preview = buildInvoice(invBuilder.client_id, invBuilder.selected, invBuilder.invoice_date, invBuilder.period_from, invBuilder.period_to, invBuilder.toll_override);
+  showModal(`
+    <h2>Build invoice — ${client.name}</h2>
+    <div class="grid-3" style="margin-bottom:14px">
+      <div><label>Invoice date</label><input type="date" value="${invBuilder.invoice_date}" onchange="invBuilder.invoice_date=this.value;renderInvBuilder()"></div>
+      <div><label>Period from</label><input type="date" value="${invBuilder.period_from}" onchange="invBuilder.period_from=this.value;renderInvBuilder()"></div>
+      <div><label>Period to</label><input type="date" value="${invBuilder.period_to}" onchange="invBuilder.period_to=this.value;renderInvBuilder()"></div>
+    </div>
+    <h3 style="margin-bottom:8px">Trips to include</h3>
+    <table style="margin-bottom:14px">
+      <thead><tr><th width="30"></th><th>Date</th><th>Vehicle</th><th>Mode</th><th class="num">Km/Hr</th><th class="num">Amount</th></tr></thead>
+      <tbody>${trips.map(t=>{const total = tripToLines(t).reduce((s,l)=>s+l.amount,0);const v = vehicleById(t.vehicle_id);return `<tr>
+        <td><input type="checkbox" ${invBuilder.selected.includes(t.id)?'checked':''} onchange="toggleTrip('${t.id}',this.checked)"></td>
+        <td>${formatDate(t.date)}</td>
+        <td><small class="muted">${v?v.number:'?'}</small> ${t.car_type}</td>
+        <td>${t.mode}</td>
+        <td class="num">${t.total_kms} / ${t.total_hours||'—'}</td>
+        <td class="num">${fmtMoneyPlain(total)}</td>
+      </tr>`}).join('')}</tbody>
+    </table>
+    <div class="grid-2">
+      <div>
+        <label>Toll override (₹, optional)</label>
+        <input type="number" value="${invBuilder.toll_override}" placeholder="auto = ${fmtMoneyPlain(trips.filter(t=>invBuilder.selected.includes(t.id)).reduce((s,t)=>s+(+t.toll||0),0))}" onchange="invBuilder.toll_override=this.value;renderInvBuilder()">
+        <div class="help">Leave blank to auto-sum tolls from trips.</div>
+      </div>
+      <div style="background:var(--paper-2);padding:14px;border-radius:8px;font-size:13px">
+        <div style="display:flex;justify-content:space-between"><span>Subtotal</span><strong>${fmtMoney(preview.subtotal)}</strong></div>
+        ${preview.gst.cgst_label?`<div style="display:flex;justify-content:space-between"><span>${preview.gst.cgst_label}</span><strong>${preview.gst.cgst?fmtMoneyPlain(preview.gst.cgst):'—'}</strong></div>`:''}
+        ${preview.gst.sgst_label?`<div style="display:flex;justify-content:space-between"><span>${preview.gst.sgst_label}</span><strong>${preview.gst.sgst?fmtMoneyPlain(preview.gst.sgst):'—'}</strong></div>`:''}
+        ${preview.gst.igst_label?`<div style="display:flex;justify-content:space-between"><span>${preview.gst.igst_label}</span><strong>${fmtMoneyPlain(preview.gst.igst)}</strong></div>`:''}
+        <div style="display:flex;justify-content:space-between"><span>Toll & parking</span><strong>${fmtMoney(preview.toll_total)}</strong></div>
+        <div style="display:flex;justify-content:space-between;font-size:15px;border-top:1px solid var(--line);padding-top:8px;margin-top:8px"><strong>Net</strong><strong>${fmtMoney(preview.net_amount)}</strong></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeModal()">Cancel</button>
+      <button class="primary" onclick="commitInvoice()">Issue invoice #${DB.company.next_invoice_number}</button>
+    </div>
+  `);
+}
+function toggleTrip(id, on){
+  if(on) invBuilder.selected.push(id);
+  else invBuilder.selected = invBuilder.selected.filter(x=>x!==id);
+  renderInvBuilder();
+}
+function commitInvoice(){
+  if(invBuilder.selected.length===0){ alert('Pick at least one trip'); return }
+  const built = buildInvoice(invBuilder.client_id, invBuilder.selected, invBuilder.invoice_date, invBuilder.period_from, invBuilder.period_to, invBuilder.toll_override);
+  const id = uid();
+  const number = DB.company.next_invoice_number++;
+  const saved = {
+    id, invoice_number:number, invoice_date:built.invoice_date,
+    client_id:invBuilder.client_id, trip_ids:[...invBuilder.selected],
+    period_from:built.period_from, period_to:built.period_to,
+    subtotal:built.subtotal, gst:built.gst, toll_total:built.toll_total,
+    net_amount:built.net_amount, words:built.words,
+    lineGroups: built.lineGroups,
+    status:'unpaid', created_at:new Date().toISOString()
+  };
+  DB.invoices.push(saved);
+  DB.trips.forEach(t=>{ if(saved.trip_ids.includes(t.id)){ t.invoiced=true; t.invoice_id=id }});
+  save(); closeModal();
+  setTimeout(()=>viewInvoice(id), 100);
+}
+
+function viewInvoice(id){
+  const i = DB.invoices.find(x=>x.id===id);
+  const client = clientById(i.client_id);
+  const g = i.gst;
+  showModal(`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px" class="no-print">
+      <h2>Invoice ${i.invoice_number}</h2>
+      <div><button onclick="window.print()">Print / Save as PDF</button><button onclick="closeModal()">Close</button></div>
+    </div>
+    <div class="print-doc">
+      <div class="pd-head">
+        <div>
+          <h1>${DB.company.name}</h1>
+          <div style="font-size:11px;margin-top:2px">${DB.company.phone} · ${DB.company.email}</div>
+        </div>
+        <div class="right">
+          <div class="biz-addr">${DB.company.address}</div>
+          <div style="margin-top:3px">GSTIN ${DB.company.gstin}</div>
+        </div>
+      </div>
+      <div class="pd-meta-row">
+        <div class="to">
+          <div class="label">Bill to</div>
+          <strong>${client.name}</strong><br>
+          ${client.address?client.address+'<br>':''}
+          ${client.gstin?'GSTIN '+client.gstin:'GSTIN NA'}<br>
+          ${client.default_booked_by?'<small>Booked by: '+client.default_booked_by+'</small>':''}
+        </div>
+        <div class="right">
+          <div class="label">Invoice</div>
+          <strong>#${i.invoice_number}</strong><br>
+          ${formatDate(i.invoice_date)}
+        </div>
+      </div>
+      <table class="pd-table">
+        <thead><tr>
+          <th width="58">Date</th>
+          <th width="115">Vehicle / Type</th>
+          <th width="48">HSN</th>
+          <th>Particulars</th>
+          <th width="48" class="num">Qty</th>
+          <th width="58" class="num">Rate</th>
+          <th width="78" class="num">Amount</th>
+        </tr></thead>
+        <tbody>
+          ${i.lineGroups.map(g=>`<tr class="trip-group"><td colspan="7" style="padding:0;border:none"><table style="width:100%;border-collapse:collapse">
+            ${g.lines.map(l=>`<tr>
+              <td width="58">${l.date||''}</td>
+              <td width="115">${l.vehicle||''}</td>
+              <td width="48">${l.hsn||''}</td>
+              <td style="white-space:pre-line">${l.particulars}</td>
+              <td width="48" class="num">${l.qty!==undefined?l.qty:''}</td>
+              <td width="58" class="num">${l.rate?fmtMoneyPlain(l.rate):''}</td>
+              <td width="78" class="num">${l.amount?fmtMoneyPlain(l.amount):''}</td>
+            </tr>`).join('')}
+          </table></td></tr>`).join('')}
+          <tr><td colspan="6" style="text-align:right;font-weight:600">Total</td><td class="num"><strong>${fmtMoneyPlain(i.subtotal)}</strong></td></tr>
+        </tbody>
+      </table>
+      <div class="pd-bottom">
+        <div class="pd-totals">
+          ${g.cgst_label?`<div class="row"><span>${g.cgst_label}</span><span>${g.cgst?fmtMoneyPlain(g.cgst):''}</span></div>`:''}
+          ${g.sgst_label?`<div class="row"><span>${g.sgst_label}</span><span>${g.sgst?fmtMoneyPlain(g.sgst):''}</span></div>`:''}
+          ${g.igst_label?`<div class="row"><span>${g.igst_label}</span><span>${fmtMoneyPlain(g.igst)}</span></div>`:''}
+          <div class="row"><span>Toll & Parking</span><span>${fmtMoneyPlain(i.toll_total)}</span></div>
+          <div class="row grand"><span>Net Amount</span><span>${fmtMoneyPlain(i.net_amount)}</span></div>
+        </div>
+        <div class="pd-words"><strong>In words:</strong> ${i.words}</div>
+        <div class="pd-foot">
+          <strong>E&OE</strong><br>
+          <strong>TERMS & CONDITIONS:</strong><br>
+          ${DB.company.terms_invoice.map(t=>'• '+t).join('<br>')}
+        </div>
+      </div>
+    </div>
+  `, 'wide');
+}
+function togglePaid(id){
+  const i = DB.invoices.find(x=>x.id===id);
+  i.status = i.status==='paid' ? 'unpaid' : 'paid';
+  if(i.status==='paid') i.paid_date = new Date().toISOString().slice(0,10);
+  save(); render();
+}
+function reverseInvoice(id){
+  if(!confirm('Reverse this invoice? Trips will become unbilled. The invoice will be deleted.')) return;
+  const i = DB.invoices.find(x=>x.id===id);
+  DB.trips.forEach(t=>{ if(i.trip_ids.includes(t.id)){ t.invoiced=false; t.invoice_id=null }});
+  DB.invoices = DB.invoices.filter(x=>x.id!==id);
+  save(); render();
+}
+
+// =========================================================================
+// QUOTATIONS
+// =========================================================================
+function renderQuotations(){
+  main.innerHTML = `
+    <div class="page-head">
+      <h1>Quotations<small>Send rates to a client. Once accepted, becomes their rate card.</small></h1>
+      <div class="actions">
+        <button onclick="openUploadQuote()">↑ Upload existing PDF</button>
+        <button class="primary" onclick="openQuoteForm()">+ New quotation</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>All quotations</h3></div>
+      ${DB.quotations.length===0
+        ? `<div class="empty"><h3>No quotations yet</h3>Create one for a new client, or upload an existing PDF to import rates.</div>`
+        : `<table><thead><tr><th>#</th><th>Date</th><th>Client</th><th>Car types</th><th>Valid until</th><th>Status</th><th></th></tr></thead><tbody>`+
+          [...DB.quotations].reverse().map(q=>{
+            const types = (q.lines||[]).map(l=>l.car_type+'/'+l.mode).join(', ');
+            return `<tr>
+              <td><strong>${q.number}</strong></td>
+              <td>${formatDate(q.date)}</td>
+              <td>${clientById(q.client_id)?.name||q.client_name||'—'}</td>
+              <td><small>${types}</small></td>
+              <td>${q.valid_until?formatDate(q.valid_until):'—'}</td>
+              <td><span class="pill ${q.status==='accepted'?'ok':(q.status==='expired'?'':'warn')}">${q.status}</span></td>
+              <td class="row-actions">
+                <button class="ghost" onclick="viewQuote('${q.id}')">View / Print</button>
+                <button class="ghost" onclick="openQuoteForm('${q.id}')">Edit</button>
+                ${q.status!=='accepted'?`<button class="ghost" onclick="acceptQuote('${q.id}')">Accept →</button>`:''}
+                <button class="ghost danger" onclick="deleteQuote('${q.id}')">×</button>
+              </td>
+            </tr>`;
+          }).join('')+'</tbody></table>'
+      }
+    </div>
+  `;
+}
+
+let quoteDraft = {};
+function openQuoteForm(id, prefill){
+  const existing = id ? DB.quotations.find(q=>q.id===id) : null;
+  if(existing){
+    quoteDraft = JSON.parse(JSON.stringify(existing));
+  } else if(prefill){
+    quoteDraft = prefill;
+  } else {
+    quoteDraft = {
+      id: null,
+      number: DB.company.quotation_prefix + String(DB.company.next_quotation_number).padStart(3,'0'),
+      date: new Date().toISOString().slice(0,10),
+      valid_until: new Date(Date.now()+90*86400000).toISOString().slice(0,10),
+      client_id:'', client_name:'', client_address:'', client_gstin:'', client_contact:'',
+      status:'draft',
+      lines:[ { car_type:'Dzire', mode:'local', base_rate:1500, base_kms:80, base_hours:8, extra_km:15, extra_hour:100, night:300, driver_ta:300, per_km:0 } ],
+      notes:''
+    };
+  }
+  renderQuoteForm();
+}
+function renderQuoteForm(){
+  showModal(`
+    <h2>${quoteDraft.id?'Edit quotation':'New quotation'}</h2>
+    <div class="grid-3">
+      <div><label>Quotation #</label><input value="${quoteDraft.number}" onchange="quoteDraft.number=this.value"></div>
+      <div><label>Date</label><input type="date" value="${quoteDraft.date}" onchange="quoteDraft.date=this.value"></div>
+      <div><label>Valid until</label><input type="date" value="${quoteDraft.valid_until}" onchange="quoteDraft.valid_until=this.value"></div>
+    </div>
+    <div style="margin-top:14px">
+      <label>Client</label>
+      <select onchange="quoteDraft.client_id=this.value;const c=clientById(this.value);if(c){quoteDraft.client_name=c.name;quoteDraft.client_address=c.address||'';quoteDraft.client_gstin=c.gstin||'';quoteDraft.client_contact=c.default_booked_by||''}renderQuoteForm()">
+        <option value="">— or enter manually below —</option>
+        ${DB.clients.map(c=>`<option value="${c.id}" ${quoteDraft.client_id===c.id?'selected':''}>${c.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="grid-2" style="margin-top:10px">
+      <div><label>Client name</label><input value="${quoteDraft.client_name||''}" onchange="quoteDraft.client_name=this.value"></div>
+      <div><label>GSTIN</label><input value="${quoteDraft.client_gstin||''}" onchange="quoteDraft.client_gstin=this.value"></div>
+      <div style="grid-column:span 2"><label>Address</label><input value="${quoteDraft.client_address||''}" onchange="quoteDraft.client_address=this.value"></div>
+      <div><label>Contact person</label><input value="${quoteDraft.client_contact||''}" onchange="quoteDraft.client_contact=this.value"></div>
+    </div>
+
+    <h3 style="margin:20px 0 8px">Rate lines</h3>
+    <div>${quoteDraft.lines.map((l,i)=>`
+      <div class="card" style="margin-bottom:10px;padding:14px">
+        <div class="grid-3" style="margin-bottom:10px">
+          <div><label>Car type</label><select onchange="quoteDraft.lines[${i}].car_type=this.value">${['Dzire','Sonet','Crysta','Innova','Ertiga','Other'].map(t=>`<option ${l.car_type===t?'selected':''}>${t}</option>`).join('')}</select></div>
+          <div><label>Mode</label><select onchange="quoteDraft.lines[${i}].mode=this.value;renderQuoteForm()">
+            <option value="local" ${l.mode==='local'?'selected':''}>Local (base + extras)</option>
+            <option value="outstation" ${l.mode==='outstation'?'selected':''}>Outstation (per km)</option>
+          </select></div>
+          <div style="text-align:right"><label>&nbsp;</label><button class="danger" onclick="quoteDraft.lines.splice(${i},1);renderQuoteForm()">Remove this line</button></div>
+        </div>
+        ${l.mode==='local'?`<div class="grid-4">
+          <div><label>Base ₹</label><input type="number" value="${l.base_rate||''}" onchange="quoteDraft.lines[${i}].base_rate=+this.value"></div>
+          <div><label>Base km</label><input type="number" value="${l.base_kms||80}" onchange="quoteDraft.lines[${i}].base_kms=+this.value"></div>
+          <div><label>Base hr</label><input type="number" value="${l.base_hours||8}" onchange="quoteDraft.lines[${i}].base_hours=+this.value"></div>
+          <div><label>Extra km ₹</label><input type="number" value="${l.extra_km||''}" onchange="quoteDraft.lines[${i}].extra_km=+this.value"></div>
+          <div><label>Extra hr ₹</label><input type="number" value="${l.extra_hour||''}" onchange="quoteDraft.lines[${i}].extra_hour=+this.value"></div>
+          <div><label>Night ₹</label><input type="number" value="${l.night||''}" onchange="quoteDraft.lines[${i}].night=+this.value"></div>
+          <div><label>Driver TA ₹/day</label><input type="number" value="${l.driver_ta||''}" onchange="quoteDraft.lines[${i}].driver_ta=+this.value"></div>
+        </div>`:`<div class="grid-2">
+          <div><label>Per km ₹</label><input type="number" value="${l.per_km||''}" onchange="quoteDraft.lines[${i}].per_km=+this.value"></div>
+          <div><label>Driver TA ₹/day</label><input type="number" value="${l.driver_ta||''}" onchange="quoteDraft.lines[${i}].driver_ta=+this.value"></div>
+        </div>`}
+      </div>
+    `).join('')}</div>
+    <button onclick="quoteDraft.lines.push({car_type:'Dzire',mode:'local',base_rate:1500,base_kms:80,base_hours:8,extra_km:15,extra_hour:100,night:300,driver_ta:300});renderQuoteForm()">+ Add another car/mode</button>
+
+    <div style="margin-top:14px"><label>Notes (optional, shown on quotation)</label><textarea rows="2" onchange="quoteDraft.notes=this.value">${quoteDraft.notes||''}</textarea></div>
+
+    <div class="modal-actions">
+      <button onclick="closeModal()">Cancel</button>
+      <button class="primary" onclick="saveQuote()">Save quotation</button>
+    </div>
+  `, 'wide');
+}
+function saveQuote(){
+  if(!quoteDraft.client_name){ alert('Enter a client name'); return }
+  if(quoteDraft.id){
+    Object.assign(DB.quotations.find(q=>q.id===quoteDraft.id), quoteDraft);
+  } else {
+    quoteDraft.id = uid();
+    DB.quotations.push(quoteDraft);
+    DB.company.next_quotation_number++;
+  }
+  save(); closeModal(); render();
+}
+function deleteQuote(id){
+  if(!confirm('Delete this quotation?')) return;
+  DB.quotations = DB.quotations.filter(q=>q.id!==id);
+  save(); render();
+}
+function acceptQuote(id){
+  const q = DB.quotations.find(x=>x.id===id);
+  if(!q.client_id){
+    if(!confirm('This quotation has no linked client. Create a new client from the quotation details?')) return;
+    const newClient = {
+      id:uid(), name:q.client_name, gstin:q.client_gstin||'',
+      address:q.client_address||'', state:'Haryana', is_rcm:false,
+      default_booked_by:q.client_contact||''
+    };
+    DB.clients.push(newClient);
+    q.client_id = newClient.id;
+    alert('Created client "'+newClient.name+'". Edit in Clients tab to set state and GST treatment.');
+  }
+  // Replace existing rate cards for matching car+mode, leave others
+  q.lines.forEach(l => {
+    const existing = DB.rate_cards.find(r => r.client_id===q.client_id && r.car_type===l.car_type && r.mode===l.mode);
+    const fields = { client_id:q.client_id, car_type:l.car_type, mode:l.mode };
+    if(l.mode==='local'){
+      Object.assign(fields, { base_rate:l.base_rate, base_kms:l.base_kms, base_hours:l.base_hours,
+        extra_km:l.extra_km, extra_hour:l.extra_hour, night:l.night, driver_ta:l.driver_ta });
+    } else {
+      Object.assign(fields, { per_km:l.per_km, driver_ta:l.driver_ta });
+    }
+    if(existing){ Object.assign(existing, fields) }
+    else { DB.rate_cards.push({ id:uid(), ...fields }) }
+  });
+  q.status = 'accepted';
+  q.accepted_at = new Date().toISOString();
+  save(); render();
+  alert('Quotation accepted. Rate cards updated for '+(clientById(q.client_id)?.name||'client')+'.');
+}
+function viewQuote(id){
+  const q = DB.quotations.find(x=>x.id===id);
+  showModal(`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px" class="no-print">
+      <h2>Quotation ${q.number}</h2>
+      <div>
+        <button onclick="window.print()">Print / Save as PDF</button>
+        ${q.status!=='accepted'?`<button class="primary" onclick="acceptQuote('${q.id}');closeModal()">Accept & make rate card</button>`:''}
+        <button onclick="closeModal()">Close</button>
+      </div>
+    </div>
+    <div class="print-doc">
+      <div class="pd-head">
+        <div>
+          <h1>${DB.company.name}</h1>
+          <div style="font-size:11px;margin-top:2px">${DB.company.phone} · ${DB.company.email}</div>
+          <div style="font-size:14px;margin-top:8px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase">QUOTATION</div>
+        </div>
+        <div class="right">
+          <div class="biz-addr">${DB.company.address}</div>
+          <div style="margin-top:3px">GSTIN ${DB.company.gstin}</div>
+        </div>
+      </div>
+      <div class="pd-meta-row">
+        <div class="to">
+          <div class="label">To</div>
+          <strong>${q.client_name}</strong><br>
+          ${q.client_address?q.client_address+'<br>':''}
+          ${q.client_gstin?'GSTIN '+q.client_gstin+'<br>':''}
+          ${q.client_contact?'Attn: '+q.client_contact:''}
+        </div>
+        <div class="right">
+          <div class="label">Quotation</div>
+          <strong>${q.number}</strong><br>
+          ${formatDate(q.date)}<br>
+          <span style="font-size:10px">Valid until ${q.valid_until?formatDate(q.valid_until):'—'}</span>
+        </div>
+      </div>
+      <p style="font-size:11.5px;margin:0 0 10px">Thank you for the opportunity to quote. Please find our rates below:</p>
+      <table class="pd-table">
+        <thead><tr>
+          <th>Vehicle</th><th>Mode</th><th class="num">Base / Per km</th><th class="num">Extra km</th><th class="num">Extra hr</th><th class="num">Night</th><th class="num">Driver TA</th>
+        </tr></thead>
+        <tbody>${q.lines.map(l=>`<tr class="trip-group">
+          <td><strong>${l.car_type}</strong></td>
+          <td>${l.mode==='local'?'Local '+(l.base_kms||80)+'km/'+(l.base_hours||8)+'hr':'Outstation per km'}</td>
+          <td class="num">${l.mode==='local'?fmtMoneyPlain(l.base_rate||0):'₹'+(l.per_km||0)+'/km'}</td>
+          <td class="num">${l.mode==='local'?'₹'+(l.extra_km||0):'—'}</td>
+          <td class="num">${l.mode==='local'?'₹'+(l.extra_hour||0):'—'}</td>
+          <td class="num">${l.mode==='local'?'₹'+(l.night||0):'—'}</td>
+          <td class="num">₹${l.driver_ta||0}/day</td>
+        </tr>`).join('')}</tbody>
+      </table>
+      ${q.notes?`<div style="margin:14px 0;font-size:11.5px"><strong>Notes:</strong> ${q.notes}</div>`:''}
+      <div class="pd-bottom">
+        <div class="pd-foot">
+          <strong>TERMS & CONDITIONS:</strong><br>
+          ${DB.company.terms_quotation.map(t=>'• '+t).join('<br>')}
+          <div style="margin-top:24px;display:flex;justify-content:space-between">
+            <div><strong>For ${DB.company.name}</strong><br><br><br>______________________<br>Authorised Signatory</div>
+            <div style="text-align:right"><strong>Accepted by ${q.client_name}</strong><br><br><br>______________________<br>Signature & Date</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `, 'wide');
+}
+
+// ---- Upload existing quotation PDF and extract ----
+function openUploadQuote(){
+  showModal(`
+    <h2>Upload existing quotation</h2>
+    <div class="extract-tip">
+      <strong>How this works:</strong> Pick the PDF — the app reads the text and shows it below. You then fill in the rate fields manually, with the PDF text visible for reference. In the production build we'll add automatic LLM extraction.
+    </div>
+    <button class="primary" onclick="document.getElementById('pdfFile').click()">Choose PDF file</button>
+    <div id="pdfStatus" style="margin-top:14px"></div>
+  `, 'wide');
+}
+document.getElementById('pdfFile').addEventListener('change', async e => {
+  const file = e.target.files[0]; if(!file) return;
+  const status = document.getElementById('pdfStatus');
+  status.innerHTML = 'Reading PDF…';
+  try {
+    const text = await extractPdfText(file);
+    const sugg = suggestRatesFromText(text);
+    status.innerHTML = `
+      <div class="card" style="margin-top:10px">
+        <h3>Extracted text (read-only)</h3>
+        <div class="pdf-preview">${text.replace(/</g,'&lt;')}</div>
+        ${sugg.gstin?`<div class="help">Detected GSTIN: <strong>${sugg.gstin}</strong></div>`:''}
+        ${sugg.car_rows.length?`<div class="help">Detected car types: ${sugg.car_rows.map(r=>r.car_type+' (numbers seen: '+r.suggested.join(', ')+')').join(' · ')}</div>`:''}
+      </div>
+      <div class="modal-actions">
+        <button onclick="closeModal()">Cancel</button>
+        <button class="primary" onclick="convertExtractToQuote('${encodeURIComponent(JSON.stringify(sugg))}','${file.name.replace(/'/g,'')}')">Continue → fill quotation form</button>
+      </div>
+    `;
+  } catch(err){
+    status.innerHTML = '<div style="color:var(--accent)">Failed to read PDF: '+err.message+'</div>';
+  }
+  e.target.value = '';
+});
+function convertExtractToQuote(suggEncoded, fileName){
+  const sugg = JSON.parse(decodeURIComponent(suggEncoded));
+  // Pre-fill quote with detected GSTIN and one rate line per detected car type
+  const prefill = {
+    id: null,
+    number: DB.company.quotation_prefix + String(DB.company.next_quotation_number).padStart(3,'0'),
+    date: new Date().toISOString().slice(0,10),
+    valid_until: new Date(Date.now()+90*86400000).toISOString().slice(0,10),
+    client_id:'', client_name:'', client_address:'',
+    client_gstin: sugg.gstin || '',
+    client_contact:'',
+    status:'draft',
+    lines: sugg.car_rows.length ? sugg.car_rows.map(r=>({
+      car_type:r.car_type, mode:'local',
+      base_rate:r.suggested[0]||1500, base_kms:80, base_hours:8,
+      extra_km:r.suggested[1]||15, extra_hour:r.suggested[2]||100,
+      night:300, driver_ta:300
+    })) : [{ car_type:'Dzire', mode:'local', base_rate:1500, base_kms:80, base_hours:8, extra_km:15, extra_hour:100, night:300, driver_ta:300 }],
+    notes:'Imported from '+fileName+' — please verify all values before saving.'
+  };
+  openQuoteForm(null, prefill);
+}
+
+// =========================================================================
+// CLIENTS
+// =========================================================================
+function renderClients(){
+  main.innerHTML = `
+    <div class="page-head">
+      <h1>Clients<small>GST treatment per client decides invoice tax logic</small></h1>
+      <div class="actions"><button class="primary" onclick="openClientForm()">+ Add client</button></div>
+    </div>
+    <div class="card">
+      ${DB.clients.length===0
+        ? '<div class="empty">No clients yet</div>'
+        : `<table><thead><tr><th>Name</th><th>GSTIN</th><th>State</th><th>GST treatment</th><th>Rate cards</th><th>Quotations</th><th></th></tr></thead><tbody>`+
+          DB.clients.map(c=>{
+            const rates = DB.rate_cards.filter(r=>r.client_id===c.id).length;
+            const quotes = DB.quotations.filter(q=>q.client_id===c.id).length;
+            const treat = c.is_rcm?'RCM (no GST charged)':(c.state===DB.company.state?'CGST 2.5 + SGST 2.5':'IGST 5%');
+            return `<tr>
+              <td><strong>${c.name}</strong><br><small class="muted">Booked by: ${c.default_booked_by||'—'}</small></td>
+              <td>${c.gstin||'<span class="muted">—</span>'}</td>
+              <td>${c.state}</td>
+              <td><span class="pill ${c.is_rcm?'accent':''}">${treat}</span></td>
+              <td>${rates}</td><td>${quotes}</td>
+              <td class="row-actions">
+                <button class="ghost" onclick="openClientForm('${c.id}')">Edit</button>
+                <button class="ghost danger" onclick="deleteClient('${c.id}')">×</button>
+              </td>
+            </tr>`;
+          }).join('')+'</tbody></table>'
+      }
+    </div>
+  `;
+}
+function openClientForm(id){
+  const c = id ? DB.clients.find(x=>x.id===id) : { name:'',gstin:'',address:'',state:'Haryana',is_rcm:false,default_booked_by:'' };
+  showModal(`
+    <h2>${id?'Edit client':'New client'}</h2>
+    <div class="grid-2">
+      <div><label>Name</label><input id="c_name" value="${c.name||''}"></div>
+      <div><label>GSTIN</label><input id="c_gst" value="${c.gstin||''}"></div>
+      <div style="grid-column:span 2"><label>Address</label><input id="c_addr" value="${c.address||''}"></div>
+      <div><label>State</label><input id="c_state" value="${c.state||''}"></div>
+      <div><label>Booked by</label><input id="c_bb" value="${c.default_booked_by||''}"></div>
+      <div><label>GST under RCM?</label>
+        <select id="c_rcm">
+          <option value="false" ${!c.is_rcm?'selected':''}>No — charge GST normally</option>
+          <option value="true" ${c.is_rcm?'selected':''}>Yes — RCM (client pays GST)</option>
+        </select>
+      </div>
+    </div>
+    <div class="help">If state ≠ ${DB.company.state} and not RCM → IGST 5%. Same state → CGST 2.5 + SGST 2.5.</div>
+    <div class="modal-actions">
+      <button onclick="closeModal()">Cancel</button>
+      <button class="primary" onclick="saveClient('${id||''}')">Save</button>
+    </div>
+  `);
+}
+function saveClient(id){
+  const obj = {
+    name: document.getElementById('c_name').value.trim(),
+    gstin: document.getElementById('c_gst').value.trim(),
+    address: document.getElementById('c_addr').value.trim(),
+    state: document.getElementById('c_state').value.trim(),
+    default_booked_by: document.getElementById('c_bb').value.trim(),
+    is_rcm: document.getElementById('c_rcm').value==='true'
+  };
+  if(!obj.name){ alert('Name required'); return }
+  if(id){ Object.assign(DB.clients.find(x=>x.id===id), obj) }
+  else { DB.clients.push({ id:uid(), ...obj }) }
+  save(); closeModal(); render();
+}
+function deleteClient(id){
+  if(DB.trips.some(t=>t.client_id===id)){ alert('Client has trips. Cannot delete.'); return }
+  if(!confirm('Delete client?')) return;
+  DB.clients = DB.clients.filter(x=>x.id!==id);
+  DB.rate_cards = DB.rate_cards.filter(r=>r.client_id!==id);
+  save(); render();
+}
+
+// =========================================================================
+// VEHICLES
+// =========================================================================
+function renderVehicles(){
+  main.innerHTML = `
+    <div class="page-head">
+      <h1>Vehicles<small>Your fleet & attached vendor cars</small></h1>
+      <div class="actions"><button class="primary" onclick="openVehicleForm()">+ Add vehicle</button></div>
+    </div>
+    <div class="card">
+      ${DB.vehicles.length===0
+        ? '<div class="empty">No vehicles yet</div>'
+        : `<table><thead><tr><th>Number</th><th>Type</th><th>Ownership</th><th>Trips logged</th><th></th></tr></thead><tbody>`+
+          DB.vehicles.map(v=>{
+            const n = DB.trips.filter(t=>t.vehicle_id===v.id).length;
+            return `<tr>
+              <td><strong>${v.number}</strong></td>
+              <td>${v.type}</td>
+              <td>${v.ownership==='own'?'<span class="pill ok">Own</span>':'<span class="pill">Vendor</span>'}${v.vendor_name?' '+v.vendor_name:''}</td>
+              <td>${n}</td>
+              <td class="row-actions">
+                <button class="ghost" onclick="openVehicleForm('${v.id}')">Edit</button>
+                <button class="ghost danger" onclick="deleteVehicle('${v.id}')">×</button>
+              </td>
+            </tr>`;
+          }).join('')+'</tbody></table>'
+      }
+    </div>
+  `;
+}
+function openVehicleForm(id){
+  const v = id ? DB.vehicles.find(x=>x.id===id) : { number:'',type:'Dzire',ownership:'own',vendor_name:'' };
+  showModal(`
+    <h2>${id?'Edit vehicle':'New vehicle'}</h2>
+    <div class="grid-2">
+      <div><label>Number</label><input id="v_num" value="${v.number}"></div>
+      <div><label>Type</label><select id="v_type">${['Dzire','Sonet','Crysta','Innova','Ertiga','Other'].map(t=>`<option ${v.type===t?'selected':''}>${t}</option>`).join('')}</select></div>
+      <div><label>Ownership</label><select id="v_own">
+        <option value="own" ${v.ownership==='own'?'selected':''}>Own</option>
+        <option value="attached" ${v.ownership==='attached'?'selected':''}>Attached (vendor)</option>
+      </select></div>
+      <div><label>Vendor name</label><input id="v_vendor" value="${v.vendor_name||''}"></div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeModal()">Cancel</button>
+      <button class="primary" onclick="saveVehicle('${id||''}')">Save</button>
+    </div>
+  `);
+}
+function saveVehicle(id){
+  const obj = {
+    number: document.getElementById('v_num').value.trim(),
+    type: document.getElementById('v_type').value,
+    ownership: document.getElementById('v_own').value,
+    vendor_name: document.getElementById('v_vendor').value.trim()
+  };
+  if(!obj.number){ alert('Vehicle number required'); return }
+  if(id){ Object.assign(DB.vehicles.find(x=>x.id===id), obj) }
+  else { DB.vehicles.push({ id:uid(), ...obj }) }
+  save(); closeModal(); render();
+}
+function deleteVehicle(id){
+  if(DB.trips.some(t=>t.vehicle_id===id)){ alert('Vehicle has trips.'); return }
+  if(!confirm('Delete vehicle?')) return;
+  DB.vehicles = DB.vehicles.filter(x=>x.id!==id);
+  save(); render();
+}
+
+// =========================================================================
+// SETTINGS — company info, terms, numbering
+// =========================================================================
+function renderSettings(){
+  main.innerHTML = `
+    <div class="page-head"><h1>Settings<small>Company info, terms, numbering. Edits apply to all future documents.</small></h1></div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Company info</h3>
+      <div class="grid-2">
+        <div><label>Name</label><input id="s_name" value="${DB.company.name}"></div>
+        <div><label>GSTIN</label><input id="s_gst" value="${DB.company.gstin}"></div>
+        <div style="grid-column:span 2"><label>Address</label><input id="s_addr" value="${DB.company.address}"></div>
+        <div><label>Phone</label><input id="s_phone" value="${DB.company.phone}"></div>
+        <div><label>Email</label><input id="s_email" value="${DB.company.email}"></div>
+        <div><label>Your state</label><input id="s_state" value="${DB.company.state}"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Numbering</h3>
+      <div class="grid-3">
+        <div><label>Next invoice #</label><input id="s_inv" type="number" value="${DB.company.next_invoice_number}"></div>
+        <div><label>Quotation prefix</label><input id="s_qpfx" value="${DB.company.quotation_prefix}"></div>
+        <div><label>Next quotation #</label><input id="s_qnum" type="number" value="${DB.company.next_quotation_number}"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Invoice terms (one per line)</h3>
+      <textarea id="s_t_inv" rows="5">${DB.company.terms_invoice.join('\n')}</textarea>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Quotation terms (one per line)</h3>
+      <textarea id="s_t_quote" rows="5">${DB.company.terms_quotation.join('\n')}</textarea>
+    </div>
+    <div style="text-align:right"><button class="primary" onclick="saveSettings()">Save settings</button></div>
+  `;
+}
+function saveSettings(){
+  DB.company.name = document.getElementById('s_name').value;
+  DB.company.gstin = document.getElementById('s_gst').value;
+  DB.company.address = document.getElementById('s_addr').value;
+  DB.company.phone = document.getElementById('s_phone').value;
+  DB.company.email = document.getElementById('s_email').value;
+  DB.company.state = document.getElementById('s_state').value;
+  DB.company.next_invoice_number = +document.getElementById('s_inv').value;
+  DB.company.quotation_prefix = document.getElementById('s_qpfx').value;
+  DB.company.next_quotation_number = +document.getElementById('s_qnum').value;
+  DB.company.terms_invoice = document.getElementById('s_t_inv').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  DB.company.terms_quotation = document.getElementById('s_t_quote').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  save(); alert('Saved.'); render();
+}
+
+// =========================================================================
+// MODAL
+// =========================================================================
+function showModal(html, size){
+  const c = document.getElementById('modalContent');
+  c.innerHTML = html;
+  c.style.maxWidth = size==='wide' ? '960px' : '720px';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('open') }
+document.getElementById('modal').addEventListener('click', e=>{ if(e.target.id==='modal') closeModal() });
+
+// =========================================================================
+// EXPORT / IMPORT / RESET
+// =========================================================================
+document.getElementById('exportData').addEventListener('click', e=>{
+  e.preventDefault();
+  const blob = new Blob([JSON.stringify(DB,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `krishna-cabs-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+});
+document.getElementById('importData').addEventListener('click', e=>{
+  e.preventDefault();
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ try { DB = JSON.parse(r.result); save(); render(); alert('Imported.') } catch(err){ alert('Invalid backup') } };
+  r.readAsText(f);
+});
+document.getElementById('resetData').addEventListener('click', e=>{
+  e.preventDefault();
+  if(!confirm('Reset all data and reload sample?')) return;
+  localStorage.removeItem(LS_KEY); location.reload();
+});
+
+// =========================================================================
+// INIT
+// =========================================================================
+if(!load()) seed();
+render();
+</script>
+</body>
+</html>
