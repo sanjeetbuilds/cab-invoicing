@@ -38,3 +38,52 @@ export interface Membership {
   accepted_at: string | null;
   created_at: string;
 }
+
+export interface Client {
+  id: string;
+  company_id: string;
+  name: string;
+  gstin: string | null;
+  address: string | null;
+  state: string;
+  is_rcm: boolean;
+  default_booked_by: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Vehicle {
+  id: string;
+  company_id: string;
+  number: string;
+  type: CarType;
+  ownership: Ownership;
+  vendor_name: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RateCard {
+  id: string;
+  company_id: string;
+  client_id: string;
+  car_type: CarType;
+  mode: TripMode;
+  // local-mode fields
+  base_rate: number | null;
+  base_kms: number | null;
+  base_hours: number | null;
+  extra_km: number | null;
+  extra_hour: number | null;
+  night: number | null;
+  // outstation-mode field
+  per_km: number | null;
+  // common
+  driver_ta: number | null;
+  source_quotation_id: string | null;
+  active_from: string;
+  created_at: string;
+  updated_at: string;
+}
