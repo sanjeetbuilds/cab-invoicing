@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { INDIA_STATES } from "@/lib/india-states";
 
 const Schema = z.object({
@@ -38,13 +39,19 @@ export async function createCompany(
     return { ok: false, error: parsed.error.issues[0].message };
   }
 
-  const supabase = await createClient();
+  // Verify the caller is authenticated using the user-context client.
+  const userClient = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await userClient.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in." };
 
-  const { data: company, error: cErr } = await supabase
+  // Use the service-role admin client to bootstrap company + membership.
+  // RLS still protects everything else; this is the one trusted seed insert
+  // per user. We control authorization here via the getUser() check above.
+  const admin = createAdminClient();
+
+  const { data: company, error: cErr } = await admin
     .from("companies")
     .insert({
       name: parsed.data.name,
@@ -63,7 +70,7 @@ export async function createCompany(
     return { ok: false, error: cErr?.message ?? "Could not create company." };
   }
 
-  const { error: mErr } = await supabase.from("memberships").insert({
+  const { error: mErr } = await admin.from("memberships").insert({
     company_id: company.id,
     user_id: user.id,
     role: "owner",
@@ -71,8 +78,7 @@ export async function createCompany(
   });
 
   if (mErr) {
-    // Rollback: delete the orphan company so the user can retry cleanly.
-    await supabase.from("companies").delete().eq("id", company.id);
+    await admin.from("companies").delete().eq("id", company.id);
     return { ok: false, error: mErr.message };
   }
 

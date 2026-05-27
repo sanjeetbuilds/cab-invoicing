@@ -1,7 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,8 +36,7 @@ const Schema = z.object({
 type FormValues = z.infer<typeof Schema>;
 
 export function OnboardingForm({ defaultEmail }: { defaultEmail?: string }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
 
   const {
     register,
@@ -62,21 +60,22 @@ export function OnboardingForm({ defaultEmail }: { defaultEmail?: string }) {
 
   const state = watch("state");
 
-  function onSubmit(values: FormValues) {
-    startTransition(async () => {
-      const fd = new FormData();
-      Object.entries(values).forEach(([k, v]) => {
-        fd.set(k, v == null ? "" : String(v));
-      });
-      const result = await createCompany(fd);
-      if (result.ok) {
-        toast.success("Company created. Welcome!");
-        router.push("/");
-        router.refresh();
-      } else {
-        toast.error(result.error);
-      }
+  async function onSubmit(values: FormValues) {
+    setPending(true);
+    const fd = new FormData();
+    Object.entries(values).forEach(([k, v]) => {
+      fd.set(k, v == null ? "" : String(v));
     });
+    const result = await createCompany(fd);
+    if (result.ok) {
+      toast.success("Company created. Welcome!");
+      // Hard navigation forces a fresh request — sidesteps any RSC cache
+      // that might still think this user has no membership.
+      window.location.href = "/";
+    } else {
+      toast.error(result.error);
+      setPending(false);
+    }
   }
 
   return (
