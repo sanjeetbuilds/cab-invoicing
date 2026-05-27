@@ -65,6 +65,28 @@ export interface Vehicle {
   updated_at: string;
 }
 
+export interface Trip {
+  id: string;
+  company_id: string;
+  client_id: string;
+  vehicle_id: string;
+  date: string;
+  car_type: CarType;
+  mode: TripMode;
+  total_kms: number;
+  total_hours: number;
+  night: boolean;
+  driver_ta: number;
+  toll: number;
+  notes: string | null;
+  duty_slip_no: string | null;
+  invoiced: boolean;
+  invoice_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface RateCard {
   id: string;
   company_id: string;
