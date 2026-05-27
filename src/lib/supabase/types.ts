@@ -87,6 +87,48 @@ export interface Trip {
   updated_at: string;
 }
 
+export interface Invoice {
+  id: string;
+  company_id: string;
+  invoice_number: number;
+  invoice_date: string;
+  client_id: string | null;
+  client_name: string;
+  client_address: string | null;
+  client_gstin: string | null;
+  client_booked_by: string | null;
+  period_from: string | null;
+  period_to: string | null;
+  subtotal: number;
+  gst_mode: GstMode;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  toll_total: number;
+  net_amount: number;
+  amount_in_words: string;
+  status: InvoiceStatus;
+  paid_date: string | null;
+  pdf_url: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvoiceLine {
+  id: string;
+  invoice_id: string;
+  trip_id: string | null;
+  date: string | null;
+  vehicle_label: string | null;
+  hsn_code: string | null;
+  particulars: string | null;
+  qty: number | null;
+  rate: number | null;
+  amount: number;
+  sort_order: number;
+}
+
 export interface RateCard {
   id: string;
   company_id: string;
