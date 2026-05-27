@@ -1,0 +1,440 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import type {
+  CarType,
+  Client,
+  RateCard,
+  Trip,
+  TripMode,
+  Vehicle,
+} from "@/lib/supabase/types";
+import { tripToLines, tripTotal } from "@/lib/trip-lines";
+import { createTripAction, updateTripAction } from "./actions";
+
+const CAR_TYPES: CarType[] = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"];
+
+const Schema = z.object({
+  date: z.string().min(1, "Pick a date."),
+  client_id: z.string().min(1, "Pick a client."),
+  vehicle_id: z.string().min(1, "Pick a vehicle."),
+  car_type: z.enum(CAR_TYPES),
+  mode: z.enum(["local", "outstation"]),
+  total_kms: z.string().min(1, "Enter kms."),
+  total_hours: z.string().optional(),
+  night: z.boolean(),
+  driver_ta: z.string().optional(),
+  toll: z.string().optional(),
+  notes: z.string().optional(),
+  duty_slip_no: z.string().optional(),
+});
+type FormValues = z.infer<typeof Schema>;
+
+const todayIso = () => {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const fmtINR = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+const toNum = (s: string | undefined) => {
+  if (!s) return 0;
+  const n = Number(s);
+  return Number.isNaN(n) ? 0 : n;
+};
+
+export function TripFormDialog({
+  open,
+  onOpenChange,
+  trip,
+  clients,
+  vehicles,
+  rateCards,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trip?: Trip | null;
+  clients: Pick<Client, "id" | "name">[];
+  vehicles: Pick<Vehicle, "id" | "number" | "type" | "active">[];
+  rateCards: RateCard[];
+}) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const editing = !!trip;
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(Schema),
+    defaultValues: {
+      date: trip?.date ?? todayIso(),
+      client_id: trip?.client_id ?? "",
+      vehicle_id: trip?.vehicle_id ?? "",
+      car_type: trip?.car_type ?? "Sonet",
+      mode: trip?.mode ?? "local",
+      total_kms: trip ? String(trip.total_kms) : "",
+      total_hours: trip ? String(trip.total_hours) : "",
+      night: trip?.night ?? false,
+      driver_ta: trip ? String(trip.driver_ta) : "0",
+      toll: trip ? String(trip.toll) : "0",
+      notes: trip?.notes ?? "",
+      duty_slip_no: trip?.duty_slip_no ?? "",
+    },
+  });
+
+  const clientId = watch("client_id");
+  const vehicleId = watch("vehicle_id");
+  const carType = watch("car_type");
+  const mode = watch("mode") as TripMode;
+  const night = watch("night");
+  const totalKmsStr = watch("total_kms");
+  const totalHoursStr = watch("total_hours");
+  const driverTaStr = watch("driver_ta");
+
+  const activeRate = useMemo(
+    () =>
+      rateCards.find(
+        (r) =>
+          r.client_id === clientId &&
+          r.car_type === carType &&
+          r.mode === mode,
+      ),
+    [rateCards, clientId, carType, mode],
+  );
+
+  const preview = useMemo(() => {
+    if (!activeRate) return null;
+    const lines = tripToLines(
+      {
+        car_type: carType,
+        mode,
+        total_kms: toNum(totalKmsStr),
+        total_hours: toNum(totalHoursStr),
+        night,
+        driver_ta: Math.floor(toNum(driverTaStr)),
+      },
+      activeRate,
+    );
+    return { lines, total: tripTotal(lines) };
+  }, [activeRate, carType, mode, totalKmsStr, totalHoursStr, night, driverTaStr]);
+
+  async function onSubmit(values: FormValues) {
+    setPending(true);
+    const fd = new FormData();
+    fd.set("date", values.date);
+    fd.set("client_id", values.client_id);
+    fd.set("vehicle_id", values.vehicle_id);
+    fd.set("car_type", values.car_type);
+    fd.set("mode", values.mode);
+    fd.set("total_kms", values.total_kms);
+    fd.set("total_hours", values.total_hours ?? "0");
+    fd.set("night", String(values.night));
+    fd.set("driver_ta", values.driver_ta ?? "0");
+    fd.set("toll", values.toll ?? "0");
+    fd.set("notes", values.notes ?? "");
+    fd.set("duty_slip_no", values.duty_slip_no ?? "");
+
+    const result = editing
+      ? await updateTripAction(trip!.id, fd)
+      : await createTripAction(fd);
+
+    if (result.ok) {
+      toast.success(editing ? "Trip updated." : "Trip logged.");
+      onOpenChange(false);
+      reset();
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+    setPending(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !pending && onOpenChange(o)}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{editing ? "Edit trip" : "Log trip"}</DialogTitle>
+          <DialogDescription>
+            One trip per duty. The amount preview uses the active rate card for
+            this client + car + mode.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="date">Date *</Label>
+              <Input id="date" type="date" {...register("date")} />
+              {errors.date && (
+                <p className="text-sm text-destructive">{errors.date.message}</p>
+              )}
+            </div>
+
+            <div className="sm:col-span-2 flex flex-col gap-2">
+              <Label htmlFor="client_id">Client *</Label>
+              <Select
+                value={clientId || undefined}
+                onValueChange={(v) => {
+                  if (typeof v === "string") {
+                    setValue("client_id", v, { shouldValidate: true });
+                  }
+                }}
+              >
+                <SelectTrigger id="client_id">
+                  <SelectValue placeholder="Pick a client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.client_id && (
+                <p className="text-sm text-destructive">{errors.client_id.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="sm:col-span-2 flex flex-col gap-2">
+              <Label htmlFor="vehicle_id">Vehicle *</Label>
+              <Select
+                value={vehicleId || undefined}
+                onValueChange={(v) => {
+                  if (typeof v !== "string") return;
+                  setValue("vehicle_id", v, { shouldValidate: true });
+                  const veh = vehicles.find((x) => x.id === v);
+                  if (veh && CAR_TYPES.includes(veh.type)) {
+                    setValue("car_type", veh.type, { shouldValidate: true });
+                  }
+                }}
+              >
+                <SelectTrigger id="vehicle_id">
+                  <SelectValue placeholder="Pick a vehicle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vehicles.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      <span className={v.active ? "" : "text-muted-foreground"}>
+                        {v.number} · {v.type}
+                        {v.active ? "" : " (inactive)"}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.vehicle_id && (
+                <p className="text-sm text-destructive">{errors.vehicle_id.message}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="car_type">Car type *</Label>
+              <Select
+                value={carType}
+                onValueChange={(v) => {
+                  if (typeof v === "string") {
+                    setValue("car_type", v as CarType, { shouldValidate: true });
+                  }
+                }}
+              >
+                <SelectTrigger id="car_type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CAR_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="mode">Mode *</Label>
+            <Select
+              value={mode}
+              onValueChange={(v) => {
+                if (v === "local" || v === "outstation") {
+                  setValue("mode", v, { shouldValidate: true });
+                }
+              }}
+            >
+              <SelectTrigger id="mode">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="local">Local (kms + hours)</SelectItem>
+                <SelectItem value="outstation">Outstation (per km)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-4 border rounded-md p-4">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="total_kms" className="text-xs">Total kms *</Label>
+              <Input
+                id="total_kms"
+                type="number"
+                inputMode="numeric"
+                {...register("total_kms")}
+              />
+              {errors.total_kms && (
+                <p className="text-xs text-destructive">{errors.total_kms.message}</p>
+              )}
+            </div>
+
+            {mode === "local" && (
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="total_hours" className="text-xs">Total hrs</Label>
+                <Input
+                  id="total_hours"
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  {...register("total_hours")}
+                />
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="driver_ta" className="text-xs">Driver TA (days)</Label>
+              <Input
+                id="driver_ta"
+                type="number"
+                inputMode="numeric"
+                {...register("driver_ta")}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="toll" className="text-xs">Toll ₹</Label>
+              <Input
+                id="toll"
+                type="number"
+                inputMode="decimal"
+                step="any"
+                {...register("toll")}
+              />
+            </div>
+
+            {mode === "local" && (
+              <div className="sm:col-span-4 flex items-center justify-between rounded-md border px-3 py-2">
+                <div>
+                  <Label htmlFor="night" className="font-medium">Night charges</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Adds the night fee from the rate card.
+                  </p>
+                </div>
+                <Switch
+                  id="night"
+                  checked={night}
+                  onCheckedChange={(v) => setValue("night", v)}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="duty_slip_no" className="text-xs">Duty slip no.</Label>
+              <Input id="duty_slip_no" {...register("duty_slip_no")} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="notes" className="text-xs">Notes</Label>
+              <Textarea id="notes" rows={2} {...register("notes")} />
+            </div>
+          </div>
+
+          <div className="rounded-md bg-muted/40 p-3 text-sm">
+            {!clientId || !carType || !mode ? (
+              <p className="text-muted-foreground">
+                Pick client, car, and mode to preview the amount.
+              </p>
+            ) : !activeRate ? (
+              <p className="text-destructive">
+                No rate card for this client + {carType} + {mode}. Add one on
+                the Rate cards page first.
+              </p>
+            ) : preview ? (
+              <div className="flex flex-col gap-1">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Computed amount
+                </p>
+                {preview.lines.map((l, i) => (
+                  <div key={i} className="flex justify-between gap-3">
+                    <span className="text-muted-foreground whitespace-pre-line">
+                      {l.particulars}
+                      {l.qty != null && l.rate != null ? ` (${l.qty} × ${fmtINR(l.rate)})` : ""}
+                    </span>
+                    <span className="font-mono">{fmtINR(l.amount)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between border-t pt-1 mt-1 font-medium">
+                  <span>Trip total</span>
+                  <span className="font-mono">{fmtINR(preview.total)}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Toll ₹{toNum(watch("toll"))} added on the invoice, not here.
+                </p>
+              </div>
+            ) : null}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={pending}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={pending}>
+              {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {editing ? "Save changes" : "Log trip"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
