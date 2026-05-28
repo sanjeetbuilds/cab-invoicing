@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,12 +18,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Vehicle } from "@/lib/supabase/types";
-import { VehicleFormDialog } from "./vehicle-form-dialog";
 import { deleteVehicleAction } from "./actions";
 
 export function VehicleRowActions({ vehicle }: { vehicle: Vehicle }) {
   const router = useRouter();
-  const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -41,15 +40,14 @@ export function VehicleRowActions({ vehicle }: { vehicle: Vehicle }) {
 
   return (
     <>
-      <div className="flex gap-1">
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          onClick={() => setEditOpen(true)}
+      <div className="flex gap-1 justify-end">
+        <Link
+          href={`/vehicles/${vehicle.id}/edit`}
           aria-label={`Edit ${vehicle.number}`}
+          className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
         >
           <Pencil className="h-4 w-4" />
-        </Button>
+        </Link>
         <Button
           size="icon-sm"
           variant="ghost"
@@ -59,12 +57,6 @@ export function VehicleRowActions({ vehicle }: { vehicle: Vehicle }) {
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-
-      <VehicleFormDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        vehicle={vehicle}
-      />
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>

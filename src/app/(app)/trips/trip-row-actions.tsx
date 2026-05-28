@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,23 +17,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Client, RateCard, Trip, Vehicle } from "@/lib/supabase/types";
-import { TripFormDialog } from "./trip-form-dialog";
+import { cn } from "@/lib/utils";
+import type { Trip } from "@/lib/supabase/types";
 import { deleteTripAction } from "./actions";
 
-export function TripRowActions({
-  trip,
-  clients,
-  vehicles,
-  rateCards,
-}: {
-  trip: Trip;
-  clients: Pick<Client, "id" | "name">[];
-  vehicles: Pick<Vehicle, "id" | "number" | "type" | "active">[];
-  rateCards: RateCard[];
-}) {
+export function TripRowActions({ trip }: { trip: Trip }) {
   const router = useRouter();
-  const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -53,17 +43,20 @@ export function TripRowActions({
 
   return (
     <>
-      <div className="flex gap-1">
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          onClick={() => setEditOpen(true)}
-          disabled={locked}
+      <div className="flex gap-1 justify-end">
+        <Link
+          href={locked ? "#" : `/trips/${trip.id}/edit`}
+          aria-disabled={locked}
+          tabIndex={locked ? -1 : 0}
           aria-label="Edit trip"
           title={locked ? "Invoiced — reverse the invoice first" : "Edit"}
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "icon-sm" }),
+            locked && "pointer-events-none opacity-50",
+          )}
         >
           <Pencil className="h-4 w-4" />
-        </Button>
+        </Link>
         <Button
           size="icon-sm"
           variant="ghost"
@@ -75,15 +68,6 @@ export function TripRowActions({
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-
-      <TripFormDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        trip={trip}
-        clients={clients}
-        vehicles={vehicles}
-        rateCards={rateCards}
-      />
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>

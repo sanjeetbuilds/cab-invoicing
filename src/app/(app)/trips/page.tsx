@@ -139,12 +139,7 @@ export default async function TripsPage({
         >
           Bulk add
         </Link>
-        <AddTripButton
-          clients={clientList}
-          vehicles={vehicleList}
-          rateCards={rateList}
-          disabled={noPrereqs}
-        />
+        <AddTripButton disabled={noPrereqs} />
       </PageHeader>
 
       {noPrereqs && (
@@ -259,12 +254,7 @@ export default async function TripsPage({
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <TripRowActions
-                          trip={t}
-                          clients={clientList}
-                          vehicles={vehicleList}
-                          rateCards={rateList}
-                        />
+                        <TripRowActions trip={t} />
                       </TableCell>
                     </TableRow>
                   );
@@ -309,12 +299,7 @@ export default async function TripsPage({
                         )}
                       </div>
                     </div>
-                    <TripRowActions
-                      trip={t}
-                      clients={clientList}
-                      vehicles={vehicleList}
-                      rateCards={rateList}
-                    />
+                    <TripRowActions trip={t} />
                   </CardContent>
                 </Card>
               );

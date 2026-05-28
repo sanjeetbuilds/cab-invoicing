@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,19 +17,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Client, RateCard } from "@/lib/supabase/types";
-import { RateCardFormDialog } from "./rate-card-form-dialog";
+import type { RateCard } from "@/lib/supabase/types";
 import { deleteRateCardAction } from "./actions";
 
-export function RateCardRowActions({
-  rateCard,
-  clients,
-}: {
-  rateCard: RateCard;
-  clients: Pick<Client, "id" | "name">[];
-}) {
+export function RateCardRowActions({ rateCard }: { rateCard: RateCard }) {
   const router = useRouter();
-  const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -47,15 +40,14 @@ export function RateCardRowActions({
 
   return (
     <>
-      <div className="flex gap-1">
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          onClick={() => setEditOpen(true)}
+      <div className="flex gap-1 justify-end">
+        <Link
+          href={`/rate-cards/${rateCard.id}/edit`}
           aria-label="Edit rate card"
+          className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
         >
           <Pencil className="h-4 w-4" />
-        </Button>
+        </Link>
         <Button
           size="icon-sm"
           variant="ghost"
@@ -65,13 +57,6 @@ export function RateCardRowActions({
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-
-      <RateCardFormDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        rateCard={rateCard}
-        clients={clients}
-      />
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>

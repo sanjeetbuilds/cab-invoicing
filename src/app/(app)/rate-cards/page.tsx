@@ -140,7 +140,7 @@ export default async function RateCardsPage() {
                             <TableCell className="text-right">{fmt(r.per_km)}</TableCell>
                             <TableCell className="text-right">{fmt(r.driver_ta)}</TableCell>
                             <TableCell className="text-right">
-                              <RateCardRowActions rateCard={r} clients={clientList} />
+                              <RateCardRowActions rateCard={r} />
                             </TableCell>
                           </TableRow>
                         ))}
@@ -179,7 +179,7 @@ export default async function RateCardsPage() {
                             <p>Driver TA {fmt(r.driver_ta)}</p>
                           </div>
                         </div>
-                        <RateCardRowActions rateCard={r} clients={clientList} />
+                        <RateCardRowActions rateCard={r} />
                       </div>
                     ))}
                   </div>

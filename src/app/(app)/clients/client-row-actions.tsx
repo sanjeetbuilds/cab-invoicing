@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,12 +18,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Client } from "@/lib/supabase/types";
-import { ClientFormDialog } from "./client-form-dialog";
 import { deleteClientAction } from "./actions";
 
 export function ClientRowActions({ client }: { client: Client }) {
   const router = useRouter();
-  const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -41,15 +40,14 @@ export function ClientRowActions({ client }: { client: Client }) {
 
   return (
     <>
-      <div className="flex gap-1">
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          onClick={() => setEditOpen(true)}
+      <div className="flex gap-1 justify-end">
+        <Link
+          href={`/clients/${client.id}/edit`}
           aria-label={`Edit ${client.name}`}
+          className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
         >
           <Pencil className="h-4 w-4" />
-        </Button>
+        </Link>
         <Button
           size="icon-sm"
           variant="ghost"
@@ -59,12 +57,6 @@ export function ClientRowActions({ client }: { client: Client }) {
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-
-      <ClientFormDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        client={client}
-      />
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>

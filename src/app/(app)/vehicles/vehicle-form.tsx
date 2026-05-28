@@ -9,14 +9,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -41,15 +34,7 @@ const Schema = z.object({
 });
 type FormValues = z.infer<typeof Schema>;
 
-export function VehicleFormDialog({
-  open,
-  onOpenChange,
-  vehicle,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  vehicle?: Vehicle | null;
-}) {
+export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const editing = !!vehicle;
@@ -59,7 +44,6 @@ export function VehicleFormDialog({
     handleSubmit,
     watch,
     setValue,
-    reset,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(Schema),
@@ -91,26 +75,18 @@ export function VehicleFormDialog({
 
     if (result.ok) {
       toast.success(editing ? "Vehicle updated." : "Vehicle added.");
-      onOpenChange(false);
-      reset();
+      router.push("/vehicles");
       router.refresh();
     } else {
       toast.error(result.error);
+      setPending(false);
     }
-    setPending(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !pending && onOpenChange(o)}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{editing ? "Edit vehicle" : "Add vehicle"}</DialogTitle>
-          <DialogDescription>
-            Vehicles you drive — own or attached vendor cars.
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+      <Card>
+        <CardContent className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <Label htmlFor="number">Vehicle number *</Label>
             <Input
@@ -131,11 +107,9 @@ export function VehicleFormDialog({
                 value={type}
                 onValueChange={(v) => {
                   if (typeof v === "string") {
-                    setValue(
-                      "type",
-                      v as (typeof CAR_TYPES)[number],
-                      { shouldValidate: true },
-                    );
+                    setValue("type", v as (typeof CAR_TYPES)[number], {
+                      shouldValidate: true,
+                    });
                   }
                 }}
               >
@@ -180,12 +154,12 @@ export function VehicleFormDialog({
             </div>
           )}
 
-          <div className="flex items-center justify-between rounded-md border px-3 py-2">
+          <div className="flex items-center justify-between rounded-lg border border-border px-3 py-3">
             <div>
               <Label htmlFor="active" className="font-medium">
                 Active
               </Label>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Inactive vehicles are hidden from trip logging.
               </p>
             </div>
@@ -195,23 +169,23 @@ export function VehicleFormDialog({
               onCheckedChange={(v) => setValue("active", v)}
             />
           </div>
+        </CardContent>
+      </Card>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={pending}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {editing ? "Save changes" : "Add vehicle"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push("/vehicles")}
+          disabled={pending}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" disabled={pending}>
+          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+          {editing ? "Save changes" : "Add vehicle"}
+        </Button>
+      </div>
+    </form>
   );
 }

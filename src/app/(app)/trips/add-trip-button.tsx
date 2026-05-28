@@ -1,36 +1,19 @@
-"use client";
-
-import { useState } from "react";
+import Link from "next/link";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { Client, RateCard, Vehicle } from "@/lib/supabase/types";
-import { TripFormDialog } from "./trip-form-dialog";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function AddTripButton({
-  clients,
-  vehicles,
-  rateCards,
-  disabled,
-}: {
-  clients: Pick<Client, "id" | "name">[];
-  vehicles: Pick<Vehicle, "id" | "number" | "type" | "active">[];
-  rateCards: RateCard[];
-  disabled?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
+export function AddTripButton({ disabled }: { disabled?: boolean }) {
   return (
-    <>
-      <Button onClick={() => setOpen(true)} disabled={disabled}>
-        <Plus className="h-4 w-4" />
-        Log trip
-      </Button>
-      <TripFormDialog
-        open={open}
-        onOpenChange={setOpen}
-        clients={clients}
-        vehicles={vehicles}
-        rateCards={rateCards}
-      />
-    </>
+    <Link
+      href="/trips/new"
+      className={cn(
+        buttonVariants(),
+        disabled && "pointer-events-none opacity-50",
+      )}
+    >
+      <Plus className="h-4 w-4" />
+      Log trip
+    </Link>
   );
 }
