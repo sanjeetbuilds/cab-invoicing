@@ -27,12 +27,13 @@ export interface InvoicePdfProps {
 
 const COLORS = {
   black: "#000000",
-  text: "#222222",
-  muted: "#666666",
-  line: "#c4c4c4",
-  lineHeavy: "#999999",
+  text: "#1a1a1a",
+  muted: "#555555",
+  faint: "#7a7a7a",
+  line: "#d8d8d8",
+  lineHeavy: "#888888",
   thBg: "#f4f2eb",
-  footText: "#444444",
+  footText: "#333333",
 };
 
 const PT = (mm: number) => (mm / 25.4) * 72;
@@ -41,80 +42,77 @@ const styles = StyleSheet.create({
   page: {
     fontFamily: "Helvetica",
     fontSize: 9.5,
-    paddingTop: PT(14) + 56,
+    paddingTop: PT(14) + 88,
     paddingBottom: PT(16) + 18,
     paddingHorizontal: PT(12),
     color: COLORS.text,
-    lineHeight: 1.45,
+    lineHeight: 1.4,
   },
 
-  // Fixed top header on every page
+  // ── Fixed top header band (3 columns) ──
   header: {
     position: "absolute",
     top: PT(14),
     left: PT(12),
     right: PT(12),
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    borderBottomWidth: 1.5,
+    borderBottomWidth: 1,
     borderBottomColor: COLORS.black,
     paddingBottom: 8,
   },
-  headerLeft: { flexDirection: "column" },
+  hCol1: { width: "33%", paddingRight: 6 },
+  hCol2: { width: "42%", paddingHorizontal: 6 },
+  hCol3: { width: "25%", paddingLeft: 6, alignItems: "flex-end" },
+
   companyName: {
-    fontFamily: "Times-Roman",
-    fontSize: 20,
-    color: COLORS.black,
-  },
-  contact: { fontSize: 9, marginTop: 2 },
-  headerRight: {
-    flexDirection: "column",
-    alignItems: "flex-end",
-    maxWidth: 260,
-  },
-  address: { fontSize: 9, textAlign: "right" },
-  gstinHeader: { fontSize: 9, marginTop: 3 },
-
-  // Bill-to row
-  metaRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  billTo: { maxWidth: "60%" },
-  metaLabel: {
-    fontSize: 8,
-    color: COLORS.muted,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 2,
     fontFamily: "Helvetica-Bold",
+    fontSize: 14,
+    color: COLORS.black,
+    letterSpacing: 0.4,
+    marginBottom: 3,
   },
-  metaRight: { alignItems: "flex-end" },
-  clientName: { fontFamily: "Helvetica-Bold", fontSize: 11 },
-  metaText: { fontSize: 9.5 },
-  metaSmall: { fontSize: 8.5, color: COLORS.muted, marginTop: 1 },
-  invoiceNumber: { fontFamily: "Helvetica-Bold", fontSize: 11 },
+  companyMeta: { fontSize: 8.5, marginBottom: 1 },
+  companyAddress: { fontSize: 8.5, marginTop: 4 },
 
-  // Table
+  billLine: { fontSize: 9, marginBottom: 1 },
+  billLineBold: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 9.5,
+    marginBottom: 1,
+  },
+
+  gstinHeader: {
+    fontSize: 9,
+    fontFamily: "Helvetica-Bold",
+    color: COLORS.black,
+    marginBottom: 12,
+    textAlign: "right",
+  },
+  invoiceNumber: {
+    fontSize: 10.5,
+    fontFamily: "Helvetica-Bold",
+    color: COLORS.black,
+    marginBottom: 3,
+    textAlign: "right",
+  },
+  invoiceDate: { fontSize: 9, textAlign: "right" },
+
+  // ── Table ──
   table: { marginTop: 4 },
   thRow: {
     flexDirection: "row",
     backgroundColor: COLORS.thBg,
-    borderTopWidth: 0.75,
-    borderBottomWidth: 0.75,
+    borderTopWidth: 0.5,
+    borderBottomWidth: 0.5,
     borderColor: COLORS.lineHeavy,
   },
   th: {
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
-    textTransform: "uppercase",
-    letterSpacing: 0.3,
     paddingVertical: 4,
     paddingHorizontal: 5,
     borderRightWidth: 0.5,
-    borderRightColor: COLORS.lineHeavy,
+    borderRightColor: COLORS.line,
     color: COLORS.black,
   },
   thLast: { borderRightWidth: 0 },
@@ -123,33 +121,31 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: COLORS.line,
   },
+  trGroupTop: { borderTopWidth: 0.5, borderTopColor: COLORS.line },
   td: {
     fontSize: 9,
     paddingVertical: 3,
     paddingHorizontal: 5,
     borderRightWidth: 0.5,
     borderRightColor: COLORS.line,
-    borderLeftWidth: 0.5,
-    borderLeftColor: COLORS.line,
   },
-  tdLast: { borderRightWidth: 0.5 },
+  tdFirst: { borderLeftWidth: 0.5, borderLeftColor: COLORS.line },
+  tdLast: { borderRightWidth: 0.5, borderRightColor: COLORS.line },
   num: { textAlign: "right" },
 
-  // Column widths (rough proportions matching prototype's 58 / 115 / 48 / flex / 48 / 58 / 78)
-  colDate: { width: 50 },
-  colVehicle: { width: 90 },
-  colHsn: { width: 38 },
+  colDate: { width: 56 },
+  colVehicle: { width: 84 },
+  colHsn: { width: 42 },
   colPart: { flex: 1 },
-  colQty: { width: 38 },
-  colRate: { width: 48 },
-  colAmount: { width: 64 },
+  colQty: { width: 42 },
+  colRate: { width: 52 },
+  colAmount: { width: 66 },
 
-  // Subtotal row
   totalRow: {
     flexDirection: "row",
-    borderBottomWidth: 0.75,
-    borderBottomColor: COLORS.lineHeavy,
-    backgroundColor: "#fafafa",
+    borderTopWidth: 0.75,
+    borderBottomWidth: 0.5,
+    borderColor: COLORS.lineHeavy,
   },
   totalLabel: {
     flex: 1,
@@ -164,26 +160,28 @@ const styles = StyleSheet.create({
     fontSize: 10,
     paddingVertical: 5,
     paddingHorizontal: 5,
-    width: 64,
+    width: 66,
     textAlign: "right",
   },
 
-  // Bottom block (totals + words + footer) kept together
-  bottom: { marginTop: 12 },
-  totalsBox: {
-    width: 240,
-    marginLeft: "auto",
-    fontSize: 10,
-  },
+  // ── Bottom: totals + words + terms ──
+  bottom: { marginTop: 10 },
+  totalsBox: { width: 260, marginLeft: "auto", fontSize: 10 },
   totalsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 2,
   },
+  totalsLabel: { color: COLORS.text },
+  totalsValue: { color: COLORS.text },
+  totalsUnderRcm: {
+    color: COLORS.muted,
+    fontStyle: "italic",
+  },
   totalsGrandRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    borderTopWidth: 1.5,
+    borderTopWidth: 1.25,
     borderTopColor: COLORS.black,
     paddingTop: 5,
     marginTop: 3,
@@ -194,12 +192,15 @@ const styles = StyleSheet.create({
   },
   words: {
     fontSize: 9.5,
-    fontStyle: "italic",
-    marginTop: 10,
+    marginTop: 12,
     paddingTop: 7,
     borderTopWidth: 0.5,
     borderTopColor: COLORS.line,
   },
+  wordsLabel: {
+    fontFamily: "Helvetica-Bold",
+  },
+
   foot: {
     marginTop: 14,
     fontSize: 8.5,
@@ -207,17 +208,17 @@ const styles = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: COLORS.line,
     paddingTop: 7,
-    lineHeight: 1.55,
+    lineHeight: 1.5,
   },
   footBold: { fontFamily: "Helvetica-Bold", color: COLORS.black },
+  termLine: { marginTop: 1 },
 
-  // Page numbers (fixed bottom-right)
   pageNum: {
     position: "absolute",
     bottom: PT(8),
     right: PT(12),
     fontSize: 8,
-    color: COLORS.muted,
+    color: COLORS.faint,
   },
 });
 
@@ -243,6 +244,14 @@ function fmtAmountAlways(n: number): string {
   });
 }
 
+function fmtQty(n: number | null | undefined): string {
+  if (n == null) return "";
+  return Number(n).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 function groupLines(lines: InvoiceLine[]): LineGroup[] {
   const groups: LineGroup[] = [];
   let current: LineGroup | null = null;
@@ -259,70 +268,73 @@ function groupLines(lines: InvoiceLine[]): LineGroup[] {
 export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
   const fullNumber = `${company.invoice_prefix ?? ""}${invoice.invoice_number}`;
   const groups = groupLines([...lines].sort((a, b) => a.sort_order - b.sort_order));
-  const terms = company.terms_invoice ?? [];
+  const terms = (company.terms_invoice ?? []).filter(Boolean);
 
   const cgstLabel =
     invoice.gst_mode === "CGST_SGST"
       ? "CGST @ 2.5%"
       : invoice.gst_mode === "RCM"
-        ? "CGST @ 2.5% Under RCM"
+        ? "CGST @ 2.5%"
         : null;
   const sgstLabel =
     invoice.gst_mode === "CGST_SGST"
       ? "SGST @ 2.5%"
       : invoice.gst_mode === "RCM"
-        ? "SGST @ 2.5% Under RCM"
+        ? "SGST @ 2.5%"
         : null;
   const igstLabel = invoice.gst_mode === "IGST" ? "IGST @ 5%" : null;
 
   return (
     <Document title={`Invoice ${fullNumber}`}>
       <Page size="A4" style={styles.page} wrap>
-        {/* Fixed top header on every page */}
+        {/* Fixed 3-column header on every page */}
         <View fixed style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.companyName}>{company.name}</Text>
-            {(company.phone || company.email) && (
-              <Text style={styles.contact}>
-                {[company.phone, company.email].filter(Boolean).join(" · ")}
-              </Text>
+          {/* Col 1 — Company */}
+          <View style={styles.hCol1}>
+            <Text style={styles.companyName}>
+              {(company.name ?? "").toUpperCase()}
+            </Text>
+            {company.phone && <Text style={styles.companyMeta}>{company.phone}</Text>}
+            {company.email && <Text style={styles.companyMeta}>{company.email}</Text>}
+            {company.address && (
+              <Text style={styles.companyAddress}>{company.address}</Text>
             )}
           </View>
-          <View style={styles.headerRight}>
-            {company.address && <Text style={styles.address}>{company.address}</Text>}
-            {company.gstin && <Text style={styles.gstinHeader}>GSTIN {company.gstin}</Text>}
-          </View>
-        </View>
 
-        {/* Bill-to / Invoice meta */}
-        <View style={styles.metaRow}>
-          <View style={styles.billTo}>
-            <Text style={styles.metaLabel}>Bill to</Text>
-            <Text style={styles.clientName}>{invoice.client_name}</Text>
+          {/* Col 2 — Bill to */}
+          <View style={styles.hCol2}>
+            <Text style={styles.billLineBold}>
+              To- {(invoice.client_name ?? "").toUpperCase()}
+            </Text>
             {invoice.client_address && (
-              <Text style={styles.metaText}>{invoice.client_address}</Text>
+              <Text style={styles.billLine}>{invoice.client_address}</Text>
             )}
-            <Text style={styles.metaText}>
+            <Text style={styles.billLine}>
               {invoice.client_gstin ? `GSTIN ${invoice.client_gstin}` : "GSTIN NA"}
             </Text>
             {invoice.client_booked_by && (
-              <Text style={styles.metaSmall}>Booked by: {invoice.client_booked_by}</Text>
+              <Text style={[styles.billLine, { marginTop: 4 }]}>
+                Booked By- {invoice.client_booked_by}
+              </Text>
             )}
           </View>
-          <View style={styles.metaRight}>
-            <Text style={styles.metaLabel}>Invoice</Text>
-            <Text style={styles.invoiceNumber}>#{fullNumber}</Text>
-            <Text style={styles.metaText}>{fmtDate(invoice.invoice_date)}</Text>
+
+          {/* Col 3 — GSTIN + invoice meta */}
+          <View style={styles.hCol3}>
+            {company.gstin && (
+              <Text style={styles.gstinHeader}>GSTIN {company.gstin}</Text>
+            )}
+            <Text style={styles.invoiceNumber}>INVOICE- {fullNumber}</Text>
+            <Text style={styles.invoiceDate}>Date: {fmtDate(invoice.invoice_date)}</Text>
           </View>
         </View>
 
-        {/* Table */}
+        {/* Lines table */}
         <View style={styles.table}>
-          {/* Header — fixed so it repeats on every page */}
           <View fixed style={styles.thRow}>
             <Text style={[styles.th, styles.colDate]}>Date</Text>
-            <Text style={[styles.th, styles.colVehicle]}>Vehicle / Type</Text>
-            <Text style={[styles.th, styles.colHsn]}>HSN</Text>
+            <Text style={[styles.th, styles.colVehicle]}>Vehicle Type</Text>
+            <Text style={[styles.th, styles.colHsn]}>HSN Code</Text>
             <Text style={[styles.th, styles.colPart]}>Particulars</Text>
             <Text style={[styles.th, styles.colQty, styles.num]}>Qty</Text>
             <Text style={[styles.th, styles.colRate, styles.num]}>Rate</Text>
@@ -331,84 +343,114 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
             </Text>
           </View>
 
-          {/* Trip groups — each kept together */}
           {groups.map((group, gi) => (
             <View key={group.trip_id ?? `g${gi}`} wrap={false}>
-              {group.lines.map((l) => (
-                <View key={l.id} style={styles.tr}>
-                  <Text style={[styles.td, styles.colDate]}>{l.date ?? ""}</Text>
-                  <Text style={[styles.td, styles.colVehicle]}>{l.vehicle_label ?? ""}</Text>
-                  <Text style={[styles.td, styles.colHsn]}>{l.hsn_code ?? ""}</Text>
-                  <Text style={[styles.td, styles.colPart]}>{l.particulars ?? ""}</Text>
-                  <Text style={[styles.td, styles.colQty, styles.num]}>
-                    {l.qty != null ? String(l.qty) : ""}
-                  </Text>
-                  <Text style={[styles.td, styles.colRate, styles.num]}>
-                    {fmtAmount(l.rate)}
-                  </Text>
-                  <Text style={[styles.td, styles.colAmount, styles.num, styles.tdLast]}>
-                    {fmtAmount(l.amount)}
-                  </Text>
-                </View>
-              ))}
+              {group.lines.map((l, li) => {
+                const isFirst = li === 0;
+                return (
+                  <View
+                    key={l.id}
+                    style={[styles.tr, isFirst ? styles.trGroupTop : {}]}
+                  >
+                    <Text style={[styles.td, styles.tdFirst, styles.colDate]}>
+                      {isFirst ? (l.date ?? "") : ""}
+                    </Text>
+                    <Text style={[styles.td, styles.colVehicle]}>
+                      {isFirst ? (l.vehicle_label ?? "") : ""}
+                    </Text>
+                    <Text style={[styles.td, styles.colHsn]}>
+                      {isFirst ? (l.hsn_code ?? "") : ""}
+                    </Text>
+                    <Text style={[styles.td, styles.colPart]}>{l.particulars ?? ""}</Text>
+                    <Text style={[styles.td, styles.colQty, styles.num]}>
+                      {fmtQty(l.qty)}
+                    </Text>
+                    <Text style={[styles.td, styles.colRate, styles.num]}>
+                      {fmtAmount(l.rate)}
+                    </Text>
+                    <Text
+                      style={[styles.td, styles.colAmount, styles.num, styles.tdLast]}
+                    >
+                      {fmtAmount(l.amount)}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           ))}
 
-          {/* Subtotal row */}
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalAmount}>{fmtAmountAlways(invoice.subtotal)}</Text>
           </View>
         </View>
 
-        {/* Bottom block — totals, words, terms — held together */}
+        {/* Bottom — totals, words, terms, footer */}
         <View wrap={false} style={styles.bottom}>
           <View style={styles.totalsBox}>
             {cgstLabel && (
               <View style={styles.totalsRow}>
-                <Text>{cgstLabel}</Text>
-                <Text>{fmtAmount(invoice.cgst)}</Text>
+                <Text style={styles.totalsLabel}>{cgstLabel}</Text>
+                <Text
+                  style={
+                    invoice.gst_mode === "RCM" ? styles.totalsUnderRcm : styles.totalsValue
+                  }
+                >
+                  {invoice.gst_mode === "RCM" ? "Under RCM" : fmtAmount(invoice.cgst)}
+                </Text>
               </View>
             )}
             {sgstLabel && (
               <View style={styles.totalsRow}>
-                <Text>{sgstLabel}</Text>
-                <Text>{fmtAmount(invoice.sgst)}</Text>
+                <Text style={styles.totalsLabel}>{sgstLabel}</Text>
+                <Text
+                  style={
+                    invoice.gst_mode === "RCM" ? styles.totalsUnderRcm : styles.totalsValue
+                  }
+                >
+                  {invoice.gst_mode === "RCM" ? "Under RCM" : fmtAmount(invoice.sgst)}
+                </Text>
               </View>
             )}
             {igstLabel && (
               <View style={styles.totalsRow}>
-                <Text>{igstLabel}</Text>
-                <Text>{fmtAmountAlways(invoice.igst)}</Text>
+                <Text style={styles.totalsLabel}>{igstLabel}</Text>
+                <Text style={styles.totalsValue}>{fmtAmountAlways(invoice.igst)}</Text>
               </View>
             )}
             <View style={styles.totalsRow}>
-              <Text>Toll & Parking</Text>
-              <Text>{fmtAmountAlways(invoice.toll_total)}</Text>
+              <Text style={styles.totalsLabel}>Toll & Parking</Text>
+              <Text style={styles.totalsValue}>{fmtAmountAlways(invoice.toll_total)}</Text>
             </View>
             <View style={styles.totalsGrandRow}>
               <Text style={styles.totalsGrandText}>Net Amount</Text>
-              <Text style={styles.totalsGrandText}>{fmtAmountAlways(invoice.net_amount)}</Text>
+              <Text style={styles.totalsGrandText}>
+                {fmtAmountAlways(invoice.net_amount)}
+              </Text>
             </View>
           </View>
 
           <Text style={styles.words}>
-            <Text style={{ fontFamily: "Helvetica-Bold", fontStyle: "normal" }}>
-              In words:{" "}
-            </Text>
+            <Text style={styles.wordsLabel}>In Words: </Text>
             {invoice.amount_in_words}
           </Text>
 
           <View style={styles.foot}>
             <Text style={styles.footBold}>E&OE</Text>
-            <Text style={styles.footBold}>TERMS & CONDITIONS:</Text>
-            {terms.map((t, i) => (
-              <Text key={i}>• {t}</Text>
+            {terms.length > 0 && (
+              <Text style={styles.termLine}>
+                <Text style={styles.footBold}>TERMS & CONDITIONS : </Text>
+                {terms[0]}
+              </Text>
+            )}
+            {terms.slice(1).map((t, i) => (
+              <Text key={i} style={styles.termLine}>
+                {t}
+              </Text>
             ))}
           </View>
         </View>
 
-        {/* Page number footer */}
         <Text
           fixed
           style={styles.pageNum}
