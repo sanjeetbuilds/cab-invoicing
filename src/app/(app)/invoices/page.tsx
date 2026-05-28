@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Client, Invoice } from "@/lib/supabase/types";
 import { formatINR } from "@/lib/format";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata = { title: "Invoices — Krishna Cabs" };
 
@@ -69,18 +70,15 @@ export default async function InvoicesPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Invoices</h1>
-          <p className="text-sm text-muted-foreground">
-            Issued invoices. Numbers are atomic — never reused.
-          </p>
-        </div>
+      <PageHeader
+        title="Invoices"
+        description="Issued invoices. Numbers are atomic — never reused."
+      >
         <Link href="/invoices/build" className={buttonVariants()}>
           <Plus className="h-4 w-4" />
           Build invoice
         </Link>
-      </div>
+      </PageHeader>
 
       <div className="flex gap-2 flex-wrap">
         {FILTERS.map((f) => {
@@ -90,10 +88,10 @@ export default async function InvoicesPage({
               key={f.value}
               href={f.value === "unpaid" ? "/invoices" : `/invoices?status=${f.value}`}
               className={cn(
-                "rounded-full border px-3 py-1 text-sm transition-colors",
+                "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150",
                 active
-                  ? "bg-foreground text-background border-foreground"
-                  : "bg-card hover:bg-accent",
+                  ? "bg-accent-soft text-accent-foreground border-accent-soft"
+                  : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
               )}
             >
               {f.label}
@@ -204,11 +202,11 @@ export default async function InvoicesPage({
 function StatusBadge({ status }: { status: Invoice["status"] }) {
   switch (status) {
     case "paid":
-      return <Badge>Paid</Badge>;
+      return <Badge variant="success">Paid</Badge>;
     case "unpaid":
-      return <Badge variant="secondary">Unpaid</Badge>;
+      return <Badge variant="warning">Unpaid</Badge>;
     case "reversed":
-      return <Badge variant="outline" className="text-muted-foreground">Reversed</Badge>;
+      return <Badge variant="ghost">Reversed</Badge>;
     case "draft":
       return <Badge variant="outline">Draft</Badge>;
   }

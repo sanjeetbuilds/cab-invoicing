@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card";
 import type { Client, RateCard } from "@/lib/supabase/types";
 import { formatINR } from "@/lib/format";
+import { PageHeader } from "@/components/ui/page-header";
 import { AddRateCardButton } from "./add-rate-card-button";
 import { RateCardRowActions } from "./rate-card-row-actions";
 
@@ -55,15 +56,12 @@ export default async function RateCardsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Rate cards</h1>
-          <p className="text-sm text-muted-foreground">
-            Per-client pricing. Updated when you accept a new quotation.
-          </p>
-        </div>
+      <PageHeader
+        title="Rate cards"
+        description="Per-client pricing. Updated when you accept a new quotation."
+      >
         <AddRateCardButton clients={clientList} />
-      </div>
+      </PageHeader>
 
       {clientList.length === 0 && (
         <Card>

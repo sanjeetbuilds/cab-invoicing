@@ -3,6 +3,7 @@ import { ArrowRight, FileEdit } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -24,6 +25,7 @@ import type {
   Trip,
 } from "@/lib/supabase/types";
 import { formatINR } from "@/lib/format";
+import { PageHeader } from "@/components/ui/page-header";
 import { SeedBanner } from "./seed/seed-banner";
 
 export const metadata = {
@@ -135,20 +137,15 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Your business at a glance.
-        </p>
-      </div>
+      <PageHeader title="Dashboard" description="Your business at a glance." />
 
       {isFresh && <SeedBanner />}
 
       {bulkDraftRowCount > 0 && (
-        <Card className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30">
-          <CardContent className="py-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-sm">
-              <FileEdit className="h-4 w-4 text-amber-700 dark:text-amber-200" />
+        <Card size="sm" className="border-warning/30 bg-warning-soft">
+          <CardContent className="flex items-center justify-between gap-3 flex-row">
+            <div className="flex items-center gap-2 text-sm text-foreground">
+              <FileEdit className="h-4 w-4 text-warning" />
               <span>
                 You have a bulk-add draft with{" "}
                 <strong>{bulkDraftRowCount}</strong> row
@@ -198,23 +195,25 @@ export default async function DashboardPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
+        <CardHeader>
           <div>
-            <CardTitle className="text-base">Unbilled trips by client</CardTitle>
+            <CardTitle>Unbilled trips by client</CardTitle>
             <CardDescription>
               Pick a client to build an invoice for them.
             </CardDescription>
           </div>
           {unbilledRows.length > 0 && (
-            <Link
-              href="/invoices/build"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Build invoice
-            </Link>
+            <CardAction>
+              <Link
+                href="/invoices/build"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                Build invoice
+              </Link>
+            </CardAction>
           )}
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent>
           {unbilledRows.length === 0 ? (
             <p className="text-sm text-muted-foreground py-3">
               All caught up — no uninvoiced trips.
@@ -236,7 +235,7 @@ export default async function DashboardPage() {
                     <TableCell className="text-right">
                       <Link
                         href={`/invoices/build?client=${client!.id}`}
-                        className="text-sm underline"
+                        className="text-sm font-medium text-primary hover:text-primary-hover"
                       >
                         Build invoice →
                       </Link>
@@ -250,16 +249,21 @@ export default async function DashboardPage() {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
+        <CardHeader>
           <div>
-            <CardTitle className="text-base">Recent invoices</CardTitle>
+            <CardTitle>Recent invoices</CardTitle>
             <CardDescription>Last 5 issued.</CardDescription>
           </div>
-          <Link href="/invoices" className="text-xs underline">
-            See all →
-          </Link>
+          <CardAction>
+            <Link
+              href="/invoices"
+              className="text-sm font-medium text-primary hover:text-primary-hover"
+            >
+              See all →
+            </Link>
+          </CardAction>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent>
           {(!recentInvoices || recentInvoices.length === 0) ? (
             <p className="text-sm text-muted-foreground py-3">
               No invoices yet.{" "}
@@ -278,15 +282,20 @@ export default async function DashboardPage() {
               </TableHeader>
               <TableBody>
                 {recentInvoices.map((inv) => (
-                  <TableRow key={inv.id} className="cursor-pointer">
-                    <TableCell className="font-mono font-medium">
-                      <Link href={`/invoices/${inv.id}`} className="hover:underline">
+                  <TableRow key={inv.id}>
+                    <TableCell className="font-medium">
+                      <Link
+                        href={`/invoices/${inv.id}`}
+                        className="text-foreground hover:text-primary"
+                      >
                         {inv.invoice_number}
                       </Link>
                     </TableCell>
-                    <TableCell className="font-mono">{fmtDate(inv.invoice_date)}</TableCell>
+                    <TableCell className="tabular-nums text-muted-foreground">
+                      {fmtDate(inv.invoice_date)}
+                    </TableCell>
                     <TableCell>{inv.client_name}</TableCell>
-                    <TableCell className="text-right font-mono">
+                    <TableCell className="text-right tabular-nums font-medium">
                       {formatINR(Number(inv.net_amount))}
                     </TableCell>
                     <TableCell className="text-center">
@@ -315,14 +324,20 @@ function StatCard({
   href?: string;
 }) {
   const body = (
-    <Card className={href ? "hover:bg-accent transition-colors" : ""}>
-      <CardHeader className="pb-2">
-        <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-2xl">{value}</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Card
+      className={
+        href ? "hover:border-foreground/20 hover:shadow-card-hover transition-all" : ""
+      }
+    >
+      <div className="flex flex-col gap-2">
+        <p className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+          {label}
+        </p>
+        <p className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">
+          {value}
+        </p>
         <p className="text-xs text-muted-foreground">{hint}</p>
-      </CardContent>
+      </div>
     </Card>
   );
   return href ? <Link href={href}>{body}</Link> : body;
@@ -331,11 +346,11 @@ function StatCard({
 function StatusBadge({ status }: { status: Invoice["status"] }) {
   switch (status) {
     case "paid":
-      return <Badge>Paid</Badge>;
+      return <Badge variant="success">Paid</Badge>;
     case "unpaid":
-      return <Badge variant="secondary">Unpaid</Badge>;
+      return <Badge variant="warning">Unpaid</Badge>;
     case "reversed":
-      return <Badge variant="outline" className="text-muted-foreground">Reversed</Badge>;
+      return <Badge variant="ghost">Reversed</Badge>;
     case "draft":
       return <Badge variant="outline">Draft</Badge>;
   }

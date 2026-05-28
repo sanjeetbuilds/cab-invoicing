@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
 import type {
   Client,
@@ -123,31 +125,27 @@ export default async function TripsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Trips</h1>
-          <p className="text-sm text-muted-foreground">
-            Daily duties. Each trip becomes a line on a monthly invoice.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/trips/bulk"
-            className={cn(
-              "hidden lg:inline-flex h-8 items-center gap-1.5 rounded-lg border bg-background px-2.5 text-sm hover:bg-muted",
-              noPrereqs ? "pointer-events-none opacity-50" : "",
-            )}
-          >
-            Bulk add
-          </Link>
-          <AddTripButton
-            clients={clientList}
-            vehicles={vehicleList}
-            rateCards={rateList}
-            disabled={noPrereqs}
-          />
-        </div>
-      </div>
+      <PageHeader
+        title="Trips"
+        description="Daily duties. Each trip becomes a line on a monthly invoice."
+      >
+        <Link
+          href="/trips/bulk"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" }),
+            "hidden lg:inline-flex",
+            noPrereqs ? "pointer-events-none opacity-50" : "",
+          )}
+        >
+          Bulk add
+        </Link>
+        <AddTripButton
+          clients={clientList}
+          vehicles={vehicleList}
+          rateCards={rateList}
+          disabled={noPrereqs}
+        />
+      </PageHeader>
 
       {noPrereqs && (
         <Card>
@@ -168,10 +166,10 @@ export default async function TripsPage({
               key={f.value}
               href={f.value === "uninvoiced" ? "/trips" : `/trips?status=${f.value}`}
               className={cn(
-                "rounded-full border px-3 py-1 text-sm transition-colors",
+                "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150",
                 active
-                  ? "bg-foreground text-background border-foreground"
-                  : "bg-card hover:bg-accent",
+                  ? "bg-accent-soft text-accent-foreground border-accent-soft"
+                  : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
               )}
             >
               {f.label}

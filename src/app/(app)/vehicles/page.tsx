@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import type { Vehicle } from "@/lib/supabase/types";
 import { AddVehicleButton } from "./add-vehicle-button";
 import { VehicleRowActions } from "./vehicle-row-actions";
@@ -27,15 +28,12 @@ export default async function VehiclesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Vehicles</h1>
-          <p className="text-sm text-muted-foreground">
-            Your fleet — own and attached cars.
-          </p>
-        </div>
+      <PageHeader
+        title="Vehicles"
+        description="Your fleet — own and attached cars."
+      >
         <AddVehicleButton />
-      </div>
+      </PageHeader>
 
       {error && (
         <p className="text-sm text-destructive">Failed to load: {error.message}</p>
@@ -53,7 +51,7 @@ export default async function VehiclesPage() {
       {vehicles && vehicles.length > 0 && (
         <>
           {/* Desktop table */}
-          <div className="hidden md:block rounded-md border bg-card">
+          <div className="hidden md:block rounded-lg border border-border bg-card shadow-card overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -68,23 +66,25 @@ export default async function VehiclesPage() {
               <TableBody>
                 {vehicles.map((v) => (
                   <TableRow key={v.id}>
-                    <TableCell className="font-mono font-medium">{v.number}</TableCell>
-                    <TableCell>{v.type}</TableCell>
+                    <TableCell className="font-mono font-medium text-foreground">
+                      {v.number}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{v.type}</TableCell>
                     <TableCell>
                       {v.ownership === "own" ? (
-                        <Badge>Own</Badge>
+                        <Badge variant="accent">Own</Badge>
                       ) : (
-                        <Badge variant="secondary">Attached</Badge>
+                        <Badge variant="default">Attached</Badge>
                       )}
                     </TableCell>
-                    <TableCell>{v.vendor_name || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {v.vendor_name || "—"}
+                    </TableCell>
                     <TableCell className="text-center">
                       {v.active ? (
-                        <Badge variant="outline">Active</Badge>
+                        <Badge variant="success">Active</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-muted-foreground">
-                          Inactive
-                        </Badge>
+                        <Badge variant="ghost">Inactive</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -99,28 +99,24 @@ export default async function VehiclesPage() {
           {/* Mobile cards */}
           <div className="md:hidden flex flex-col gap-3">
             {vehicles.map((v) => (
-              <Card key={v.id}>
-                <CardContent className="py-4 flex items-start justify-between gap-3">
+              <Card key={v.id} size="sm">
+                <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="font-mono font-semibold">{v.number}</p>
+                    <p className="font-mono font-semibold text-foreground">{v.number}</p>
                     <p className="text-sm text-muted-foreground">{v.type}</p>
                     <div className="mt-2 flex flex-wrap gap-1">
                       {v.ownership === "own" ? (
-                        <Badge>Own</Badge>
+                        <Badge variant="accent">Own</Badge>
                       ) : (
-                        <Badge variant="secondary">
+                        <Badge variant="default">
                           Attached{v.vendor_name ? ` — ${v.vendor_name}` : ""}
                         </Badge>
                       )}
-                      {!v.active && (
-                        <Badge variant="outline" className="text-muted-foreground">
-                          Inactive
-                        </Badge>
-                      )}
+                      {!v.active && <Badge variant="ghost">Inactive</Badge>}
                     </div>
                   </div>
                   <VehicleRowActions vehicle={v} />
-                </CardContent>
+                </div>
               </Card>
             ))}
           </div>
