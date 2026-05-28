@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,24 +37,41 @@ import type {
   Vehicle,
 } from "@/lib/supabase/types";
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
+import { chargeLabel } from "@/lib/charges";
 import { createTripAction, updateTripAction } from "./actions";
 
 const CAR_TYPES: CarType[] = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"];
 
-const Schema = z.object({
-  date: z.string().min(1, "Pick a date."),
-  client_id: z.string().min(1, "Pick a client."),
-  vehicle_id: z.string().min(1, "Pick a vehicle."),
-  car_type: z.enum(CAR_TYPES),
-  mode: z.enum(["local", "outstation"]),
-  total_kms: z.string().min(1, "Enter kms."),
-  total_hours: z.string().optional(),
-  night: z.boolean(),
-  driver_ta: z.string().optional(),
-  toll: z.string().optional(),
-  notes: z.string().optional(),
-  duty_slip_no: z.string().optional(),
-});
+const decimalRegex = /^\d*\.?\d*$/;
+
+const Schema = z
+  .object({
+    date: z.string().min(1, "Pick a date."),
+    end_date: z.string().optional(),
+    client_id: z.string().min(1, "Pick a client."),
+    vehicle_id: z.string().min(1, "Pick a vehicle."),
+    car_type: z.enum(CAR_TYPES),
+    mode: z.enum(["local", "outstation"]),
+    total_kms: z.string().min(1, "Enter kms."),
+    total_hours: z.string().optional(),
+    night: z.boolean(),
+    driver_ta: z.string().optional(),
+    extra_charge_amount: z
+      .string()
+      .optional()
+      .refine((v) => !v || decimalRegex.test(v), {
+        message: "Enter a decimal amount.",
+      }),
+    charge_toll: z.boolean(),
+    charge_tax: z.boolean(),
+    charge_parking: z.boolean(),
+    notes: z.string().optional(),
+    duty_slip_no: z.string().optional(),
+  })
+  .refine(
+    (d) => !d.end_date || d.end_date >= d.date,
+    { message: "End date must be on or after the start date.", path: ["end_date"] },
+  );
 type FormValues = z.infer<typeof Schema>;
 
 const todayIso = () => {
@@ -102,6 +119,7 @@ export function TripFormDialog({
     resolver: zodResolver(Schema),
     defaultValues: {
       date: trip?.date ?? todayIso(),
+      end_date: trip?.end_date ?? "",
       client_id: trip?.client_id ?? "",
       vehicle_id: trip?.vehicle_id ?? "",
       car_type: trip?.car_type ?? "Sonet",
@@ -110,7 +128,13 @@ export function TripFormDialog({
       total_hours: trip ? String(trip.total_hours) : "",
       night: trip?.night ?? false,
       driver_ta: trip ? String(trip.driver_ta) : "0",
-      toll: trip ? String(trip.toll) : "0",
+      extra_charge_amount:
+        trip != null
+          ? String(trip.extra_charge_amount || trip.toll || 0)
+          : "0",
+      charge_toll: trip?.charge_toll ?? false,
+      charge_tax: trip?.charge_tax ?? false,
+      charge_parking: trip?.charge_parking ?? false,
       notes: trip?.notes ?? "",
       duty_slip_no: trip?.duty_slip_no ?? "",
     },
@@ -124,6 +148,18 @@ export function TripFormDialog({
   const totalKmsStr = watch("total_kms");
   const totalHoursStr = watch("total_hours");
   const driverTaStr = watch("driver_ta");
+  const extraChargeStr = watch("extra_charge_amount");
+  const chargeToll = watch("charge_toll");
+  const chargeTax = watch("charge_tax");
+  const chargeParking = watch("charge_parking");
+
+  const extraChargeAmount = toNum(extraChargeStr);
+  const anyTicked = chargeToll || chargeTax || chargeParking;
+  const showChargeWarning = extraChargeAmount > 0 && !anyTicked;
+  const liveChargeLabel = chargeLabel(
+    { toll: chargeToll, tax: chargeTax, parking: chargeParking },
+    extraChargeAmount,
+  );
 
   const activeRate = useMemo(
     () =>
@@ -156,6 +192,7 @@ export function TripFormDialog({
     setPending(true);
     const fd = new FormData();
     fd.set("date", values.date);
+    fd.set("end_date", values.end_date ?? "");
     fd.set("client_id", values.client_id);
     fd.set("vehicle_id", values.vehicle_id);
     fd.set("car_type", values.car_type);
@@ -164,7 +201,10 @@ export function TripFormDialog({
     fd.set("total_hours", values.total_hours ?? "0");
     fd.set("night", String(values.night));
     fd.set("driver_ta", values.driver_ta ?? "0");
-    fd.set("toll", values.toll ?? "0");
+    fd.set("extra_charge_amount", values.extra_charge_amount ?? "0");
+    fd.set("charge_toll", String(values.charge_toll));
+    fd.set("charge_tax", String(values.charge_tax));
+    fd.set("charge_parking", String(values.charge_parking));
     fd.set("notes", values.notes ?? "");
     fd.set("duty_slip_no", values.duty_slip_no ?? "");
 
@@ -185,7 +225,7 @@ export function TripFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !pending && onOpenChange(o)}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editing ? "Edit trip" : "Log trip"}</DialogTitle>
           <DialogDescription>
@@ -204,7 +244,20 @@ export function TripFormDialog({
               )}
             </div>
 
-            <div className="sm:col-span-2 flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="end_date">
+                End date
+                <span className="text-xs text-muted-foreground font-normal">
+                  {" "}— optional, for multi-day duties
+                </span>
+              </Label>
+              <Input id="end_date" type="date" {...register("end_date")} />
+              {errors.end_date && (
+                <p className="text-sm text-destructive">{errors.end_date.message}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
               <Label htmlFor="client_id">Client *</Label>
               <Select
                 value={clientId || undefined}
@@ -308,7 +361,7 @@ export function TripFormDialog({
             </Select>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-4 border rounded-md p-4">
+          <div className="grid gap-4 sm:grid-cols-3 border rounded-md p-4">
             <div className="flex flex-col gap-1">
               <Label htmlFor="total_kms" className="text-xs">Total kms *</Label>
               <Input
@@ -345,19 +398,8 @@ export function TripFormDialog({
               />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="toll" className="text-xs">Toll ₹</Label>
-              <Input
-                id="toll"
-                type="number"
-                inputMode="decimal"
-                step="any"
-                {...register("toll")}
-              />
-            </div>
-
             {mode === "local" && (
-              <div className="sm:col-span-4 flex items-center justify-between rounded-md border px-3 py-2">
+              <div className="sm:col-span-3 flex items-center justify-between rounded-md border px-3 py-2">
                 <div>
                   <Label htmlFor="night" className="font-medium">Night charges</Label>
                   <p className="text-xs text-muted-foreground">
@@ -369,6 +411,75 @@ export function TripFormDialog({
                   checked={night}
                   onCheckedChange={(v) => setValue("night", v)}
                 />
+              </div>
+            )}
+          </div>
+
+          {/* Toll / Tax / Parking block */}
+          <div className="flex flex-col gap-3 rounded-md border p-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="extra_charge_amount">
+                Toll / Tax / Parking amount ₹
+              </Label>
+              <Input
+                id="extra_charge_amount"
+                type="text"
+                inputMode="decimal"
+                placeholder="0.00"
+                {...register("extra_charge_amount", {
+                  onChange: (e) => {
+                    const v = e.target.value;
+                    if (v !== "" && !decimalRegex.test(v)) {
+                      e.target.value = v.slice(0, -1);
+                    }
+                  },
+                })}
+              />
+              {errors.extra_charge_amount && (
+                <p className="text-xs text-destructive">
+                  {errors.extra_charge_amount.message}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                One amount. Added to the invoice net after GST. Use the boxes
+                below to label what it covers.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-4">
+              <CheckboxLabel
+                id="charge_toll"
+                checked={chargeToll}
+                onChange={(v) => setValue("charge_toll", v)}
+                label="Toll"
+              />
+              <CheckboxLabel
+                id="charge_tax"
+                checked={chargeTax}
+                onChange={(v) => setValue("charge_tax", v)}
+                label="Tax"
+              />
+              <CheckboxLabel
+                id="charge_parking"
+                checked={chargeParking}
+                onChange={(v) => setValue("charge_parking", v)}
+                label="Parking"
+              />
+            </div>
+
+            {extraChargeAmount > 0 && anyTicked && (
+              <p className="text-xs text-muted-foreground">
+                Invoice will read: <span className="font-medium">{liveChargeLabel}</span>
+              </p>
+            )}
+
+            {showChargeWarning && (
+              <div className="flex items-start gap-2 rounded-md bg-amber-50 dark:bg-amber-950/30 p-2 text-xs text-amber-900 dark:text-amber-200">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>
+                  You entered an amount but didn&apos;t tick a box. The invoice
+                  will default to <strong>&ldquo;Toll &amp; Parking&rdquo;</strong>.
+                </span>
               </div>
             )}
           </div>
@@ -413,7 +524,7 @@ export function TripFormDialog({
                   <span className="font-mono">{fmtINR(preview.total)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Toll ₹{toNum(watch("toll"))} added on the invoice, not here.
+                  + {fmtINR(extraChargeAmount)} ({liveChargeLabel}) added on the invoice, not here.
                 </p>
               </div>
             ) : null}
@@ -436,5 +547,33 @@ export function TripFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function CheckboxLabel({
+  id,
+  checked,
+  onChange,
+  label,
+}: {
+  id: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex items-center gap-2 cursor-pointer select-none"
+    >
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 accent-foreground"
+      />
+      <span className="text-sm">{label}</span>
+    </label>
   );
 }

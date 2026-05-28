@@ -7,20 +7,32 @@ import { requireWriter } from "@/lib/auth";
 const CAR_TYPES = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"] as const;
 const MODES = ["local", "outstation"] as const;
 
-const TripSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date."),
-  client_id: z.string().uuid("Pick a client."),
-  vehicle_id: z.string().uuid("Pick a vehicle."),
-  car_type: z.enum(CAR_TYPES),
-  mode: z.enum(MODES),
-  total_kms: z.number().int().min(0),
-  total_hours: z.number().min(0).default(0),
-  night: z.boolean().default(false),
-  driver_ta: z.number().int().min(0).default(0),
-  toll: z.number().min(0).default(0),
-  notes: z.string().optional().default(""),
-  duty_slip_no: z.string().optional().default(""),
-});
+const TripSchema = z
+  .object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date."),
+    end_date: z
+      .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")])
+      .optional()
+      .default(""),
+    client_id: z.string().uuid("Pick a client."),
+    vehicle_id: z.string().uuid("Pick a vehicle."),
+    car_type: z.enum(CAR_TYPES),
+    mode: z.enum(MODES),
+    total_kms: z.number().int().min(0),
+    total_hours: z.number().min(0).default(0),
+    night: z.boolean().default(false),
+    driver_ta: z.number().int().min(0).default(0),
+    extra_charge_amount: z.number().min(0).default(0),
+    charge_toll: z.boolean().default(false),
+    charge_tax: z.boolean().default(false),
+    charge_parking: z.boolean().default(false),
+    notes: z.string().optional().default(""),
+    duty_slip_no: z.string().optional().default(""),
+  })
+  .refine(
+    (d) => !d.end_date || d.end_date >= d.date,
+    { message: "End date must be on or after the start date.", path: ["end_date"] },
+  );
 
 export type ActionResult =
   | { ok: true }
@@ -35,6 +47,7 @@ function parse(formData: FormData) {
   };
   return TripSchema.safeParse({
     date: formData.get("date"),
+    end_date: formData.get("end_date") ?? "",
     client_id: formData.get("client_id"),
     vehicle_id: formData.get("vehicle_id"),
     car_type: formData.get("car_type"),
@@ -43,10 +56,35 @@ function parse(formData: FormData) {
     total_hours: num("total_hours"),
     night: formData.get("night") === "true",
     driver_ta: num("driver_ta"),
-    toll: num("toll"),
+    extra_charge_amount: num("extra_charge_amount"),
+    charge_toll: formData.get("charge_toll") === "true",
+    charge_tax: formData.get("charge_tax") === "true",
+    charge_parking: formData.get("charge_parking") === "true",
     notes: formData.get("notes") ?? "",
     duty_slip_no: formData.get("duty_slip_no") ?? "",
   });
+}
+
+function payload(d: z.infer<typeof TripSchema>) {
+  const isLocal = d.mode === "local";
+  return {
+    client_id: d.client_id,
+    vehicle_id: d.vehicle_id,
+    date: d.date,
+    end_date: d.end_date || null,
+    car_type: d.car_type,
+    mode: d.mode,
+    total_kms: d.total_kms,
+    total_hours: isLocal ? d.total_hours : 0,
+    night: isLocal ? d.night : false,
+    driver_ta: d.driver_ta,
+    extra_charge_amount: d.extra_charge_amount,
+    charge_toll: d.charge_toll,
+    charge_tax: d.charge_tax,
+    charge_parking: d.charge_parking,
+    notes: d.notes || null,
+    duty_slip_no: d.duty_slip_no || null,
+  };
 }
 
 export async function createTripAction(
@@ -58,22 +96,9 @@ export async function createTripAction(
   const ctx = await requireWriter();
   if (!ctx.ok) return ctx;
 
-  const isLocal = parsed.data.mode === "local";
-
   const { error } = await ctx.admin.from("trips").insert({
     company_id: ctx.companyId,
-    client_id: parsed.data.client_id,
-    vehicle_id: parsed.data.vehicle_id,
-    date: parsed.data.date,
-    car_type: parsed.data.car_type,
-    mode: parsed.data.mode,
-    total_kms: parsed.data.total_kms,
-    total_hours: isLocal ? parsed.data.total_hours : 0,
-    night: isLocal ? parsed.data.night : false,
-    driver_ta: parsed.data.driver_ta,
-    toll: parsed.data.toll,
-    notes: parsed.data.notes || null,
-    duty_slip_no: parsed.data.duty_slip_no || null,
+    ...payload(parsed.data),
     created_by: ctx.userId,
   });
   if (error) return { ok: false, error: error.message };
@@ -105,24 +130,9 @@ export async function updateTripAction(
     return { ok: false, error: "Trip is invoiced — reverse the invoice first." };
   }
 
-  const isLocal = parsed.data.mode === "local";
-
   const { error } = await ctx.admin
     .from("trips")
-    .update({
-      client_id: parsed.data.client_id,
-      vehicle_id: parsed.data.vehicle_id,
-      date: parsed.data.date,
-      car_type: parsed.data.car_type,
-      mode: parsed.data.mode,
-      total_kms: parsed.data.total_kms,
-      total_hours: isLocal ? parsed.data.total_hours : 0,
-      night: isLocal ? parsed.data.night : false,
-      driver_ta: parsed.data.driver_ta,
-      toll: parsed.data.toll,
-      notes: parsed.data.notes || null,
-      duty_slip_no: parsed.data.duty_slip_no || null,
-    })
+    .update(payload(parsed.data))
     .eq("id", id)
     .eq("company_id", ctx.companyId);
   if (error) return { ok: false, error: error.message };

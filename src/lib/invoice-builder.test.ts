@@ -64,6 +64,7 @@ function trip(o: Partial<Trip>): Trip {
     client_id: "client",
     vehicle_id: vehicle.id,
     date: "2026-04-15",
+    end_date: null,
     car_type: "Sonet",
     mode: "local",
     total_kms: 0,
@@ -71,6 +72,10 @@ function trip(o: Partial<Trip>): Trip {
     night: false,
     driver_ta: 0,
     toll: 0,
+    extra_charge_amount: 0,
+    charge_toll: false,
+    charge_tax: false,
+    charge_parking: false,
     notes: null,
     duty_slip_no: null,
     invoiced: false,
@@ -195,10 +200,24 @@ describe("buildInvoiceDraft", () => {
     expect(draft.net_amount).toBe(6936);
   });
 
-  it("toll override beats trip toll sums", () => {
+  it("toll override beats trip extra-charge sums", () => {
     const trips = [
-      trip({ id: "a", client_id: haryanaClient.id, total_kms: 80, total_hours: 8, toll: 100 }),
-      trip({ id: "b", client_id: haryanaClient.id, total_kms: 80, total_hours: 8, toll: 50 }),
+      trip({
+        id: "a",
+        client_id: haryanaClient.id,
+        total_kms: 80,
+        total_hours: 8,
+        extra_charge_amount: 100,
+        charge_toll: true,
+      }),
+      trip({
+        id: "b",
+        client_id: haryanaClient.id,
+        total_kms: 80,
+        total_hours: 8,
+        extra_charge_amount: 50,
+        charge_toll: true,
+      }),
     ];
     const rateCards = [
       rate({
@@ -253,6 +272,121 @@ describe("buildInvoiceDraft", () => {
 
     expect(draft.unmatched_trip_ids).toEqual(["bad"]);
     expect(draft.subtotal).toBe(1500);
+  });
+
+  it("multi-day outstation trip renders stacked date in line cell", () => {
+    const trips = [
+      trip({
+        id: "paras-multi-day",
+        client_id: haryanaClient.id,
+        mode: "outstation",
+        date: "2026-04-15",
+        end_date: "2026-04-16",
+        total_kms: 707,
+        driver_ta: 2,
+      }),
+      trip({
+        id: "paras-single-day",
+        client_id: haryanaClient.id,
+        mode: "outstation",
+        date: "2026-04-22",
+        end_date: null,
+        total_kms: 100,
+      }),
+    ];
+    const rateCards = [
+      rate({
+        client_id: haryanaClient.id,
+        mode: "outstation",
+        per_km: 15,
+        driver_ta: 300,
+      }),
+    ];
+
+    const draft = buildInvoiceDraft({
+      trips,
+      rateCards,
+      vehicles: [vehicle],
+      client: haryanaClient,
+      company,
+    });
+    // Multi-day trip: both of its lines carry the stacked date.
+    expect(draft.lines[0].date).toBe("15/4/26\nto\n16/4/26");
+    expect(draft.lines[1].date).toBe("15/4/26\nto\n16/4/26");
+    // Single-day trip: plain one-line date.
+    expect(draft.lines[2].date).toBe("22/4/26");
+  });
+
+  it("toll_label reflects union of ticked boxes across selected trips", () => {
+    const trips = [
+      trip({
+        id: "a",
+        client_id: haryanaClient.id,
+        total_kms: 80,
+        total_hours: 8,
+        extra_charge_amount: 100,
+        charge_toll: true,
+        charge_tax: true,
+      }),
+      trip({
+        id: "b",
+        client_id: haryanaClient.id,
+        total_kms: 80,
+        total_hours: 8,
+        extra_charge_amount: 50,
+        charge_parking: true,
+      }),
+    ];
+    const rateCards = [
+      rate({
+        client_id: haryanaClient.id,
+        base_rate: 1500,
+        base_kms: 80,
+        base_hours: 8,
+      }),
+    ];
+
+    const draft = buildInvoiceDraft({
+      trips,
+      rateCards,
+      vehicles: [vehicle],
+      client: haryanaClient,
+      company,
+    });
+    expect(draft.toll_total).toBe(150);
+    expect(draft.toll_label).toBe("Toll, Tax & Parking");
+  });
+
+  it("falls back to legacy `toll` column when extra_charge_amount is 0", () => {
+    const trips = [
+      trip({
+        id: "legacy",
+        client_id: haryanaClient.id,
+        total_kms: 80,
+        total_hours: 8,
+        toll: 75,
+        extra_charge_amount: 0,
+      }),
+    ];
+    const rateCards = [
+      rate({
+        client_id: haryanaClient.id,
+        base_rate: 1500,
+        base_kms: 80,
+        base_hours: 8,
+      }),
+    ];
+
+    const draft = buildInvoiceDraft({
+      trips,
+      rateCards,
+      vehicles: [vehicle],
+      client: haryanaClient,
+      company,
+    });
+    expect(draft.toll_total).toBe(75);
+    // No flags ticked → fallback label
+    expect(draft.toll_label).toBe("Toll & Parking");
   });
 
   it("amount in words ends with ' Rupees Only'", () => {

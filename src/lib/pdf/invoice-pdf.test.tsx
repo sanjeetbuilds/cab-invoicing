@@ -43,6 +43,7 @@ const baseInvoice: Invoice = {
   sgst: 0,
   igst: 0,
   toll_total: 0,
+  toll_label: null,
   net_amount: 2985,
   amount_in_words: "Two Thousand Nine Hundred & Eighty Five Only.",
   status: "unpaid",

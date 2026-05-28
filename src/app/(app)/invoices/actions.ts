@@ -144,6 +144,7 @@ export async function issueInvoiceAction(
       sgst: draft.gst.sgst,
       igst: draft.gst.igst,
       toll_total: draft.toll_total,
+      toll_label: draft.toll_label,
       net_amount: draft.net_amount,
       amount_in_words: draft.amount_in_words,
       status: "unpaid",

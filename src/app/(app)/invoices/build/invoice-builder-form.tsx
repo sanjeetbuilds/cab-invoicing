@@ -30,6 +30,11 @@ const fmtTripDate = (iso: string) => {
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
 };
 
+const tripCharge = (t: Trip) =>
+  (t.extra_charge_amount && t.extra_charge_amount > 0)
+    ? t.extra_charge_amount
+    : (t.toll ?? 0);
+
 const todayIso = () => {
   const d = new Date();
   const yyyy = d.getFullYear();
@@ -251,7 +256,7 @@ export function InvoiceBuilderForm({
                           : `${t.total_kms}km outstation`}
                         {t.driver_ta > 0 ? ` · TA×${t.driver_ta}` : ""}
                         {t.night ? " · night" : ""}
-                        {t.toll > 0 ? ` · toll ${fmtINR(t.toll)}` : ""}
+                        {tripCharge(t) > 0 ? ` · charges ${fmtINR(tripCharge(t))}` : ""}
                       </p>
                     </div>
                   </label>
@@ -275,7 +280,7 @@ export function InvoiceBuilderForm({
               inputMode="decimal"
               step="any"
               placeholder={`Default: ${fmtINR(
-                selectedTrips.reduce((s, t) => s + (t.toll ?? 0), 0),
+                selectedTrips.reduce((s, t) => s + tripCharge(t), 0),
               )}`}
               value={tollOverrideStr}
               onChange={(e) => setTollOverrideStr(e.target.value)}
@@ -311,7 +316,7 @@ export function InvoiceBuilderForm({
               <Row label={draft.gst.labels.igst ?? "IGST"} value={fmtINR(draft.gst.igst)} />
             )}
 
-            <Row label="Toll" value={fmtINR(draft.toll_total)} />
+            <Row label={draft.toll_label} value={fmtINR(draft.toll_total)} />
 
             <div className="border-t pt-2 flex justify-between text-base font-medium">
               <span>Net</span>

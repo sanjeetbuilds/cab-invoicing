@@ -8,10 +8,11 @@ import type {
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
 import { gstFor, type GstResult } from "@/lib/gst";
 import { numberToWords } from "@/lib/number-to-words";
+import { chargeLabel, unionChargeFlags } from "@/lib/charges";
 
 export interface InvoiceLineDraft {
   trip_id: string | null;
-  date: string;          // display format, e.g. "15/4/26"
+  date: string;          // display format, multi-line for multi-day duties
   vehicle_label: string; // e.g. "9083 Sonet"
   hsn_code: string;
   particulars: string;
@@ -26,6 +27,7 @@ export interface InvoiceDraft {
   subtotal: number;
   gst: GstResult;
   toll_total: number;
+  toll_label: string;
   net_amount: number;
   amount_in_words: string;
   /**
@@ -41,7 +43,7 @@ export interface BuildInvoiceInput {
   vehicles: Pick<Vehicle, "id" | "number" | "type">[];
   client: Pick<Client, "id" | "state" | "is_rcm">;
   company: Pick<Company, "state">;
-  /** Override the sum of trip tolls with this value. */
+  /** Override the sum of trip extra charges with this value. */
   toll_override?: number | null;
 }
 
@@ -68,7 +70,7 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
     const vehicle_label = v
       ? `${lastSegment(v.number)} ${v.type}`
       : trip.car_type;
-    const date = fmtTripDate(trip.date);
+    const date = fmtTripDateRange(trip.date, trip.end_date);
 
     const tripLines = tripToLines(
       {
@@ -97,35 +99,55 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
     }
   }
 
+  const matchedTrips = input.trips.filter((t) => !unmatched.includes(t.id));
+
   const subtotal = round2(
-    input.trips
-      .filter((t) => !unmatched.includes(t.id))
-      .reduce((sum, trip) => {
-        const rate = rateByKey.get(
-          `${trip.client_id}|${trip.car_type}|${trip.mode}`,
-        );
-        if (!rate) return sum;
-        return sum + tripTotal(tripToLines(
-          {
-            car_type: trip.car_type,
-            mode: trip.mode,
-            total_kms: trip.total_kms,
-            total_hours: trip.total_hours,
-            night: trip.night,
-            driver_ta: trip.driver_ta,
-          },
-          rate,
-        ));
-      }, 0),
+    matchedTrips.reduce((sum, trip) => {
+      const rate = rateByKey.get(
+        `${trip.client_id}|${trip.car_type}|${trip.mode}`,
+      );
+      if (!rate) return sum;
+      return sum + tripTotal(tripToLines(
+        {
+          car_type: trip.car_type,
+          mode: trip.mode,
+          total_kms: trip.total_kms,
+          total_hours: trip.total_hours,
+          night: trip.night,
+          driver_ta: trip.driver_ta,
+        },
+        rate,
+      ));
+    }, 0),
   );
 
   const gst = gstFor(input.client, subtotal, input.company);
 
-  const toll_total = round2(
-    input.toll_override != null
-      ? input.toll_override
-      : input.trips.reduce((sum, t) => sum + (t.toll ?? 0), 0),
+  // Charges (toll / tax / parking) — single amount per trip, dynamic label.
+  // Prefer the new extra_charge_amount; fall back to the legacy `toll`
+  // column so trips logged before the schema change still total correctly.
+  const tripChargeAmount = (t: Trip): number => {
+    const v = t.extra_charge_amount ?? 0;
+    if (v !== 0) return v;
+    return t.toll ?? 0;
+  };
+
+  const summedCharges = matchedTrips.reduce(
+    (sum, t) => sum + tripChargeAmount(t),
+    0,
   );
+  const toll_total = round2(
+    input.toll_override != null ? input.toll_override : summedCharges,
+  );
+
+  const unionFlags = unionChargeFlags(
+    matchedTrips.map((t) => ({
+      toll: t.charge_toll ?? false,
+      tax: t.charge_tax ?? false,
+      parking: t.charge_parking ?? false,
+    })),
+  );
+  const toll_label = chargeLabel(unionFlags, toll_total);
 
   const net_amount = round2(
     subtotal + gst.cgst + gst.sgst + gst.igst + toll_total,
@@ -138,6 +160,7 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
     subtotal,
     gst,
     toll_total,
+    toll_label,
     net_amount,
     amount_in_words,
     unmatched_trip_ids: unmatched,
@@ -151,6 +174,17 @@ function round2(n: number): number {
 function lastSegment(s: string): string {
   const parts = s.trim().split(/\s+/);
   return parts[parts.length - 1] ?? s;
+}
+
+/** Format a single date as D/M/YY, or a date range stacked over three lines. */
+function fmtTripDateRange(
+  startIso: string,
+  endIso: string | null,
+): string {
+  const start = fmtTripDate(startIso);
+  if (!endIso || endIso === startIso) return start;
+  const end = fmtTripDate(endIso);
+  return `${start}\nto\n${end}`;
 }
 
 /** "2026-04-15" → "15/4/26" (matches prototype invoice display). */

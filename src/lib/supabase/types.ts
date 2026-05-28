@@ -71,6 +71,7 @@ export interface Trip {
   client_id: string;
   vehicle_id: string;
   date: string;
+  end_date: string | null;
   car_type: CarType;
   mode: TripMode;
   total_kms: number;
@@ -78,6 +79,10 @@ export interface Trip {
   night: boolean;
   driver_ta: number;
   toll: number;
+  extra_charge_amount: number;
+  charge_toll: boolean;
+  charge_tax: boolean;
+  charge_parking: boolean;
   notes: string | null;
   duty_slip_no: string | null;
   invoiced: boolean;
@@ -105,6 +110,7 @@ export interface Invoice {
   sgst: number;
   igst: number;
   toll_total: number;
+  toll_label: string | null;
   net_amount: number;
   amount_in_words: string;
   status: InvoiceStatus;

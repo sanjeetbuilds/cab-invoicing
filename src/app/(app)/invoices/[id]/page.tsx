@@ -197,7 +197,7 @@ export default async function InvoiceViewPage({
                         key={l.id}
                         className={isFirst && gi > 0 ? "border-t-2" : ""}
                       >
-                        <TableCell className="font-mono text-xs whitespace-nowrap align-top">
+                        <TableCell className="font-mono text-xs whitespace-pre-line align-top">
                           {isFirst ? (l.date ?? "") : ""}
                         </TableCell>
                         <TableCell className="font-mono text-xs whitespace-nowrap align-top">
@@ -257,7 +257,12 @@ export default async function InvoiceViewPage({
               {igstShow && (
                 <Row label="IGST @ 5%" value={fmtINR(invoice.igst)} />
               )}
-              <Row label="Toll & Parking" value={fmtINR(invoice.toll_total)} />
+              {invoice.toll_total !== 0 && (
+                <Row
+                  label={invoice.toll_label ?? "Toll & Parking"}
+                  value={fmtINR(invoice.toll_total)}
+                />
+              )}
               <Separator className="my-1 bg-black" />
               <div className="flex justify-between font-bold text-base">
                 <span>Net Amount</span>

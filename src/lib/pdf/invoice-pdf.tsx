@@ -418,10 +418,16 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
                 <Text style={styles.totalsValue}>{fmtAmountAlways(invoice.igst)}</Text>
               </View>
             )}
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>Toll & Parking</Text>
-              <Text style={styles.totalsValue}>{fmtAmountAlways(invoice.toll_total)}</Text>
-            </View>
+            {invoice.toll_total !== 0 && (
+              <View style={styles.totalsRow}>
+                <Text style={styles.totalsLabel}>
+                  {invoice.toll_label ?? "Toll & Parking"}
+                </Text>
+                <Text style={styles.totalsValue}>
+                  {fmtAmountAlways(invoice.toll_total)}
+                </Text>
+              </View>
+            )}
             <View style={styles.totalsGrandRow}>
               <Text style={styles.totalsGrandText}>Net Amount</Text>
               <Text style={styles.totalsGrandText}>
