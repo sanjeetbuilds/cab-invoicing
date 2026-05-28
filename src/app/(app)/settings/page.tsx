@@ -1,9 +1,8 @@
 import { requireMembership } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import type { Membership, Role } from "@/lib/supabase/types";
-import { TeamSection } from "./team-section";
+import type { Company, Membership, Role } from "@/lib/supabase/types";
+import { SettingsTabs } from "./settings-tabs";
 
 export const metadata = { title: "Settings" };
 
@@ -21,17 +20,21 @@ export default async function SettingsPage() {
   const { user, membership } = await requireMembership();
   const admin = createAdminClient();
 
-  const { data: rows } = await admin
-    .from("memberships")
-    .select("id, role, user_id, invited_email, accepted_at")
-    .eq("company_id", membership.company_id)
-    .order("created_at", { ascending: true })
-    .returns<
-      Pick<
-        Membership,
-        "id" | "role" | "user_id" | "invited_email" | "accepted_at"
-      >[]
-    >();
+  const [{ data: company }, { data: rows }] = await Promise.all([
+    admin
+      .from("companies")
+      .select("*")
+      .eq("id", membership.company_id)
+      .maybeSingle<Company>(),
+    admin
+      .from("memberships")
+      .select("id, role, user_id, invited_email, accepted_at")
+      .eq("company_id", membership.company_id)
+      .order("created_at", { ascending: true })
+      .returns<
+        Pick<Membership, "id" | "role" | "user_id" | "invited_email" | "accepted_at">[]
+      >(),
+  ]);
 
   const memberRows: TeamMemberRow[] = [];
   for (const r of rows ?? []) {
@@ -51,25 +54,26 @@ export default async function SettingsPage() {
     });
   }
 
+  if (!company) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Settings" />
+        <p className="text-sm text-destructive">Company record not found.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Settings"
-        description="Manage your team. Company info, numbering, and invoice terms come next."
+        description="Company info, numbering, terms, and team."
       />
-
-      <Card>
-        <TeamSection currentRole={membership.role} members={memberRows} />
-      </Card>
-
-      <Card>
-        <CardContent className="text-sm text-muted-foreground">
-          Company info, invoice numbering, and terms editing are not in this
-          page yet — set them directly in Supabase Studio under{" "}
-          <code className="font-mono text-foreground">companies</code> for
-          now.
-        </CardContent>
-      </Card>
+      <SettingsTabs
+        company={company}
+        currentRole={membership.role}
+        members={memberRows}
+      />
     </div>
   );
 }

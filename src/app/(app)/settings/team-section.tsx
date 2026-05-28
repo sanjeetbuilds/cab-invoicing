@@ -3,9 +3,10 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Check, Copy, Loader2, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +54,11 @@ const ALL_ROLES: { value: Role; label: string }[] = [
   ...INVITABLE_ROLES,
 ];
 
+interface NewInvite {
+  email: string;
+  tempPassword: string;
+}
+
 export function TeamSection({
   currentRole,
   members,
@@ -69,6 +75,8 @@ export function TeamSection({
   const [inviting, startInvite] = useTransition();
   const [pendingRow, setPendingRow] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<TeamMemberRow | null>(null);
+  const [newInvite, setNewInvite] = useState<NewInvite | null>(null);
+  const [copied, setCopied] = useState(false);
 
   function onInvite(e: React.FormEvent) {
     e.preventDefault();
@@ -79,10 +87,9 @@ export function TeamSection({
     startInvite(async () => {
       const result = await inviteMemberAction({ email: email.trim(), role });
       if (result.ok) {
-        toast.success(
-          `Invite created for ${email}. Share the app URL — they sign up with this email and join your team.`,
-        );
+        setNewInvite({ email: result.email, tempPassword: result.tempPassword });
         setEmail("");
+        setCopied(false);
         router.refresh();
       } else {
         toast.error(result.error);
@@ -118,75 +125,133 @@ export function TeamSection({
     }
   }
 
+  async function copyTempPassword() {
+    if (!newInvite) return;
+    await navigator.clipboard.writeText(newInvite.tempPassword);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="text-base font-semibold tracking-tight text-foreground">
-          Team
-        </h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          Invite teammates by email. They sign up with the same email and get
-          added to your company automatically.
-        </p>
-      </div>
-
       {canManage && (
-        <form
-          onSubmit={onInvite}
-          className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end"
-        >
-          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-            <Label htmlFor="invite-email" className="text-xs">Email</Label>
-            <Input
-              id="invite-email"
-              type="email"
-              inputMode="email"
-              placeholder="teammate@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5 sm:w-40">
-            <Label htmlFor="invite-role" className="text-xs">Role</Label>
-            <Select
-              value={role}
-              onValueChange={(v) => {
-                if (typeof v === "string") {
-                  setRole(v as Exclude<Role, "owner">);
-                }
-              }}
+        <Card>
+          <CardContent>
+            <p className="text-sm font-semibold text-foreground">Invite teammate</p>
+            <p className="text-xs text-muted-foreground mt-0.5 mb-4">
+              Creates a user account with a temp password. Copy it and share
+              it with them — they sign in at <span className="font-mono">/sign-in</span> and
+              can reset their password from there.
+            </p>
+            <form
+              onSubmit={onInvite}
+              className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end"
             >
-              <SelectTrigger id="invite-role">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {INVITABLE_ROLES.map((r) => (
-                  <SelectItem key={r.value} value={r.value}>
-                    {r.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button type="submit" disabled={inviting}>
-            {inviting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            Invite
-          </Button>
-        </form>
+              <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                <Label htmlFor="invite-email" className="text-xs">
+                  Email
+                </Label>
+                <Input
+                  id="invite-email"
+                  type="email"
+                  inputMode="email"
+                  placeholder="teammate@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 sm:w-40">
+                <Label htmlFor="invite-role" className="text-xs">
+                  Role
+                </Label>
+                <Select
+                  value={role}
+                  onValueChange={(v) => {
+                    if (typeof v === "string") {
+                      setRole(v as Exclude<Role, "owner">);
+                    }
+                  }}
+                >
+                  <SelectTrigger id="invite-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INVITABLE_ROLES.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>
+                        {r.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button type="submit" disabled={inviting}>
+                {inviting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                Invite
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
+      {newInvite && (
+        <Card className="border-success/30 bg-success-soft">
+          <CardContent>
+            <p className="text-sm font-semibold text-foreground">
+              Invite ready for {newInvite.email}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 mb-3">
+              Share this temporary password with them (e.g. WhatsApp). They
+              sign in at <span className="font-mono">/sign-in</span> with their
+              email + this password, then can change it under Forgot password.
+            </p>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-2">
+              <code className="flex-1 font-mono text-sm break-all px-2">
+                {newInvite.tempPassword}
+              </code>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={copyTempPassword}
+                aria-label="Copy temp password"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    Copy
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="mt-3 text-xs">
+              <button
+                type="button"
+                className="font-medium text-primary hover:text-primary-hover"
+                onClick={() => setNewInvite(null)}
+              >
+                Dismiss
+              </button>
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="rounded-lg border border-border bg-card shadow-card overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Email</TableHead>
-              <TableHead className="w-[140px]">Role</TableHead>
-              <TableHead className="w-[140px]">Status</TableHead>
-              <TableHead className="w-[100px] text-right">Actions</TableHead>
+              <TableHead className="w-[160px]">Role</TableHead>
+              <TableHead className="w-[120px]">Status</TableHead>
+              <TableHead className="w-[80px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -267,9 +332,9 @@ export function TeamSection({
           <AlertDialogHeader>
             <AlertDialogTitle>Remove this member?</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmRemove?.user_id
-                ? `${confirmRemove?.email} will lose access to this company immediately.`
-                : `The pending invite for ${confirmRemove?.email} will be cancelled.`}
+              {confirmRemove?.email} will lose access to this company
+              immediately. Their auth account is not deleted — they keep it for
+              other companies they belong to.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
