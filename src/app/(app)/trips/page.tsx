@@ -133,12 +133,23 @@ export default async function TripsPage({
             Daily duties. Each trip becomes a line on a monthly invoice.
           </p>
         </div>
-        <AddTripButton
-          clients={clientList}
-          vehicles={vehicleList}
-          rateCards={rateList}
-          disabled={noPrereqs}
-        />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/trips/bulk"
+            className={cn(
+              "hidden lg:inline-flex h-8 items-center gap-1.5 rounded-lg border bg-background px-2.5 text-sm hover:bg-muted",
+              noPrereqs ? "pointer-events-none opacity-50" : "",
+            )}
+          >
+            Bulk add
+          </Link>
+          <AddTripButton
+            clients={clientList}
+            vehicles={vehicleList}
+            rateCards={rateList}
+            disabled={noPrereqs}
+          />
+        </div>
       </div>
 
       {noPrereqs && (
