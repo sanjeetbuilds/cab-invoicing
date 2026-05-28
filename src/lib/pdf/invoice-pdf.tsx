@@ -14,19 +14,22 @@ import type {
 } from "@/lib/supabase/types";
 import { formatINR, formatINRBlank, formatQty } from "@/lib/format";
 
-// Noto Sans natively includes the rupee symbol (U+20B9) and every other
-// character we render. Using a single font family for the whole document
-// avoids the "fallback heavier glyph mid-line" effect seen when Inter's
-// woff subset was missing ₹ and react-pdf fell back to Helvetica.
+// Single variable Noto Sans TTF (2 MB) — covers every glyph we render
+// including ₹ (U+20B9), · (U+00B7), — (U+2014), &, € and the Latin
+// alphabet, so react-pdf never needs to fall back to Helvetica for a
+// missing character. That removes the "alphabet within a word looks
+// bold" mid-line effect previously caused by the rupee sign coming
+// from Helvetica while the rest came from a subset that lacked it.
+//
+// We register the SAME file twice under two family names — when the
+// user wants the company name / column header / Net Amount to read
+// a touch heavier, the style uses "NotoSans-Medium". Variable font
+// weight selection isn't always honoured by react-pdf, but the goal
+// here is "no weight glitches", which holds either way.
 const fontDir = path.join(process.cwd(), "public", "fonts");
-Font.register({
-  family: "NotoSans",
-  src: path.join(fontDir, "NotoSans-Regular.woff"),
-});
-Font.register({
-  family: "NotoSans-Medium",
-  src: path.join(fontDir, "NotoSans-Medium.woff"),
-});
+const notoFile = path.join(fontDir, "NotoSans.ttf");
+Font.register({ family: "NotoSans", src: notoFile, fontWeight: 400 });
+Font.register({ family: "NotoSans-Medium", src: notoFile, fontWeight: 500 });
 
 interface LineGroup {
   trip_id: string | null;
