@@ -39,6 +39,7 @@ import type {
 } from "@/lib/supabase/types";
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
 import { chargeLabel } from "@/lib/charges";
+import { formatINR } from "@/lib/format";
 import { createTripAction, updateTripAction } from "./actions";
 
 const CAR_TYPES: CarType[] = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"];
@@ -84,7 +85,6 @@ const todayIso = () => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-const fmtINR = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 const toNum = (s: string | undefined) => {
   if (!s) return 0;
   const n = Number(s);
@@ -565,17 +565,17 @@ export function TripFormDialog({
                   <div key={i} className="flex justify-between gap-3">
                     <span className="text-muted-foreground whitespace-pre-line">
                       {l.particulars}
-                      {l.qty != null && l.rate != null ? ` (${l.qty} × ${fmtINR(l.rate)})` : ""}
+                      {l.qty != null && l.rate != null ? ` (${l.qty} × ${formatINR(l.rate)})` : ""}
                     </span>
-                    <span className="font-mono">{fmtINR(l.amount)}</span>
+                    <span className="font-mono">{formatINR(l.amount)}</span>
                   </div>
                 ))}
                 <div className="flex justify-between border-t pt-1 mt-1 font-medium">
                   <span>Trip total</span>
-                  <span className="font-mono">{fmtINR(preview.total)}</span>
+                  <span className="font-mono">{formatINR(preview.total)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  + {fmtINR(extraChargeAmount)} ({liveChargeLabel}) added on the invoice, not here.
+                  + {formatINR(extraChargeAmount)} ({liveChargeLabel}) added on the invoice, not here.
                 </p>
               </div>
             ) : null}

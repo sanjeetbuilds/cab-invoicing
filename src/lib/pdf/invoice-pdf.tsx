@@ -1,15 +1,31 @@
+import path from "node:path";
 import {
   Document,
   Page,
   Text,
   View,
   StyleSheet,
+  Font,
 } from "@react-pdf/renderer";
 import type {
   Company,
   Invoice,
   InvoiceLine,
 } from "@/lib/supabase/types";
+import { formatINR, formatINRBlank, formatQty } from "@/lib/format";
+
+// The default PDF Type-1 fonts (Helvetica/Times) do NOT include the rupee
+// symbol (U+20B9). Register Inter from local files (bundled in /public/fonts/)
+// so ₹ renders and there's no network request at PDF time.
+const fontDir = path.join(process.cwd(), "public", "fonts");
+Font.register({
+  family: "Inter",
+  src: path.join(fontDir, "Inter-Regular.woff"),
+});
+Font.register({
+  family: "Inter-Bold",
+  src: path.join(fontDir, "Inter-Bold.woff"),
+});
 
 interface LineGroup {
   trip_id: string | null;
@@ -40,7 +56,7 @@ const PT = (mm: number) => (mm / 25.4) * 72;
 
 const styles = StyleSheet.create({
   page: {
-    fontFamily: "Helvetica",
+    fontFamily: "Inter",
     fontSize: 9.5,
     paddingTop: PT(14) + 88,
     paddingBottom: PT(16) + 18,
@@ -65,7 +81,7 @@ const styles = StyleSheet.create({
   hCol3: { width: "25%", paddingLeft: 6, alignItems: "flex-end" },
 
   companyName: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Inter-Bold",
     fontSize: 14,
     color: COLORS.black,
     letterSpacing: 0.4,
@@ -76,21 +92,21 @@ const styles = StyleSheet.create({
 
   billLine: { fontSize: 9, marginBottom: 1 },
   billLineBold: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Inter-Bold",
     fontSize: 9.5,
     marginBottom: 1,
   },
 
   gstinHeader: {
     fontSize: 9,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Inter-Bold",
     color: COLORS.black,
     marginBottom: 12,
     textAlign: "right",
   },
   invoiceNumber: {
     fontSize: 10.5,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Inter-Bold",
     color: COLORS.black,
     marginBottom: 3,
     textAlign: "right",
@@ -108,7 +124,7 @@ const styles = StyleSheet.create({
   },
   th: {
     fontSize: 8,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Inter-Bold",
     paddingVertical: 4,
     paddingHorizontal: 5,
     borderRightWidth: 0.5,
@@ -150,13 +166,13 @@ const styles = StyleSheet.create({
   totalLabel: {
     flex: 1,
     textAlign: "right",
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Inter-Bold",
     fontSize: 9.5,
     paddingVertical: 5,
     paddingHorizontal: 5,
   },
   totalAmount: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Inter-Bold",
     fontSize: 10,
     paddingVertical: 5,
     paddingHorizontal: 5,
@@ -176,7 +192,6 @@ const styles = StyleSheet.create({
   totalsValue: { color: COLORS.text },
   totalsUnderRcm: {
     color: COLORS.muted,
-    fontStyle: "italic",
   },
   totalsGrandRow: {
     flexDirection: "row",
@@ -187,7 +202,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   totalsGrandText: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Inter-Bold",
     fontSize: 12,
   },
   words: {
@@ -198,7 +213,7 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.line,
   },
   wordsLabel: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Inter-Bold",
   },
 
   foot: {
@@ -210,7 +225,7 @@ const styles = StyleSheet.create({
     paddingTop: 7,
     lineHeight: 1.5,
   },
-  footBold: { fontFamily: "Helvetica-Bold", color: COLORS.black },
+  footBold: { fontFamily: "Inter-Bold", color: COLORS.black },
   termLine: { marginTop: 1 },
 
   pageNum: {
@@ -227,29 +242,6 @@ function fmtDate(iso: string | null | undefined): string {
   const [y, m, d] = iso.split("-");
   if (!y || !m || !d) return iso;
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
-}
-
-function fmtAmount(n: number | null | undefined): string {
-  if (n == null || n === 0) return "";
-  return Number(n).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function fmtAmountAlways(n: number): string {
-  return Number(n).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function fmtQty(n: number | null | undefined): string {
-  if (n == null) return "";
-  return Number(n).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 }
 
 function groupLines(lines: InvoiceLine[]): LineGroup[] {
@@ -363,15 +355,15 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
                     </Text>
                     <Text style={[styles.td, styles.colPart]}>{l.particulars ?? ""}</Text>
                     <Text style={[styles.td, styles.colQty, styles.num]}>
-                      {fmtQty(l.qty)}
+                      {formatQty(l.qty)}
                     </Text>
                     <Text style={[styles.td, styles.colRate, styles.num]}>
-                      {fmtAmount(l.rate)}
+                      {formatINRBlank(l.rate)}
                     </Text>
                     <Text
                       style={[styles.td, styles.colAmount, styles.num, styles.tdLast]}
                     >
-                      {fmtAmount(l.amount)}
+                      {formatINRBlank(l.amount)}
                     </Text>
                   </View>
                 );
@@ -381,7 +373,7 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
 
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalAmount}>{fmtAmountAlways(invoice.subtotal)}</Text>
+            <Text style={styles.totalAmount}>{formatINR(invoice.subtotal)}</Text>
           </View>
         </View>
 
@@ -396,7 +388,7 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
                     invoice.gst_mode === "RCM" ? styles.totalsUnderRcm : styles.totalsValue
                   }
                 >
-                  {invoice.gst_mode === "RCM" ? "Under RCM" : fmtAmount(invoice.cgst)}
+                  {invoice.gst_mode === "RCM" ? "Under RCM" : formatINRBlank(invoice.cgst)}
                 </Text>
               </View>
             )}
@@ -408,14 +400,14 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
                     invoice.gst_mode === "RCM" ? styles.totalsUnderRcm : styles.totalsValue
                   }
                 >
-                  {invoice.gst_mode === "RCM" ? "Under RCM" : fmtAmount(invoice.sgst)}
+                  {invoice.gst_mode === "RCM" ? "Under RCM" : formatINRBlank(invoice.sgst)}
                 </Text>
               </View>
             )}
             {igstLabel && (
               <View style={styles.totalsRow}>
                 <Text style={styles.totalsLabel}>{igstLabel}</Text>
-                <Text style={styles.totalsValue}>{fmtAmountAlways(invoice.igst)}</Text>
+                <Text style={styles.totalsValue}>{formatINR(invoice.igst)}</Text>
               </View>
             )}
             {invoice.toll_total !== 0 && (
@@ -424,14 +416,14 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
                   {invoice.toll_label ?? "Toll & Parking"}
                 </Text>
                 <Text style={styles.totalsValue}>
-                  {fmtAmountAlways(invoice.toll_total)}
+                  {formatINR(invoice.toll_total)}
                 </Text>
               </View>
             )}
             <View style={styles.totalsGrandRow}>
               <Text style={styles.totalsGrandText}>Net Amount</Text>
               <Text style={styles.totalsGrandText}>
-                {fmtAmountAlways(invoice.net_amount)}
+                {formatINR(invoice.net_amount)}
               </Text>
             </View>
           </View>

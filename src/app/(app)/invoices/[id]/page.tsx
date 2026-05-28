@@ -17,26 +17,10 @@ import type {
   Invoice,
   InvoiceLine,
 } from "@/lib/supabase/types";
+import { formatINR, formatINRBlank, formatQty } from "@/lib/format";
 import { InvoiceActions } from "./invoice-actions";
 
 export const metadata = { title: "Invoice — Krishna Cabs" };
-
-function fmtINR(n: number) {
-  return n.toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function fmtAmount(n: number | null | undefined): string {
-  if (n == null || n === 0) return "";
-  return fmtINR(Number(n));
-}
-
-function fmtQty(n: number | null | undefined): string {
-  if (n == null) return "";
-  return fmtINR(Number(n));
-}
 
 function fmtDate(iso: string) {
   const [y, m, d] = iso.split("-");
@@ -215,13 +199,13 @@ export default async function InvoiceViewPage({
                           {l.particulars ?? ""}
                         </TableCell>
                         <TableCell className="text-right font-mono align-top">
-                          {fmtQty(l.qty)}
+                          {formatQty(l.qty)}
                         </TableCell>
                         <TableCell className="text-right font-mono align-top">
-                          {fmtAmount(l.rate)}
+                          {formatINRBlank(l.rate)}
                         </TableCell>
                         <TableCell className="text-right font-mono align-top">
-                          {fmtAmount(l.amount)}
+                          {formatINRBlank(l.amount)}
                         </TableCell>
                       </TableRow>
                     );
@@ -235,7 +219,7 @@ export default async function InvoiceViewPage({
                     Total
                   </TableCell>
                   <TableCell className="text-right font-mono font-semibold border-t-2 border-black">
-                    {fmtINR(invoice.subtotal)}
+                    {formatINR(invoice.subtotal)}
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -248,30 +232,30 @@ export default async function InvoiceViewPage({
               {cgstShow && (
                 <Row
                   label="CGST @ 2.5%"
-                  value={isRcm ? "Under RCM" : fmtINR(invoice.cgst)}
+                  value={isRcm ? "Under RCM" : formatINR(invoice.cgst)}
                   italic={isRcm}
                 />
               )}
               {sgstShow && (
                 <Row
                   label="SGST @ 2.5%"
-                  value={isRcm ? "Under RCM" : fmtINR(invoice.sgst)}
+                  value={isRcm ? "Under RCM" : formatINR(invoice.sgst)}
                   italic={isRcm}
                 />
               )}
               {igstShow && (
-                <Row label="IGST @ 5%" value={fmtINR(invoice.igst)} />
+                <Row label="IGST @ 5%" value={formatINR(invoice.igst)} />
               )}
               {invoice.toll_total !== 0 && (
                 <Row
                   label={invoice.toll_label ?? "Toll & Parking"}
-                  value={fmtINR(invoice.toll_total)}
+                  value={formatINR(invoice.toll_total)}
                 />
               )}
               <Separator className="my-1 bg-black" />
               <div className="flex justify-between font-bold text-base">
                 <span>Net Amount</span>
-                <span className="font-mono">{fmtINR(invoice.net_amount)}</span>
+                <span className="font-mono">{formatINR(invoice.net_amount)}</span>
               </div>
             </div>
           </div>

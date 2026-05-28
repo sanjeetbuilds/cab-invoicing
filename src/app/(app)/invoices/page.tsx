@@ -14,6 +14,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Client, Invoice } from "@/lib/supabase/types";
+import { formatINR } from "@/lib/format";
 
 export const metadata = { title: "Invoices — Krishna Cabs" };
 
@@ -25,10 +26,6 @@ const FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "reversed", label: "Reversed" },
   { value: "all", label: "All" },
 ];
-
-function fmtINR(n: number) {
-  return `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 function fmtDate(iso: string) {
   const [y, m, d] = iso.split("-");
@@ -160,7 +157,7 @@ export default async function InvoicesPage({
                       {inv.gst_mode === "CGST_SGST" && <Badge variant="secondary">CGST+SGST</Badge>}
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      {fmtINR(inv.net_amount)}
+                      {formatINR(inv.net_amount)}
                     </TableCell>
                     <TableCell className="text-center">
                       <StatusBadge status={inv.status} />
@@ -189,7 +186,7 @@ export default async function InvoicesPage({
                           : "no period"}
                       </p>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-sm">{fmtINR(inv.net_amount)}</span>
+                        <span className="font-mono text-sm">{formatINR(inv.net_amount)}</span>
                         <StatusBadge status={inv.status} />
                       </div>
                     </div>

@@ -18,6 +18,7 @@ import type {
   Vehicle,
 } from "@/lib/supabase/types";
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
+import { formatINR } from "@/lib/format";
 import { AddTripButton } from "./add-trip-button";
 import { TripRowActions } from "./trip-row-actions";
 
@@ -30,10 +31,6 @@ const FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "invoiced", label: "Invoiced" },
   { value: "all", label: "All" },
 ];
-
-function fmtINR(n: number) {
-  return `₹${n.toLocaleString("en-IN")}`;
-}
 
 function fmtDate(iso: string) {
   const [y, m, d] = iso.split("-");
@@ -253,7 +250,7 @@ export default async function TripsPage({
                         {amount == null ? (
                           <span className="text-destructive text-xs">no rate</span>
                         ) : (
-                          fmtINR(amount)
+                          formatINR(amount)
                         )}
                       </TableCell>
                       <TableCell className="text-center">
@@ -304,7 +301,7 @@ export default async function TripsPage({
                           {amount == null ? (
                             <span className="text-destructive">no rate</span>
                           ) : (
-                            fmtINR(amount)
+                            formatINR(amount)
                           )}
                         </span>
                         {t.invoiced ? (

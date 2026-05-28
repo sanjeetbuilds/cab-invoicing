@@ -21,8 +21,7 @@ import { tripToLines, tripTotal } from "@/lib/trip-lines";
 import { buildInvoiceDraft } from "@/lib/invoice-builder";
 import { issueInvoiceAction } from "../actions";
 
-const fmtINR = (n: number) =>
-  `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+import { formatINR } from "@/lib/format";
 
 const fmtTripDate = (iso: string) => {
   const [y, m, d] = iso.split("-");
@@ -251,7 +250,7 @@ export function InvoiceBuilderForm({
                           {amount == null ? (
                             <span className="text-destructive">no rate</span>
                           ) : (
-                            fmtINR(amount)
+                            formatINR(amount)
                           )}
                         </span>
                       </div>
@@ -262,7 +261,7 @@ export function InvoiceBuilderForm({
                           : `${t.total_kms}km outstation`}
                         {t.driver_ta > 0 ? ` · TA×${t.driver_ta}` : ""}
                         {t.night ? " · night" : ""}
-                        {tripCharge(t) > 0 ? ` · charges ${fmtINR(tripCharge(t))}` : ""}
+                        {tripCharge(t) > 0 ? ` · charges ${formatINR(tripCharge(t))}` : ""}
                       </p>
                     </div>
                   </label>
@@ -285,7 +284,7 @@ export function InvoiceBuilderForm({
               type="number"
               inputMode="decimal"
               step="any"
-              placeholder={`Default: ${fmtINR(
+              placeholder={`Default: ${formatINR(
                 selectedTrips.reduce((s, t) => s + tripCharge(t), 0),
               )}`}
               value={tollOverrideStr}
@@ -305,7 +304,7 @@ export function InvoiceBuilderForm({
             <CardTitle className="text-base">Preview</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 text-sm">
-            <Row label="Subtotal" value={fmtINR(draft.subtotal)} />
+            <Row label="Subtotal" value={formatINR(draft.subtotal)} />
 
             {draft.gst.mode === "RCM" && (
               <p className="text-xs text-muted-foreground">
@@ -314,19 +313,19 @@ export function InvoiceBuilderForm({
             )}
             {draft.gst.mode === "CGST_SGST" && (
               <>
-                <Row label={draft.gst.labels.cgst ?? "CGST"} value={fmtINR(draft.gst.cgst)} />
-                <Row label={draft.gst.labels.sgst ?? "SGST"} value={fmtINR(draft.gst.sgst)} />
+                <Row label={draft.gst.labels.cgst ?? "CGST"} value={formatINR(draft.gst.cgst)} />
+                <Row label={draft.gst.labels.sgst ?? "SGST"} value={formatINR(draft.gst.sgst)} />
               </>
             )}
             {draft.gst.mode === "IGST" && (
-              <Row label={draft.gst.labels.igst ?? "IGST"} value={fmtINR(draft.gst.igst)} />
+              <Row label={draft.gst.labels.igst ?? "IGST"} value={formatINR(draft.gst.igst)} />
             )}
 
-            <Row label={draft.toll_label} value={fmtINR(draft.toll_total)} />
+            <Row label={draft.toll_label} value={formatINR(draft.toll_total)} />
 
             <div className="border-t pt-2 flex justify-between text-base font-medium">
               <span>Net</span>
-              <span className="font-mono">{fmtINR(draft.net_amount)}</span>
+              <span className="font-mono">{formatINR(draft.net_amount)}</span>
             </div>
 
             <p className="text-xs text-muted-foreground italic">

@@ -26,6 +26,7 @@ import type {
   Vehicle,
 } from "@/lib/supabase/types";
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
+import { formatINR } from "@/lib/format";
 import {
   commitBulkRowsAction,
   discardBulkDraftAction,
@@ -37,8 +38,6 @@ import {
 const CAR_TYPES: CarType[] = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"];
 const decimalRegex = /^\d*\.?\d*$/;
 
-const fmtINR = (n: number) =>
-  n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const toNum = (s: string) => {
   if (!s) return 0;
@@ -237,7 +236,7 @@ export function BulkAddClient({
           <span className="text-sm">
             <span className="font-medium">{readyCount}</span> of{" "}
             <span className="font-medium">{rows.length}</span> ready ·{" "}
-            <span className="font-mono">₹{fmtINR(runningTotal)}</span>
+            <span className="font-mono">{formatINR(runningTotal)}</span>
           </span>
           <Button
             variant="outline"
@@ -501,7 +500,7 @@ export function BulkAddClient({
                         <span className="text-muted-foreground">—</span>
                       )
                     ) : (
-                      fmtINR(c.amount)
+                      formatINR(c.amount)
                     )}
                   </td>
                   <td>
@@ -538,7 +537,7 @@ export function BulkAddClient({
                 Running total
               </td>
               <td className="px-2 py-2 text-right font-mono text-sm font-semibold">
-                {fmtINR(runningTotal)}
+                {formatINR(runningTotal)}
               </td>
               <td></td>
             </tr>

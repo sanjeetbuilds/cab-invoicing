@@ -23,18 +23,12 @@ import type {
   Invoice,
   Trip,
 } from "@/lib/supabase/types";
+import { formatINR } from "@/lib/format";
 import { SeedBanner } from "./seed/seed-banner";
 
 export const metadata = {
   title: "Dashboard — Krishna Cabs",
 };
-
-function fmtINR(n: number) {
-  return `₹${n.toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
 
 function fmtDate(iso: string) {
   const [y, m, d] = iso.split("-");
@@ -180,7 +174,7 @@ export default async function DashboardPage() {
         />
         <StatCard
           label="Outstanding"
-          value={outstanding > 0 ? fmtINR(outstanding) : "—"}
+          value={outstanding > 0 ? formatINR(outstanding) : "—"}
           hint={
             unpaidInvoices && unpaidInvoices.length > 0
               ? `${unpaidInvoices.length} unpaid invoice${
@@ -192,7 +186,7 @@ export default async function DashboardPage() {
         />
         <StatCard
           label="Billed this month"
-          value={billedThisMonth > 0 ? fmtINR(billedThisMonth) : "—"}
+          value={billedThisMonth > 0 ? formatINR(billedThisMonth) : "—"}
           hint={`since ${fmtDate(monthStart)}`}
           href="/invoices?status=all"
         />
@@ -293,7 +287,7 @@ export default async function DashboardPage() {
                     <TableCell className="font-mono">{fmtDate(inv.invoice_date)}</TableCell>
                     <TableCell>{inv.client_name}</TableCell>
                     <TableCell className="text-right font-mono">
-                      {fmtINR(Number(inv.net_amount))}
+                      {formatINR(Number(inv.net_amount))}
                     </TableCell>
                     <TableCell className="text-center">
                       <StatusBadge status={inv.status} />

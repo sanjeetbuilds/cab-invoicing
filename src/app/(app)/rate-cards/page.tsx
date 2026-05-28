@@ -16,13 +16,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Client, RateCard } from "@/lib/supabase/types";
+import { formatINR } from "@/lib/format";
 import { AddRateCardButton } from "./add-rate-card-button";
 import { RateCardRowActions } from "./rate-card-row-actions";
 
 export const metadata = { title: "Rate cards — Krishna Cabs" };
 
 function fmt(n: number | null) {
-  return n == null ? "—" : `₹${n.toLocaleString("en-IN")}`;
+  return n == null ? "—" : formatINR(n);
 }
 
 export default async function RateCardsPage() {
