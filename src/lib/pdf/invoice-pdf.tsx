@@ -14,9 +14,7 @@ import type {
 } from "@/lib/supabase/types";
 import { formatINR, formatINRBlank, formatQty } from "@/lib/format";
 
-// The default PDF Type-1 fonts (Helvetica/Times) do NOT include the rupee
-// symbol (U+20B9). Register Inter from local files (bundled in /public/fonts/)
-// so ₹ renders and there's no network request at PDF time.
+// Inter has ₹ (Helvetica Type-1 does not). Local files avoid CDN cold-start.
 const fontDir = path.join(process.cwd(), "public", "fonts");
 Font.register({
   family: "Inter",
@@ -46,10 +44,7 @@ const COLORS = {
   text: "#1a1a1a",
   muted: "#555555",
   faint: "#7a7a7a",
-  line: "#d8d8d8",
-  lineHeavy: "#888888",
-  thBg: "#f4f2eb",
-  footText: "#333333",
+  line: "#bfbfbf",
 };
 
 const PT = (mm: number) => (mm / 25.4) * 72;
@@ -57,24 +52,24 @@ const PT = (mm: number) => (mm / 25.4) * 72;
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Inter",
-    fontSize: 9.5,
-    paddingTop: PT(14) + 88,
+    fontSize: 10,
+    paddingTop: PT(14) + 92,
     paddingBottom: PT(16) + 18,
-    paddingHorizontal: PT(12),
+    paddingHorizontal: PT(14),
     color: COLORS.text,
     lineHeight: 1.4,
   },
 
-  // ── Fixed top header band (3 columns) ──
+  // ── Header band ──
   header: {
     position: "absolute",
     top: PT(14),
-    left: PT(12),
-    right: PT(12),
+    left: PT(14),
+    right: PT(14),
     flexDirection: "row",
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.75,
     borderBottomColor: COLORS.black,
-    paddingBottom: 8,
+    paddingBottom: 10,
   },
   hCol1: { width: "33%", paddingRight: 6 },
   hCol2: { width: "42%", paddingHorizontal: 6 },
@@ -82,156 +77,132 @@ const styles = StyleSheet.create({
 
   companyName: {
     fontFamily: "Inter-Bold",
-    fontSize: 14,
+    fontSize: 15,
     color: COLORS.black,
-    letterSpacing: 0.4,
-    marginBottom: 3,
+    letterSpacing: 0.6,
+    marginBottom: 4,
   },
-  companyMeta: { fontSize: 8.5, marginBottom: 1 },
-  companyAddress: { fontSize: 8.5, marginTop: 4 },
+  companyMeta: { fontSize: 9, marginBottom: 1 },
+  companyAddress: { fontSize: 9, marginTop: 5, lineHeight: 1.35 },
 
-  billLine: { fontSize: 9, marginBottom: 1 },
+  billLine: { fontSize: 9.5, marginBottom: 1 },
   billLineBold: {
     fontFamily: "Inter-Bold",
-    fontSize: 9.5,
-    marginBottom: 1,
+    fontSize: 10,
+    marginBottom: 2,
   },
+  billContact: { fontSize: 9, marginTop: 4, color: COLORS.muted },
 
   gstinHeader: {
     fontSize: 9,
     fontFamily: "Inter-Bold",
     color: COLORS.black,
-    marginBottom: 12,
+    marginBottom: 14,
     textAlign: "right",
   },
   invoiceNumber: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontFamily: "Inter-Bold",
     color: COLORS.black,
     marginBottom: 3,
     textAlign: "right",
   },
-  invoiceDate: { fontSize: 9, textAlign: "right" },
+  invoiceDate: { fontSize: 9.5, textAlign: "right" },
 
   // ── Table ──
-  table: { marginTop: 4 },
+  table: { marginTop: 6 },
   thRow: {
     flexDirection: "row",
-    backgroundColor: COLORS.thBg,
-    borderTopWidth: 0.5,
+    paddingTop: 6,
+    paddingBottom: 5,
     borderBottomWidth: 0.5,
-    borderColor: COLORS.lineHeavy,
+    borderBottomColor: COLORS.black,
   },
   th: {
-    fontSize: 8,
+    fontSize: 8.5,
     fontFamily: "Inter-Bold",
-    paddingVertical: 4,
-    paddingHorizontal: 5,
-    borderRightWidth: 0.5,
-    borderRightColor: COLORS.line,
     color: COLORS.black,
+    paddingHorizontal: 4,
   },
-  thLast: { borderRightWidth: 0 },
+  thNum: { textAlign: "right" },
+
+  // Trip-group wrapper — gives a touch of separation between duties
+  groupBlock: { paddingTop: 8, paddingBottom: 6 },
+  groupBlockDivider: {
+    borderTopWidth: 0.25,
+    borderTopColor: COLORS.line,
+  },
+
   tr: {
     flexDirection: "row",
-    borderBottomWidth: 0.5,
-    borderBottomColor: COLORS.line,
+    paddingVertical: 2,
   },
-  trGroupTop: { borderTopWidth: 0.5, borderTopColor: COLORS.line },
   td: {
-    fontSize: 9,
-    paddingVertical: 3,
-    paddingHorizontal: 5,
-    borderRightWidth: 0.5,
-    borderRightColor: COLORS.line,
-  },
-  tdFirst: { borderLeftWidth: 0.5, borderLeftColor: COLORS.line },
-  tdLast: { borderRightWidth: 0.5, borderRightColor: COLORS.line },
-  num: { textAlign: "right" },
-
-  colDate: { width: 56 },
-  colVehicle: { width: 84 },
-  colHsn: { width: 42 },
-  colPart: { flex: 1 },
-  colQty: { width: 42 },
-  colRate: { width: 52 },
-  colAmount: { width: 66 },
-
-  totalRow: {
-    flexDirection: "row",
-    borderTopWidth: 0.75,
-    borderBottomWidth: 0.5,
-    borderColor: COLORS.lineHeavy,
-  },
-  totalLabel: {
-    flex: 1,
-    textAlign: "right",
-    fontFamily: "Inter-Bold",
     fontSize: 9.5,
-    paddingVertical: 5,
-    paddingHorizontal: 5,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    color: COLORS.text,
   },
-  totalAmount: {
-    fontFamily: "Inter-Bold",
-    fontSize: 10,
-    paddingVertical: 5,
-    paddingHorizontal: 5,
-    width: 66,
-    textAlign: "right",
-  },
+  tdMuted: { color: COLORS.muted },
+  tdNum: { textAlign: "right" },
 
-  // ── Bottom: totals + words + terms ──
-  bottom: { marginTop: 10 },
-  totalsBox: { width: 260, marginLeft: "auto", fontSize: 10 },
+  // Column widths (sum ≈ A4 usable width 545pt at 14mm margins).
+  colDate: { width: 56 },
+  colVehicle: { width: 46 },
+  colType: { width: 50 },
+  colHsn: { width: 50 },
+  colPart: { flex: 1 },
+  colRate: { width: 62 },
+  colAmount: { width: 78 },
+
+  // ── Totals block ──
+  totalsWrap: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 14,
+    paddingTop: 10,
+    borderTopWidth: 0.5,
+    borderTopColor: COLORS.black,
+  },
+  totalsBox: { width: 250 },
   totalsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 2,
+    paddingVertical: 2.5,
+    fontSize: 10,
   },
   totalsLabel: { color: COLORS.text },
   totalsValue: { color: COLORS.text },
-  totalsUnderRcm: {
-    color: COLORS.muted,
-  },
+  totalsValueMuted: { color: COLORS.muted },
   totalsGrandRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    borderTopWidth: 1.25,
-    borderTopColor: COLORS.black,
-    paddingTop: 5,
-    marginTop: 3,
-  },
-  totalsGrandText: {
-    fontFamily: "Inter-Bold",
-    fontSize: 12,
-  },
-  words: {
-    fontSize: 9.5,
-    marginTop: 12,
-    paddingTop: 7,
+    paddingTop: 8,
+    marginTop: 5,
     borderTopWidth: 0.5,
-    borderTopColor: COLORS.line,
+    borderTopColor: COLORS.black,
   },
-  wordsLabel: {
-    fontFamily: "Inter-Bold",
+  totalsGrandText: { fontFamily: "Inter-Bold", fontSize: 12 },
+
+  words: {
+    fontSize: 10,
+    marginTop: 14,
   },
+  wordsLabel: { fontFamily: "Inter-Bold" },
 
   foot: {
-    marginTop: 14,
+    marginTop: 18,
     fontSize: 8.5,
-    color: COLORS.footText,
-    borderTopWidth: 0.5,
-    borderTopColor: COLORS.line,
-    paddingTop: 7,
+    color: COLORS.muted,
     lineHeight: 1.5,
   },
   footBold: { fontFamily: "Inter-Bold", color: COLORS.black },
-  termLine: { marginTop: 1 },
+  termLine: { marginTop: 2 },
 
   pageNum: {
     position: "absolute",
     bottom: PT(8),
-    right: PT(12),
+    right: PT(14),
     fontSize: 8,
     color: COLORS.faint,
   },
@@ -257,6 +228,16 @@ function groupLines(lines: InvoiceLine[]): LineGroup[] {
   return groups;
 }
 
+function splitVehicleLabel(label: string | null | undefined): {
+  vehicle: string;
+  type: string;
+} {
+  if (!label) return { vehicle: "", type: "" };
+  const i = label.lastIndexOf(" ");
+  if (i === -1) return { vehicle: "", type: label };
+  return { vehicle: label.slice(0, i), type: label.slice(i + 1) };
+}
+
 export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
   const fullNumber = `${company.invoice_prefix ?? ""}${invoice.invoice_number}`;
   const groups = groupLines([...lines].sort((a, b) => a.sort_order - b.sort_order));
@@ -266,22 +247,21 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
     invoice.gst_mode === "CGST_SGST"
       ? "CGST @ 2.5%"
       : invoice.gst_mode === "RCM"
-        ? "CGST @ 2.5%"
+        ? "CGST @ 2.5% Under RCM"
         : null;
   const sgstLabel =
     invoice.gst_mode === "CGST_SGST"
       ? "SGST @ 2.5%"
       : invoice.gst_mode === "RCM"
-        ? "SGST @ 2.5%"
+        ? "SGST @ 2.5% Under RCM"
         : null;
   const igstLabel = invoice.gst_mode === "IGST" ? "IGST @ 5%" : null;
 
   return (
     <Document title={`Invoice ${fullNumber}`}>
       <Page size="A4" style={styles.page} wrap>
-        {/* Fixed 3-column header on every page */}
+        {/* ── Fixed top header ── */}
         <View fixed style={styles.header}>
-          {/* Col 1 — Company */}
           <View style={styles.hCol1}>
             <Text style={styles.companyName}>
               {(company.name ?? "").toUpperCase()}
@@ -293,7 +273,6 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
             )}
           </View>
 
-          {/* Col 2 — Bill to */}
           <View style={styles.hCol2}>
             <Text style={styles.billLineBold}>
               To- {(invoice.client_name ?? "").toUpperCase()}
@@ -305,13 +284,12 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
               {invoice.client_gstin ? `GSTIN ${invoice.client_gstin}` : "GSTIN NA"}
             </Text>
             {invoice.client_booked_by && (
-              <Text style={[styles.billLine, { marginTop: 4 }]}>
+              <Text style={styles.billContact}>
                 Booked By- {invoice.client_booked_by}
               </Text>
             )}
           </View>
 
-          {/* Col 3 — GSTIN + invoice meta */}
           <View style={styles.hCol3}>
             {company.gstin && (
               <Text style={styles.gstinHeader}>GSTIN {company.gstin}</Text>
@@ -321,74 +299,86 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
           </View>
         </View>
 
-        {/* Lines table */}
-        <View style={styles.table}>
-          <View fixed style={styles.thRow}>
-            <Text style={[styles.th, styles.colDate]}>Date</Text>
-            <Text style={[styles.th, styles.colVehicle]}>Vehicle Type</Text>
-            <Text style={[styles.th, styles.colHsn]}>HSN Code</Text>
-            <Text style={[styles.th, styles.colPart]}>Particulars</Text>
-            <Text style={[styles.th, styles.colQty, styles.num]}>Qty</Text>
-            <Text style={[styles.th, styles.colRate, styles.num]}>Rate</Text>
-            <Text style={[styles.th, styles.colAmount, styles.num, styles.thLast]}>
-              Amount
-            </Text>
-          </View>
+        {/* ── Column headers (repeat on each page) ── */}
+        <View fixed style={styles.thRow}>
+          <Text style={[styles.th, styles.colDate]}>Date</Text>
+          <Text style={[styles.th, styles.colVehicle]}>Vehicle</Text>
+          <Text style={[styles.th, styles.colType]}>Type</Text>
+          <Text style={[styles.th, styles.colHsn]}>HSN Code</Text>
+          <Text style={[styles.th, styles.colPart]}>Particulars</Text>
+          <Text style={[styles.th, styles.colRate, styles.thNum]}>Rate</Text>
+          <Text style={[styles.th, styles.colAmount, styles.thNum]}>Amount</Text>
+        </View>
 
-          {groups.map((group, gi) => (
-            <View key={group.trip_id ?? `g${gi}`} wrap={false}>
+        {/* ── Trip groups ── */}
+        {groups.map((group, gi) => {
+          const { vehicle, type } = splitVehicleLabel(
+            group.lines[0]?.vehicle_label,
+          );
+          const firstDate = group.lines[0]?.date ?? "";
+          const hsn = group.lines[0]?.hsn_code ?? "";
+          return (
+            <View
+              key={group.trip_id ?? `g${gi}`}
+              wrap={false}
+              style={[
+                styles.groupBlock,
+                gi > 0 ? styles.groupBlockDivider : {},
+              ]}
+            >
               {group.lines.map((l, li) => {
                 const isFirst = li === 0;
                 return (
-                  <View
-                    key={l.id}
-                    style={[styles.tr, isFirst ? styles.trGroupTop : {}]}
-                  >
-                    <Text style={[styles.td, styles.tdFirst, styles.colDate]}>
-                      {isFirst ? (l.date ?? "") : ""}
+                  <View key={l.id} style={styles.tr}>
+                    <Text style={[styles.td, styles.colDate]}>
+                      {isFirst ? firstDate : ""}
                     </Text>
-                    <Text style={[styles.td, styles.colVehicle]}>
-                      {isFirst ? (l.vehicle_label ?? "") : ""}
+                    <Text style={[styles.td, styles.colVehicle, styles.tdMuted]}>
+                      {isFirst ? vehicle : ""}
                     </Text>
-                    <Text style={[styles.td, styles.colHsn]}>
-                      {isFirst ? (l.hsn_code ?? "") : ""}
+                    <Text style={[styles.td, styles.colType, styles.tdMuted]}>
+                      {isFirst ? type : ""}
                     </Text>
-                    <Text style={[styles.td, styles.colPart]}>{l.particulars ?? ""}</Text>
-                    <Text style={[styles.td, styles.colQty, styles.num]}>
-                      {formatQty(l.qty)}
+                    <Text style={[styles.td, styles.colHsn, styles.tdMuted]}>
+                      {isFirst ? hsn : ""}
                     </Text>
-                    <Text style={[styles.td, styles.colRate, styles.num]}>
+                    <Text style={[styles.td, styles.colPart]}>
+                      {l.particulars ?? ""}
+                      {l.qty != null ? `\n${formatQty(l.qty)}` : ""}
+                    </Text>
+                    <Text style={[styles.td, styles.colRate, styles.tdNum]}>
                       {formatINRBlank(l.rate)}
                     </Text>
-                    <Text
-                      style={[styles.td, styles.colAmount, styles.num, styles.tdLast]}
-                    >
+                    <Text style={[styles.td, styles.colAmount, styles.tdNum]}>
                       {formatINRBlank(l.amount)}
                     </Text>
                   </View>
                 );
               })}
             </View>
-          ))}
+          );
+        })}
 
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalAmount}>{formatINR(invoice.subtotal)}</Text>
-          </View>
-        </View>
-
-        {/* Bottom — totals, words, terms, footer */}
-        <View wrap={false} style={styles.bottom}>
+        {/* ── Totals ── */}
+        <View wrap={false} style={styles.totalsWrap}>
           <View style={styles.totalsBox}>
+            <View style={styles.totalsRow}>
+              <Text style={styles.totalsLabel}>Total</Text>
+              <Text style={styles.totalsValue}>{formatINR(invoice.subtotal)}</Text>
+            </View>
             {cgstLabel && (
               <View style={styles.totalsRow}>
                 <Text style={styles.totalsLabel}>{cgstLabel}</Text>
                 <Text
                   style={
-                    invoice.gst_mode === "RCM" ? styles.totalsUnderRcm : styles.totalsValue
+                    invoice.gst_mode === "RCM"
+                      ? styles.totalsValueMuted
+                      : styles.totalsValue
                   }
                 >
-                  {invoice.gst_mode === "RCM" ? "Under RCM" : formatINRBlank(invoice.cgst)}
+                  {invoice.gst_mode === "RCM"
+                    ? "—"
+                    : formatINRBlank(invoice.cgst)}
                 </Text>
               </View>
             )}
@@ -397,10 +387,14 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
                 <Text style={styles.totalsLabel}>{sgstLabel}</Text>
                 <Text
                   style={
-                    invoice.gst_mode === "RCM" ? styles.totalsUnderRcm : styles.totalsValue
+                    invoice.gst_mode === "RCM"
+                      ? styles.totalsValueMuted
+                      : styles.totalsValue
                   }
                 >
-                  {invoice.gst_mode === "RCM" ? "Under RCM" : formatINRBlank(invoice.sgst)}
+                  {invoice.gst_mode === "RCM"
+                    ? "—"
+                    : formatINRBlank(invoice.sgst)}
                 </Text>
               </View>
             )}
@@ -427,26 +421,28 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
               </Text>
             </View>
           </View>
+        </View>
 
-          <Text style={styles.words}>
-            <Text style={styles.wordsLabel}>In Words: </Text>
-            {invoice.amount_in_words}
-          </Text>
+        {/* ── In words ── */}
+        <Text style={styles.words}>
+          <Text style={styles.wordsLabel}>In Words: </Text>
+          {invoice.amount_in_words}
+        </Text>
 
-          <View style={styles.foot}>
-            <Text style={styles.footBold}>E&OE</Text>
-            {terms.length > 0 && (
-              <Text style={styles.termLine}>
-                <Text style={styles.footBold}>TERMS & CONDITIONS : </Text>
-                {terms[0]}
-              </Text>
-            )}
-            {terms.slice(1).map((t, i) => (
-              <Text key={i} style={styles.termLine}>
-                {t}
-              </Text>
-            ))}
-          </View>
+        {/* ── Footer ── */}
+        <View wrap={false} style={styles.foot}>
+          <Text style={styles.footBold}>E&OE</Text>
+          {terms.length > 0 && (
+            <Text style={styles.termLine}>
+              <Text style={styles.footBold}>TERMS &amp; CONDITIONS : </Text>
+              {terms[0]}
+            </Text>
+          )}
+          {terms.slice(1).map((t, i) => (
+            <Text key={i} style={styles.termLine}>
+              {t}
+            </Text>
+          ))}
         </View>
 
         <Text
