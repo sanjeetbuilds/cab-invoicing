@@ -272,6 +272,6 @@ describe("buildInvoiceDraft", () => {
     });
 
     expect(draft.net_amount).toBe(5800);
-    expect(draft.amount_in_words).toBe("Five Thousand Eight Hundred Rupees Only");
+    expect(draft.amount_in_words).toBe("Five Thousand Eight Hundred Only.");
   });
 });

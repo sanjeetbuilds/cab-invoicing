@@ -131,7 +131,7 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
     subtotal + gst.cgst + gst.sgst + gst.igst + toll_total,
   );
 
-  const amount_in_words = `${numberToWords(Math.round(net_amount))} Rupees Only`;
+  const amount_in_words = `${numberToWords(Math.round(net_amount))} Only.`;
 
   return {
     lines,

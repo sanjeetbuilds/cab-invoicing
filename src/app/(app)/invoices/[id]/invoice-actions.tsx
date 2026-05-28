@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { RotateCcw } from "lucide-react";
+import { Download, RotateCcw } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,8 +24,6 @@ export function InvoiceActions({ invoice }: { invoice: Invoice }) {
   const [confirmReverse, setConfirmReverse] = useState(false);
   const [pending, setPending] = useState(false);
 
-  if (invoice.status === "reversed") return null;
-
   async function onReverse() {
     setPending(true);
     const result = await reverseInvoiceAction({ id: invoice.id });
@@ -39,17 +37,30 @@ export function InvoiceActions({ invoice }: { invoice: Invoice }) {
     }
   }
 
+  const reversed = invoice.status === "reversed";
+
   return (
     <>
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          onClick={() => setConfirmReverse(true)}
-          disabled={pending}
+      <div className="flex gap-2 flex-wrap">
+        <a
+          href={`/api/invoices/${invoice.id}/pdf`}
+          target="_blank"
+          rel="noreferrer"
+          className={buttonVariants({ variant: "outline" })}
         >
-          <RotateCcw className="h-4 w-4" />
-          Reverse
-        </Button>
+          <Download className="h-4 w-4" />
+          PDF
+        </a>
+        {!reversed && (
+          <Button
+            variant="outline"
+            onClick={() => setConfirmReverse(true)}
+            disabled={pending}
+          >
+            <RotateCcw className="h-4 w-4" />
+            Reverse
+          </Button>
+        )}
       </div>
 
       <AlertDialog open={confirmReverse} onOpenChange={setConfirmReverse}>
