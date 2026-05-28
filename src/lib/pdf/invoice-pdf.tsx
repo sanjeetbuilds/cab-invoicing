@@ -14,15 +14,18 @@ import type {
 } from "@/lib/supabase/types";
 import { formatINR, formatINRBlank, formatQty } from "@/lib/format";
 
-// Inter latin-ext includes the rupee symbol (U+20B9).
+// Noto Sans natively includes the rupee symbol (U+20B9) and every other
+// character we render. Using a single font family for the whole document
+// avoids the "fallback heavier glyph mid-line" effect seen when Inter's
+// woff subset was missing ₹ and react-pdf fell back to Helvetica.
 const fontDir = path.join(process.cwd(), "public", "fonts");
 Font.register({
-  family: "Inter",
-  src: path.join(fontDir, "Inter-Regular.woff"),
+  family: "NotoSans",
+  src: path.join(fontDir, "NotoSans-Regular.woff"),
 });
 Font.register({
-  family: "Inter-Bold",
-  src: path.join(fontDir, "Inter-Bold.woff"),
+  family: "NotoSans-Medium",
+  src: path.join(fontDir, "NotoSans-Medium.woff"),
 });
 
 interface LineGroup {
@@ -51,7 +54,7 @@ const PT = (mm: number) => (mm / 25.4) * 72;
 
 const styles = StyleSheet.create({
   page: {
-    fontFamily: "Inter",
+    fontFamily: "NotoSans",
     fontSize: 9,
     paddingTop: PT(14),
     paddingBottom: PT(16) + 16,
@@ -63,15 +66,15 @@ const styles = StyleSheet.create({
   // ── Header band ──
   headerRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
     paddingBottom: 9,
     borderBottomWidth: 0.6,
     borderBottomColor: COLORS.ruleStrong,
   },
-  hLeft: { width: "70%" },
-  hRight: { width: "28%", alignItems: "flex-end" },
+  hLeft: { flex: 1, paddingRight: 16 },
+  hRight: { width: 160, alignItems: "flex-end" },
   companyName: {
-    fontFamily: "Inter-Bold",
+    fontFamily: "NotoSans-Medium",
     fontSize: 13,
     letterSpacing: 0.5,
     color: COLORS.text,
@@ -101,7 +104,7 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.ruleStrong,
   },
   th: {
-    fontFamily: "Inter-Bold",
+    fontFamily: "NotoSans-Medium",
     fontSize: 8,
     letterSpacing: 0.2,
     color: COLORS.text,
@@ -162,7 +165,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: COLORS.ruleStrong,
   },
-  totalsGrandText: { fontFamily: "Inter-Bold", fontSize: 11 },
+  totalsGrandText: { fontFamily: "NotoSans-Medium", fontSize: 11 },
 
   words: {
     fontSize: 9.5,
