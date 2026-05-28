@@ -37,18 +37,8 @@ function groupLines(lines: InvoiceLine[]): LineGroup[] {
   return groups;
 }
 
-function splitVehicleLabel(label: string | null | undefined): {
-  vehicle: string;
-  type: string;
-} {
-  if (!label) return { vehicle: "", type: "" };
-  const i = label.lastIndexOf(" ");
-  if (i === -1) return { vehicle: "", type: label };
-  return { vehicle: label.slice(0, i), type: label.slice(i + 1) };
-}
-
-// Column widths shared between header and rows — same grid template across.
-const GRID = "52px 40px 46px 46px 1fr 44px 54px 70px";
+// Single grid template shared between header row and body rows.
+const GRID = "64px 82px 50px 1fr 46px 56px 76px";
 
 export default async function InvoiceViewPage({
   params,
@@ -84,6 +74,8 @@ export default async function InvoiceViewPage({
   const fullNumber = `${company.invoice_prefix ?? ""}${invoice.invoice_number}`;
   const groups = groupLines(lineList);
   const terms = (company.terms_invoice ?? []).filter(Boolean);
+
+  const contactLine = [company.phone, company.email].filter(Boolean).join("  ·  ");
 
   const cgstLabel =
     invoice.gst_mode === "CGST_SGST"
@@ -128,79 +120,64 @@ export default async function InvoiceViewPage({
       </div>
 
       <Card>
-        <CardContent className="py-8 px-8">
-          {/* Letterhead */}
-          <div className="grid grid-cols-12 gap-4 pb-2.5 border-b border-black">
-            <div className="col-span-12 sm:col-span-4">
-              <p className="font-bold text-base tracking-[0.04em]">
+        <CardContent className="py-7 px-7 text-[12.5px] leading-snug text-foreground">
+          {/* Header: stacked company info on left, INVOICE-N + Date right */}
+          <div className="flex items-start justify-between gap-6 pb-2.5 border-b border-black">
+            <div className="min-w-0">
+              <p className="font-semibold text-[15px] tracking-[0.04em]">
                 {(company.name ?? "").toUpperCase()}
               </p>
-              {company.phone && (
-                <p className="text-xs mt-1.5">{company.phone}</p>
+              {contactLine && (
+                <p className="mt-1">{contactLine}</p>
               )}
-              {company.email && <p className="text-xs">{company.email}</p>}
               {company.address && (
-                <p className="text-xs mt-2.5 whitespace-pre-line leading-snug">
-                  {company.address}
-                </p>
+                <p className="mt-0.5 whitespace-pre-line">{company.address}</p>
               )}
-            </div>
-
-            <div className="col-span-12 sm:col-span-5">
-              <p className="font-semibold text-sm">
-                To- {(invoice.client_name ?? "").toUpperCase()}
-              </p>
-              {invoice.client_address && (
-                <p className="text-xs mt-1 whitespace-pre-line">
-                  {invoice.client_address}
-                </p>
-              )}
-              <p className="text-xs mt-1">
-                {invoice.client_gstin ? `GSTIN ${invoice.client_gstin}` : "GSTIN NA"}
-              </p>
-              {invoice.client_booked_by && (
-                <p className="text-xs mt-2.5 text-muted-foreground">
-                  Booked By- {invoice.client_booked_by}
-                </p>
-              )}
-            </div>
-
-            <div className="col-span-12 sm:col-span-3 text-right">
               {company.gstin && (
-                <p className="text-xs font-bold mb-3.5">GSTIN {company.gstin}</p>
+                <p className="mt-0.5">GSTIN {company.gstin}</p>
               )}
-              <p className="font-bold">INVOICE- {fullNumber}</p>
-              <p className="text-xs mt-1">Date: {fmtDate(invoice.invoice_date)}</p>
             </div>
+            <div className="text-right shrink-0">
+              <p className="text-[14px]">INVOICE- {fullNumber}</p>
+              <p className="mt-0.5">Date: {fmtDate(invoice.invoice_date)}</p>
+            </div>
+          </div>
+
+          {/* Bill-to block */}
+          <div className="mt-3">
+            <p>To- {(invoice.client_name ?? "").toUpperCase()}</p>
+            <p className="mt-0.5">
+              {invoice.client_gstin ? `GSTIN - ${invoice.client_gstin}` : "GSTIN NA"}
+            </p>
+            {invoice.client_booked_by && (
+              <p className="mt-0.5">Booked By- {invoice.client_booked_by}</p>
+            )}
           </div>
 
           {/* Column headers */}
           <div
-            className="grid gap-2 mt-5 pb-1.5 border-b border-black text-[10px] font-semibold uppercase tracking-wider text-foreground"
+            className="grid gap-2 mt-4 pt-1.5 pb-1 border-t border-border/60 border-b border-black text-[10px] font-semibold uppercase tracking-wider"
             style={{ gridTemplateColumns: GRID }}
           >
             <div>Date</div>
-            <div>Vehicle</div>
-            <div>Type</div>
+            <div>Vehicle / Type</div>
             <div>HSN Code</div>
             <div>Particulars</div>
-            <div className="text-right">Qty</div>
+            <div className="text-right">Units</div>
             <div className="text-right">Rate</div>
             <div className="text-right">Amount</div>
           </div>
 
-          {/* Trip groups — tight rows */}
-          <div className="text-[12.5px] leading-snug">
+          {/* Trip groups */}
+          <div className="text-[12px]">
             {groups.map((group, gi) => {
-              const { vehicle, type } = splitVehicleLabel(
-                group.lines[0]?.vehicle_label,
-              );
+              const vehicle = group.lines[0]?.vehicle_label ?? "";
               const firstDate = group.lines[0]?.date ?? "";
               const hsn = group.lines[0]?.hsn_code ?? "";
               return (
                 <div
                   key={group.trip_id ?? `g${gi}`}
-                  className={`py-1 ${gi > 0 ? "border-t border-border/50" : ""}`}
+                  className={`py-1 ${gi > 0 ? "border-t border-border/40" : ""}`}
                 >
                   {group.lines.map((l, li) => {
                     const isFirst = li === 0;
@@ -210,14 +187,11 @@ export default async function InvoiceViewPage({
                         className="grid gap-2 py-px"
                         style={{ gridTemplateColumns: GRID }}
                       >
-                        <div className="font-mono text-[11px]">
+                        <div className="font-mono text-[11px] whitespace-pre-line">
                           {isFirst ? firstDate : ""}
                         </div>
                         <div className="font-mono text-[11px] text-muted-foreground">
                           {isFirst ? vehicle : ""}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {isFirst ? type : ""}
                         </div>
                         <div className="font-mono text-[11px] text-muted-foreground">
                           {isFirst ? hsn : ""}
@@ -243,8 +217,8 @@ export default async function InvoiceViewPage({
           </div>
 
           {/* Totals */}
-          <div className="mt-5 pt-2.5 border-t border-black flex justify-end">
-            <div className="w-full sm:w-72 flex flex-col gap-1 text-sm">
+          <div className="mt-4 pt-2 border-t border-black flex justify-end">
+            <div className="w-full sm:w-72 flex flex-col gap-0.5 text-[13px]">
               <Row label="Total" value={formatINR(invoice.subtotal)} />
               {cgstLabel && (
                 <Row
@@ -269,7 +243,7 @@ export default async function InvoiceViewPage({
                   value={formatINR(invoice.toll_total)}
                 />
               )}
-              <div className="mt-1.5 pt-1.5 border-t border-black flex justify-between font-bold text-base">
+              <div className="mt-1 pt-1 border-t border-black flex justify-between font-semibold text-[15px]">
                 <span>Net Amount</span>
                 <span className="tabular-nums">{formatINR(invoice.net_amount)}</span>
               </div>
@@ -277,17 +251,14 @@ export default async function InvoiceViewPage({
           </div>
 
           {/* In words */}
-          <p className="mt-4 text-sm">
-            <span className="font-bold">In Words: </span>
-            {invoice.amount_in_words}
-          </p>
+          <p className="mt-3">In Words: {invoice.amount_in_words}</p>
 
           {/* Footer */}
-          <div className="mt-5 text-xs text-muted-foreground leading-relaxed">
-            <p className="font-bold text-foreground">E&amp;OE</p>
+          <div className="mt-4 text-[11.5px] text-muted-foreground leading-relaxed">
+            <p className="text-foreground">E&amp;OE</p>
             {terms.length > 0 && (
-              <p className="mt-1">
-                <span className="font-bold text-foreground">TERMS &amp; CONDITIONS :</span>{" "}
+              <p className="mt-0.5">
+                <span className="text-foreground">TERMS &amp; CONDITIONS :</span>{" "}
                 {terms[0]}
               </p>
             )}
@@ -312,12 +283,8 @@ function Row({
 }) {
   return (
     <div className="flex justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span
-        className={
-          muted ? "italic text-muted-foreground" : "tabular-nums text-foreground"
-        }
-      >
+      <span>{label}</span>
+      <span className={muted ? "italic text-muted-foreground" : "tabular-nums"}>
         {value}
       </span>
     </div>
