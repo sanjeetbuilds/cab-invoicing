@@ -3,55 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireWriter } from "@/lib/auth";
-import type { BillingMethod, CarType, TripMode } from "@/lib/supabase/types";
-
-/**
- * One row in the bulk draft. All fields are strings (or booleans) so they
- * can round-trip from the form to JSONB without losing partial input.
- */
-export interface BulkDraftRow {
-  date: string;
-  end_date: string;
-  client_id: string;
-  vehicle_id: string;
-  car_type: "" | CarType;
-  mode: "" | TripMode;
-  billing_method: BillingMethod;
-  total_kms: string;
-  total_hours: string;
-  night: boolean;
-  driver_ta: string;
-  extra_charge_amount: string;
-  charge_toll: boolean;
-  charge_tax: boolean;
-  charge_parking: boolean;
-  notes: string;
-  duty_slip_no: string;
-}
-
-const BULK_BUCKET = "trips_bulk_draft";
-
-export function emptyDraftRow(): BulkDraftRow {
-  return {
-    date: "",
-    end_date: "",
-    client_id: "",
-    vehicle_id: "",
-    car_type: "",
-    mode: "",
-    billing_method: "per_km",
-    total_kms: "",
-    total_hours: "",
-    night: false,
-    driver_ta: "",
-    extra_charge_amount: "",
-    charge_toll: false,
-    charge_tax: false,
-    charge_parking: false,
-    notes: "",
-    duty_slip_no: "",
-  };
-}
+import type { BulkDraftRow } from "./draft";
 
 /** Per-row TripSchema — same shape as single-trip TripSchema, mirrored here. */
 const TripRowSchema = z
@@ -116,7 +68,6 @@ export type SaveDraftResult =
 export async function saveBulkDraftAction(
   rows: BulkDraftRow[],
 ): Promise<SaveDraftResult> {
-  void BULK_BUCKET;
   const ctx = await requireWriter();
   if (!ctx.ok) return ctx;
 

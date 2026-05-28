@@ -7,7 +7,7 @@ import type {
   Vehicle,
 } from "@/lib/supabase/types";
 import { BulkAddClient } from "./bulk-add-client";
-import { emptyDraftRow, type BulkDraftRow } from "./actions";
+import { emptyDraftRow, type BulkDraftRow } from "./draft";
 
 export const metadata = { title: "Bulk add trips — Krishna Cabs" };
 

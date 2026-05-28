@@ -30,10 +30,9 @@ import { formatINR } from "@/lib/format";
 import {
   commitBulkRowsAction,
   discardBulkDraftAction,
-  emptyDraftRow,
   saveBulkDraftAction,
-  type BulkDraftRow,
 } from "./actions";
+import { emptyDraftRow, type BulkDraftRow } from "./draft";
 
 const CAR_TYPES: CarType[] = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"];
 const decimalRegex = /^\d*\.?\d*$/;
