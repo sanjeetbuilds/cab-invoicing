@@ -9,7 +9,7 @@ import {
 import { SignInForm } from "./sign-in-form";
 
 export const metadata = {
-  title: "Sign in — Krishna Cabs",
+  title: "Sign in",
 };
 
 export default function SignInPage() {
@@ -17,7 +17,7 @@ export default function SignInPage() {
     <div className="flex flex-1 items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">Welcome to Krishna Cabs</CardTitle>
+          <CardTitle className="text-2xl">Welcome to EasyBills</CardTitle>
           <CardDescription>
             Sign in with your email and password, or create a new account.
           </CardDescription>

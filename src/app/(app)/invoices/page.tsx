@@ -17,7 +17,7 @@ import type { Client, Invoice } from "@/lib/supabase/types";
 import { formatINR } from "@/lib/format";
 import { PageHeader } from "@/components/ui/page-header";
 
-export const metadata = { title: "Invoices — Krishna Cabs" };
+export const metadata = { title: "Invoices" };
 
 type StatusFilter = "all" | "unpaid" | "paid" | "reversed";
 

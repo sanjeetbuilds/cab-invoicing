@@ -16,8 +16,11 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Krishna Cabs",
-  description: "Cab service operations: clients, trips, invoices, payments.",
+  title: {
+    default: "EasyBills",
+    template: "%s — EasyBills",
+  },
+  description: "EasyBills — invoicing for cab service businesses.",
 };
 
 export default function RootLayout({

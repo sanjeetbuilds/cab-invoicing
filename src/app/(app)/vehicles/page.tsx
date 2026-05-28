@@ -14,7 +14,7 @@ import type { Vehicle } from "@/lib/supabase/types";
 import { AddVehicleButton } from "./add-vehicle-button";
 import { VehicleRowActions } from "./vehicle-row-actions";
 
-export const metadata = { title: "Vehicles — Krishna Cabs" };
+export const metadata = { title: "Vehicles" };
 
 export default async function VehiclesPage() {
   const { supabase, membership } = await requireMembership();

@@ -14,7 +14,7 @@ import type { Client } from "@/lib/supabase/types";
 import { AddClientButton } from "./add-client-button";
 import { ClientRowActions } from "./client-row-actions";
 
-export const metadata = { title: "Clients — Krishna Cabs" };
+export const metadata = { title: "Clients" };
 
 export default async function ClientsPage() {
   const { supabase, membership } = await requireMembership();

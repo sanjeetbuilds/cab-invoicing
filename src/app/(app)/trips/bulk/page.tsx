@@ -9,7 +9,7 @@ import type {
 import { BulkAddClient } from "./bulk-add-client";
 import { emptyDraftRow, type BulkDraftRow } from "./draft";
 
-export const metadata = { title: "Bulk add trips — Krishna Cabs" };
+export const metadata = { title: "Bulk add trips" };
 
 interface BulkDraft {
   rows: BulkDraftRow[];

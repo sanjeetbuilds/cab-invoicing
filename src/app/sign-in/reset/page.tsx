@@ -9,7 +9,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { ResetForm } from "./reset-form";
 
-export const metadata = { title: "Set new password — Krishna Cabs" };
+export const metadata = { title: "Set new password" };
 
 export default async function ResetPasswordPage() {
   // The /auth/callback exchanged the code in the email for a session, then

@@ -11,7 +11,7 @@ import { claimPendingInvites } from "@/lib/auth";
 import { OnboardingForm } from "./onboarding-form";
 
 export const metadata = {
-  title: "Create your company — Krishna Cabs",
+  title: "Create your company",
 };
 
 export default async function OnboardingPage() {

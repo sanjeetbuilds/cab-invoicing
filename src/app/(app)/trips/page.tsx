@@ -24,7 +24,7 @@ import { formatINR } from "@/lib/format";
 import { AddTripButton } from "./add-trip-button";
 import { TripRowActions } from "./trip-row-actions";
 
-export const metadata = { title: "Trips — Krishna Cabs" };
+export const metadata = { title: "Trips" };
 
 type StatusFilter = "all" | "uninvoiced" | "invoiced";
 

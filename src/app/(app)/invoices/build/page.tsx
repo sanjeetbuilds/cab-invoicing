@@ -16,7 +16,7 @@ import type {
 } from "@/lib/supabase/types";
 import { InvoiceBuilderForm } from "./invoice-builder-form";
 
-export const metadata = { title: "Build invoice — Krishna Cabs" };
+export const metadata = { title: "Build invoice" };
 
 export default async function BuildInvoicePage({
   searchParams,

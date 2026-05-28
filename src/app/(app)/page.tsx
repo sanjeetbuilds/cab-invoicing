@@ -29,7 +29,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SeedBanner } from "./seed/seed-banner";
 
 export const metadata = {
-  title: "Dashboard — Krishna Cabs",
+  title: "Dashboard",
 };
 
 function fmtDate(iso: string) {

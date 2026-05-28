@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* =====================================================================
-   Design tokens — Krishna Cabs SaaS palette
+   Design tokens — EasyBills SaaS palette
    bg #fafafa, surface #ffffff, border #e5e7eb, text #111827,
    muted #6b7280, accent indigo #4f46e5, success/warning/danger as below
    ===================================================================== */
@@ -32,7 +32,7 @@
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-card-hover: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
 
-  /* Color tokens — map shadcn names to the Krishna Cabs palette */
+  /* Color tokens — map shadcn names to the EasyBills palette */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 

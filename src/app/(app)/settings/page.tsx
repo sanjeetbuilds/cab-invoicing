@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import type { Membership, Role } from "@/lib/supabase/types";
 import { TeamSection } from "./team-section";
 
-export const metadata = { title: "Settings — Krishna Cabs" };
+export const metadata = { title: "Settings" };
 
 export interface TeamMemberRow {
   id: string;

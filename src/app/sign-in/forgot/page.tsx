@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { ForgotForm } from "./forgot-form";
 
-export const metadata = { title: "Forgot password — Krishna Cabs" };
+export const metadata = { title: "Forgot password" };
 
 export default function ForgotPasswordPage() {
   return (

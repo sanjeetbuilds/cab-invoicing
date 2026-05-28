@@ -20,7 +20,7 @@ import type {
 import { formatINR, formatINRBlank, formatQty } from "@/lib/format";
 import { InvoiceActions } from "./invoice-actions";
 
-export const metadata = { title: "Invoice — Krishna Cabs" };
+export const metadata = { title: "Invoice" };
 
 function fmtDate(iso: string) {
   const [y, m, d] = iso.split("-");

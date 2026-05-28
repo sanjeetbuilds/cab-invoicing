@@ -21,7 +21,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { AddRateCardButton } from "./add-rate-card-button";
 import { RateCardRowActions } from "./rate-card-row-actions";
 
-export const metadata = { title: "Rate cards — Krishna Cabs" };
+export const metadata = { title: "Rate cards" };
 
 function fmt(n: number | null) {
   return n == null ? "—" : formatINR(n);
