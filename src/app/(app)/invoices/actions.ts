@@ -196,6 +196,57 @@ export async function issueInvoiceAction(
   return { ok: true, invoice_id, invoice_number };
 }
 
+const MarkPaidSchema = z.object({
+  id: z.string().uuid(),
+  paid: z.boolean(),
+});
+
+export type MarkPaidResult =
+  | { ok: true; status: "paid" | "unpaid" }
+  | { ok: false; error: string };
+
+export async function markInvoicePaidAction(
+  raw: { id: string; paid: boolean },
+): Promise<MarkPaidResult> {
+  const parsed = MarkPaidSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+
+  const ctx = await requireWriter();
+  if (!ctx.ok) return ctx;
+
+  const { data: existing, error: readErr } = await ctx.admin
+    .from("invoices")
+    .select("status")
+    .eq("id", parsed.data.id)
+    .eq("company_id", ctx.companyId)
+    .maybeSingle<{ status: string }>();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!existing) return { ok: false, error: "Invoice not found." };
+  if (existing.status === "reversed") {
+    return { ok: false, error: "Reversed invoices can't be marked paid." };
+  }
+
+  const nextStatus = parsed.data.paid ? "paid" : "unpaid";
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { error } = await ctx.admin
+    .from("invoices")
+    .update({
+      status: nextStatus,
+      paid_date: parsed.data.paid ? today : null,
+    })
+    .eq("id", parsed.data.id)
+    .eq("company_id", ctx.companyId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${parsed.data.id}`);
+  revalidatePath("/");
+  return { ok: true, status: nextStatus };
+}
+
 const ReverseSchema = z.object({
   id: z.string().uuid(),
 });

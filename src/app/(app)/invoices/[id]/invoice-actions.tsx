@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Download, RotateCcw } from "lucide-react";
+import { Check, Download, RotateCcw, Undo2 } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Invoice } from "@/lib/supabase/types";
-import { reverseInvoiceAction } from "../actions";
+import { markInvoicePaidAction, reverseInvoiceAction } from "../actions";
 
 export function InvoiceActions({ invoice }: { invoice: Invoice }) {
   const router = useRouter();
@@ -37,7 +37,20 @@ export function InvoiceActions({ invoice }: { invoice: Invoice }) {
     }
   }
 
+  async function onTogglePaid(paid: boolean) {
+    setPending(true);
+    const result = await markInvoicePaidAction({ id: invoice.id, paid });
+    setPending(false);
+    if (result.ok) {
+      toast.success(paid ? "Marked paid." : "Marked unpaid.");
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
   const reversed = invoice.status === "reversed";
+  const paid = invoice.status === "paid";
 
   return (
     <>
@@ -51,6 +64,22 @@ export function InvoiceActions({ invoice }: { invoice: Invoice }) {
           <Download className="h-4 w-4" />
           PDF
         </a>
+        {!reversed && !paid && (
+          <Button onClick={() => onTogglePaid(true)} disabled={pending}>
+            <Check className="h-4 w-4" />
+            Mark paid
+          </Button>
+        )}
+        {!reversed && paid && (
+          <Button
+            variant="outline"
+            onClick={() => onTogglePaid(false)}
+            disabled={pending}
+          >
+            <Undo2 className="h-4 w-4" />
+            Mark unpaid
+          </Button>
+        )}
         {!reversed && (
           <Button
             variant="outline"

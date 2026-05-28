@@ -121,6 +121,11 @@ export default async function InvoiceViewPage({
             <span className="text-sm text-muted-foreground">
               Issued {fmtDate(invoice.invoice_date)}
             </span>
+            {invoice.status === "paid" && invoice.paid_date && (
+              <span className="text-sm text-muted-foreground">
+                · Paid {fmtDate(invoice.paid_date)}
+              </span>
+            )}
           </div>
         </div>
         <InvoiceActions invoice={invoice} />
