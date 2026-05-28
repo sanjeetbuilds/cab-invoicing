@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
+import { claimPendingInvites } from "@/lib/auth";
 import { OnboardingForm } from "./onboarding-form";
 
 export const metadata = {
@@ -20,7 +21,14 @@ export default async function OnboardingPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  // If user is already a member of a company, jump to dashboard.
+  // First: claim any pending team invite on this email. If we claim one,
+  // they're now a member of someone else's company — skip onboarding.
+  if (user.email) {
+    await claimPendingInvites(user.id, user.email);
+  }
+
+  // If user is already a member of a company (including the one we just
+  // claimed), jump to dashboard.
   const { data: existing } = await supabase
     .from("memberships")
     .select("id")

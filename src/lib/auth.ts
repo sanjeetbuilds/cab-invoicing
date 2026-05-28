@@ -20,16 +20,44 @@ export async function requireUser() {
 }
 
 /**
- * Returns the user and their "current" membership (currently the first one).
- * Redirects to /onboarding if the user has no companies yet.
+ * If the signed-in user has any pending invite (a memberships row with
+ * matching invited_email and user_id still null), claim it: bind the row
+ * to their user_id and stamp accepted_at. Returns how many invites were
+ * claimed — the caller can use that to skip the "no membership →
+ * onboarding" redirect.
  *
- * When we add a multi-company switcher we'll read the active company id
- * from a cookie and look up that membership instead.
+ * Runs through the admin client because the user can't UPDATE a row
+ * where user_id is still null (RLS only matches their own rows).
+ */
+export async function claimPendingInvites(
+  userId: string,
+  email: string,
+): Promise<number> {
+  if (!email) return 0;
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("memberships")
+    .update({ user_id: userId, accepted_at: new Date().toISOString() })
+    .eq("invited_email", email)
+    .is("user_id", null)
+    .select("id");
+  if (error) {
+    console.warn(`[claimPendingInvites] ${error.message}`);
+    return 0;
+  }
+  return data?.length ?? 0;
+}
+
+/**
+ * Returns the user and their "current" membership (currently the first one).
+ * Redirects to /onboarding if the user has no memberships *and* has no
+ * pending invites to claim.
  */
 export async function requireMembership() {
   const { supabase, user } = await requireUser();
 
-  const { data, error } = await supabase
+  // First pass — do they already have a membership?
+  let { data } = await supabase
     .from("memberships")
     .select("*")
     .eq("user_id", user.id)
@@ -37,7 +65,21 @@ export async function requireMembership() {
     .limit(1)
     .maybeSingle<Membership>();
 
-  if (error) throw error;
+  // If not, try to claim any invite waiting on their email, then re-query.
+  if (!data && user.email) {
+    const claimed = await claimPendingInvites(user.id, user.email);
+    if (claimed > 0) {
+      const retry = await supabase
+        .from("memberships")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle<Membership>();
+      data = retry.data;
+    }
+  }
+
   if (!data) redirect("/onboarding");
 
   return { supabase, user, membership: data };
