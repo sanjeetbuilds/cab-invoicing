@@ -55,6 +55,7 @@ function computeAmount(trip: Trip, rate: RateCard | undefined): number | null {
       total_kms: trip.total_kms,
       total_hours: trip.total_hours,
       night: trip.night,
+      night_count: trip.night_count ?? (trip.night ? 1 : 0),
       driver_ta: trip.driver_ta,
     },
     rate,

@@ -9,14 +9,24 @@ import type {
 
 const company: Pick<
   Company,
-  "name" | "address" | "gstin" | "phone" | "email" | "invoice_prefix" | "terms_invoice"
+  | "name"
+  | "address"
+  | "gstin"
+  | "phone"
+  | "phone2"
+  | "email"
+  | "invoice_email"
+  | "invoice_prefix"
+  | "terms_invoice"
 > = {
   name: "Krishna Cabs",
   address:
     "House No. 1, Bharat Vihar,\nKherki Daula, Sector 84,\nGurugram, Haryana 122004",
   gstin: "06AAACK1234A1ZQ",
   phone: "+91 98000 00000",
+  phone2: null,
   email: "krishnacabs@example.com",
+  invoice_email: null,
   invoice_prefix: "",
   terms_invoice: [
     "Subjected to Gurugram Jurisdiction.",

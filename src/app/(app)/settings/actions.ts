@@ -12,7 +12,12 @@ const CompanySchema = z.object({
   name: z.string().min(1, "Company name is required."),
   address: z.string().optional().default(""),
   phone: z.string().optional().default(""),
+  phone2: z.string().optional().default(""),
   email: z
+    .union([z.string().email("Enter a valid email."), z.literal("")])
+    .optional()
+    .default(""),
+  invoice_email: z
     .union([z.string().email("Enter a valid email."), z.literal("")])
     .optional()
     .default(""),
@@ -68,7 +73,9 @@ export async function updateCompanyAction(
       name: parsed.data.name,
       address: parsed.data.address || null,
       phone: parsed.data.phone || null,
+      phone2: parsed.data.phone2 || null,
       email: parsed.data.email || null,
+      invoice_email: parsed.data.invoice_email || null,
       gstin: parsed.data.gstin || null,
       state: parsed.data.state,
     })

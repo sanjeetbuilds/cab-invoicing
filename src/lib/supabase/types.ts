@@ -17,7 +17,9 @@ export interface Company {
   address: string | null;
   gstin: string | null;
   phone: string | null;
+  phone2: string | null;
   email: string | null;
+  invoice_email: string | null;
   state: string;
   invoice_prefix: string | null;
   next_invoice_number: number;
@@ -79,6 +81,7 @@ export interface Trip {
   total_kms: number;
   total_hours: number;
   night: boolean;
+  night_count: number;
   driver_ta: number;
   toll: number;
   extra_charge_amount: number;

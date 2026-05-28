@@ -2,16 +2,19 @@ import { describe, it, expect } from "vitest";
 import { tripToLines, tripTotal, type ComputableTrip } from "./trip-lines";
 import type { RateCard } from "@/lib/supabase/types";
 
-/** Shorthand: defaults billing_method from mode (local→slab, outstation→per_km). */
+/** Shorthand: defaults billing_method from mode (local→slab, outstation→per_km)
+ *  and night_count from the night boolean. */
 function ct(
-  fields: Omit<ComputableTrip, "billing_method"> & {
+  fields: Omit<ComputableTrip, "billing_method" | "night_count"> & {
     billing_method?: ComputableTrip["billing_method"];
+    night_count?: ComputableTrip["night_count"];
   },
 ): ComputableTrip {
   return {
     ...fields,
     billing_method:
       fields.billing_method ?? (fields.mode === "local" ? "slab" : "per_km"),
+    night_count: fields.night_count ?? (fields.night ? 1 : 0),
   };
 }
 
@@ -67,7 +70,7 @@ describe("tripToLines — reference invoices from BUILD-SPEC.md", () => {
       { particulars: "Total 149kms\n80kms/8hrs", qty: null, rate: null, amount: 1500 },
       { particulars: "Additional kms",            qty: 69,   rate: 15,   amount: 1035 },
       { particulars: "Additional hrs",            qty: 1.5,  rate: 100,  amount: 150 },
-      { particulars: "Night Charges",             qty: null, rate: null, amount: 300 },
+      { particulars: "Night Charges",             qty: 1,    rate: 300,  amount: 300 },
     ]);
     expect(tripTotal(lines)).toBe(2985);
   });
@@ -173,6 +176,7 @@ describe("tripToLines — outstation billed as slab borrows the local rate card"
         total_kms: 149,
         total_hours: 9.5,
         night: true,
+        night_count: 1,
         driver_ta: 0,
       },
       r,
@@ -181,7 +185,7 @@ describe("tripToLines — outstation billed as slab borrows the local rate card"
       { particulars: "Total 149kms\n80kms/8hrs", qty: null, rate: null, amount: 1500 },
       { particulars: "Additional kms",            qty: 69,   rate: 15,   amount: 1035 },
       { particulars: "Additional hrs",            qty: 1.5,  rate: 100,  amount: 150 },
-      { particulars: "Night Charges",             qty: null, rate: null, amount: 300 },
+      { particulars: "Night Charges",             qty: 1,    rate: 300,  amount: 300 },
     ]);
     expect(tripTotal(lines)).toBe(2985);
   });
@@ -200,6 +204,7 @@ describe("tripToLines — outstation billed as slab borrows the local rate card"
         total_kms: 149,
         total_hours: 0,
         night: false,
+        night_count: 0,
         driver_ta: 0,
       },
       r,

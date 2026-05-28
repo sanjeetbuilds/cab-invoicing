@@ -17,7 +17,7 @@ export interface BulkDraftRow {
   billing_method: BillingMethod;
   total_kms: string;
   total_hours: string;
-  night: boolean;
+  night_count: string;
   driver_ta: string;
   extra_charge_amount: string;
   charge_toll: boolean;
@@ -38,7 +38,7 @@ export function emptyDraftRow(): BulkDraftRow {
     billing_method: "per_km",
     total_kms: "",
     total_hours: "",
-    night: false,
+    night_count: "",
     driver_ta: "",
     extra_charge_amount: "",
     charge_toll: false,

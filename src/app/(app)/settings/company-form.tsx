@@ -28,7 +28,11 @@ const Schema = z.object({
   name: z.string().min(1, "Company name is required."),
   address: z.string().optional(),
   phone: z.string().optional(),
+  phone2: z.string().optional(),
   email: z
+    .union([z.string().email("Enter a valid email."), z.literal("")])
+    .optional(),
+  invoice_email: z
     .union([z.string().email("Enter a valid email."), z.literal("")])
     .optional(),
   gstin: z.string().optional(),
@@ -52,7 +56,9 @@ export function CompanyForm({ company }: { company: Company }) {
       name: company.name ?? "",
       address: company.address ?? "",
       phone: company.phone ?? "",
+      phone2: company.phone2 ?? "",
       email: company.email ?? "",
+      invoice_email: company.invoice_email ?? "",
       gstin: company.gstin ?? "",
       state: company.state ?? "",
     },
@@ -66,7 +72,9 @@ export function CompanyForm({ company }: { company: Company }) {
       name: values.name,
       address: values.address ?? "",
       phone: values.phone ?? "",
+      phone2: values.phone2 ?? "",
       email: values.email ?? "",
+      invoice_email: values.invoice_email ?? "",
       gstin: values.gstin ?? "",
       state: values.state,
     });
@@ -105,21 +113,55 @@ export function CompanyForm({ company }: { company: Company }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="phone">Phone 1</Label>
             <Input id="phone" placeholder="+91 9999 00 4016" {...register("phone")} />
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="phone2">
+              Phone 2
+              <span className="text-xs text-muted-foreground font-normal"> — optional</span>
+            </Label>
+            <Input
+              id="phone2"
+              placeholder="Second number on the invoice (optional)"
+              {...register("phone2")}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="email">
+              Account email
+              <span className="text-xs text-muted-foreground font-normal"> — for sign-in</span>
+            </Label>
             <Input
               id="email"
               type="email"
-              placeholder="invoices@example.com"
+              placeholder="login@example.com"
               {...register("email")}
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
             )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="invoice_email">
+              Invoice email
+              <span className="text-xs text-muted-foreground font-normal"> — shows on the invoice</span>
+            </Label>
+            <Input
+              id="invoice_email"
+              type="email"
+              placeholder={company.email ?? "invoices@example.com"}
+              {...register("invoice_email")}
+            />
+            {errors.invoice_email && (
+              <p className="text-sm text-destructive">{errors.invoice_email.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Blank = use the account email above.
+            </p>
           </div>
 
           <div className="flex flex-col gap-2">

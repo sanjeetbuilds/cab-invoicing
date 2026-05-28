@@ -75,7 +75,9 @@ export default async function InvoiceViewPage({
   const groups = groupLines(lineList);
   const terms = (company.terms_invoice ?? []).filter(Boolean);
 
-  const contactLine = [company.phone, company.email].filter(Boolean).join("  ·  ");
+  const phones = [company.phone, company.phone2].filter(Boolean).join(", ");
+  const invoiceEmail = company.invoice_email ?? company.email ?? "";
+  const contactLine = [phones, invoiceEmail].filter(Boolean).join("  ·  ");
 
   const cgstLabel =
     invoice.gst_mode === "CGST_SGST"

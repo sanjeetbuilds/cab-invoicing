@@ -117,7 +117,13 @@ export function RateCardForm({
               }}
             >
               <SelectTrigger id="client_id">
-                <SelectValue placeholder="Pick a client" />
+                <SelectValue placeholder="Pick a client">
+                  {(value) =>
+                    typeof value === "string" && value
+                      ? (clients.find((c) => c.id === value)?.name ?? null)
+                      : null
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {clients.map((c) => (

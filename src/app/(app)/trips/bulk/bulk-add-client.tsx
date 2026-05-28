@@ -124,6 +124,7 @@ export function BulkAddClient({
         effectiveMethod === "slab" ? "local" : "outstation";
       const rate = rateByKey.get(`${r.client_id}|${r.car_type}|${lookupMode}`);
       if (!rate) return { amount: null, hasRate: false };
+      const nightCount = Math.max(0, Math.floor(toNum(r.night_count)));
       const lines = tripToLines(
         {
           car_type: r.car_type,
@@ -131,7 +132,8 @@ export function BulkAddClient({
           billing_method: effectiveMethod,
           total_kms: toNum(r.total_kms),
           total_hours: toNum(r.total_hours),
-          night: r.night,
+          night: nightCount > 0,
+          night_count: nightCount,
           driver_ta: Math.floor(toNum(r.driver_ta)),
         },
         rate,
@@ -258,27 +260,27 @@ export function BulkAddClient({
 
       {/* Table */}
       <div className="rounded-md border bg-card overflow-x-auto">
-        <table className="w-full border-collapse text-xs">
+        <table className="w-full border-collapse text-sm">
           <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur">
-            <tr className="[&>th]:px-2 [&>th]:py-2 [&>th]:text-left [&>th]:font-medium [&>th]:border-b">
-              <th className="w-[110px]">Date</th>
-              <th className="w-[110px]">End</th>
-              <th className="min-w-[160px]">Client</th>
-              <th className="min-w-[140px]">Vehicle</th>
+            <tr className="[&>th]:px-2 [&>th]:py-2 [&>th]:text-left [&>th]:font-medium [&>th]:border-b [&>th]:text-xs [&>th]:uppercase [&>th]:tracking-wider [&>th]:text-muted-foreground">
+              <th className="w-[120px]">Date</th>
+              <th className="w-[120px]">End</th>
+              <th className="min-w-[180px]">Client</th>
+              <th className="min-w-[160px]">Vehicle</th>
               <th className="w-[110px]">Car</th>
               <th className="w-[110px]">Mode</th>
-              <th className="w-[60px] text-center">Slab</th>
-              <th className="w-[70px] text-right">Kms</th>
-              <th className="w-[70px] text-right">Hrs</th>
-              <th className="w-[60px] text-right">TA</th>
-              <th className="w-[60px] text-center">Night</th>
-              <th className="w-[90px] text-right">Charges ₹</th>
-              <th className="w-[60px] text-center" title="Toll / Tax / Parking">
+              <th className="w-[64px] text-center">Slab</th>
+              <th className="w-[90px] text-right">Kms</th>
+              <th className="w-[90px] text-right">Hrs</th>
+              <th className="w-[80px] text-right">TA days</th>
+              <th className="w-[90px] text-right">Nights</th>
+              <th className="w-[120px] text-right">Charges ₹</th>
+              <th className="w-[70px] text-center" title="Toll / Tax / Parking">
                 T·T·P
               </th>
-              <th className="min-w-[140px]">Notes</th>
-              <th className="w-[90px] text-right">Total</th>
-              <th className="w-[60px]"></th>
+              <th className="min-w-[180px]">Notes</th>
+              <th className="w-[110px] text-right">Total</th>
+              <th className="w-[64px]"></th>
             </tr>
           </thead>
           <tbody>
@@ -297,7 +299,7 @@ export function BulkAddClient({
                       type="date"
                       value={r.date}
                       onChange={(e) => patchRow(i, { date: e.target.value })}
-                      className="h-7 px-1 text-xs"
+                      className="h-8 px-2 text-sm"
                     />
                   </td>
                   <td>
@@ -305,14 +307,14 @@ export function BulkAddClient({
                       type="date"
                       value={r.end_date}
                       onChange={(e) => patchRow(i, { end_date: e.target.value })}
-                      className="h-7 px-1 text-xs"
+                      className="h-8 px-2 text-sm"
                     />
                   </td>
                   <td>
                     <select
                       value={r.client_id}
                       onChange={(e) => patchRow(i, { client_id: e.target.value })}
-                      className="h-7 w-full rounded border px-1 text-xs bg-background"
+                      className="h-8 w-full rounded-lg border border-input px-2 text-sm bg-card focus:border-ring focus:ring-2 focus:ring-ring/20 focus:outline-none"
                     >
                       <option value="">—</option>
                       {clients.map((c) => (
@@ -331,7 +333,7 @@ export function BulkAddClient({
                           car_type: v ? v.type : r.car_type,
                         });
                       }}
-                      className="h-7 w-full rounded border px-1 text-xs bg-background"
+                      className="h-8 w-full rounded-lg border border-input px-2 text-sm bg-card focus:border-ring focus:ring-2 focus:ring-ring/20 focus:outline-none"
                     >
                       <option value="">—</option>
                       {vehicles.map((v) => (
@@ -352,7 +354,7 @@ export function BulkAddClient({
                       onChange={(e) =>
                         patchRow(i, { car_type: e.target.value as CarType | "" })
                       }
-                      className="h-7 w-full rounded border px-1 text-xs bg-background"
+                      className="h-8 w-full rounded-lg border border-input px-2 text-sm bg-card focus:border-ring focus:ring-2 focus:ring-ring/20 focus:outline-none"
                     >
                       <option value="">—</option>
                       {CAR_TYPES.map((t) => (
@@ -371,7 +373,7 @@ export function BulkAddClient({
                             m === "outstation" ? "per_km" : "slab",
                         });
                       }}
-                      className="h-7 w-full rounded border px-1 text-xs bg-background"
+                      className="h-8 w-full rounded-lg border border-input px-2 text-sm bg-card focus:border-ring focus:ring-2 focus:ring-ring/20 focus:outline-none"
                     >
                       <option value="">—</option>
                       <option value="local">Local</option>
@@ -403,7 +405,7 @@ export function BulkAddClient({
                       onChange={(e) =>
                         patchRow(i, { total_kms: e.target.value })
                       }
-                      className="h-7 px-1 text-xs text-right"
+                      className="h-8 px-2 text-sm text-right tabular-nums"
                     />
                   </td>
                   <td>
@@ -416,7 +418,7 @@ export function BulkAddClient({
                         onChange={(e) =>
                           patchRow(i, { total_hours: e.target.value })
                         }
-                        className="h-7 px-1 text-xs text-right"
+                        className="h-8 px-2 text-sm text-right tabular-nums"
                       />
                     ) : (
                       <span className="block text-right text-muted-foreground">—</span>
@@ -430,21 +432,24 @@ export function BulkAddClient({
                       onChange={(e) =>
                         patchRow(i, { driver_ta: e.target.value })
                       }
-                      className="h-7 px-1 text-xs text-right"
+                      className="h-8 px-2 text-sm text-right tabular-nums"
                     />
                   </td>
-                  <td className="text-center">
+                  <td>
                     {r.mode === "local" ? (
-                      <input
-                        type="checkbox"
-                        checked={r.night}
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        placeholder="0"
+                        value={r.night_count}
                         onChange={(e) =>
-                          patchRow(i, { night: e.target.checked })
+                          patchRow(i, { night_count: e.target.value })
                         }
-                        className="h-4 w-4 accent-foreground"
+                        className="h-8 px-2 text-sm text-right tabular-nums"
                       />
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="block text-right text-muted-foreground">—</span>
                     )}
                   </td>
                   <td>
@@ -458,7 +463,7 @@ export function BulkAddClient({
                           patchRow(i, { extra_charge_amount: v });
                         }
                       }}
-                      className="h-7 px-1 text-xs text-right"
+                      className="h-8 px-2 text-sm text-right tabular-nums"
                     />
                   </td>
                   <td>
@@ -488,7 +493,7 @@ export function BulkAddClient({
                       type="text"
                       value={r.notes}
                       onChange={(e) => patchRow(i, { notes: e.target.value })}
-                      className="h-7 px-1 text-xs"
+                      className="h-8 px-2 text-sm"
                     />
                   </td>
                   <td className="text-right font-mono">

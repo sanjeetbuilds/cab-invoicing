@@ -80,6 +80,7 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
         total_kms: t.total_kms,
         total_hours: t.total_hours,
         night: t.night,
+        night_count: t.night_count ?? (t.night ? 1 : 0),
         driver_ta: t.driver_ta,
       },
       rate,

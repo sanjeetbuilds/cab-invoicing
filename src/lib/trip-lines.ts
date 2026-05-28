@@ -16,7 +16,9 @@ export interface ComputableTrip {
   billing_method: BillingMethod;
   total_kms: number;
   total_hours: number;
+  /** Backwards-compat boolean; treated as 1 night when night_count is 0. */
   night: boolean;
+  night_count: number; // number of nights
   driver_ta: number; // count of days
 }
 
@@ -79,12 +81,15 @@ export function tripToLines(trip: ComputableTrip, rate: RateCard): TripLine[] {
       });
     }
 
-    if (trip.night) {
+    const nights = trip.night_count > 0
+      ? trip.night_count
+      : (trip.night ? 1 : 0);
+    if (nights > 0) {
       lines.push({
         particulars: "Night Charges",
-        qty: null,
-        rate: null,
-        amount: round2(night_fee),
+        qty: nights,
+        rate: night_fee,
+        amount: round2(nights * night_fee),
       });
     }
   } else {

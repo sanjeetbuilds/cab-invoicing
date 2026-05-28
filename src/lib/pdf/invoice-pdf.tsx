@@ -39,7 +39,15 @@ interface LineGroup {
 export interface InvoicePdfProps {
   company: Pick<
     Company,
-    "name" | "address" | "gstin" | "phone" | "email" | "invoice_prefix" | "terms_invoice"
+    | "name"
+    | "address"
+    | "gstin"
+    | "phone"
+    | "phone2"
+    | "email"
+    | "invoice_email"
+    | "invoice_prefix"
+    | "terms_invoice"
   >;
   invoice: Invoice;
   lines: InvoiceLine[];
@@ -219,10 +227,11 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
   const groups = groupLines([...lines].sort((a, b) => a.sort_order - b.sort_order));
   const terms = (company.terms_invoice ?? []).filter(Boolean);
 
-  // Inline "phone · email" if both exist; otherwise show whichever is set.
-  const contactLine = [company.phone, company.email]
-    .filter(Boolean)
-    .join("  ·  ");
+  // Phone 1 (and optional Phone 2) on one line, then the invoice email
+  // (falling back to the account email if not set separately).
+  const phones = [company.phone, company.phone2].filter(Boolean).join(", ");
+  const invoiceEmail = company.invoice_email ?? company.email ?? "";
+  const contactLine = [phones, invoiceEmail].filter(Boolean).join("  ·  ");
 
   const cgstLabel =
     invoice.gst_mode === "CGST_SGST"

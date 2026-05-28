@@ -49,7 +49,7 @@ const Schema = z
     billing_method: z.enum(["per_km", "slab"]),
     total_kms: z.string().min(1, "Enter kms."),
     total_hours: z.string().optional(),
-    night: z.boolean(),
+    night_count: z.string().optional(),
     driver_ta: z.string().optional(),
     extra_charge_amount: z
       .string()
@@ -118,7 +118,9 @@ export function TripForm({
         (trip?.mode === "outstation" ? "per_km" : "slab"),
       total_kms: trip ? String(trip.total_kms) : "",
       total_hours: trip ? String(trip.total_hours) : "",
-      night: trip?.night ?? false,
+      night_count: trip
+        ? String(trip.night_count ?? (trip.night ? 1 : 0))
+        : "0",
       driver_ta: trip ? String(trip.driver_ta) : "0",
       extra_charge_amount:
         trip != null ? String(trip.extra_charge_amount || trip.toll || 0) : "0",
@@ -137,10 +139,12 @@ export function TripForm({
   const formBillingMethod = watch("billing_method") as BillingMethod;
   const effectiveMethod: BillingMethod =
     mode === "local" ? "slab" : formBillingMethod;
-  const night = watch("night");
+  const nightCountStr = watch("night_count");
   const totalKmsStr = watch("total_kms");
   const totalHoursStr = watch("total_hours");
   const driverTaStr = watch("driver_ta");
+
+  const nightCount = Math.max(0, Math.floor(toNum(nightCountStr)));
   const extraChargeStr = watch("extra_charge_amount");
   const chargeToll = watch("charge_toll");
   const chargeTax = watch("charge_tax");
@@ -176,13 +180,14 @@ export function TripForm({
         billing_method: effectiveMethod,
         total_kms: toNum(totalKmsStr),
         total_hours: toNum(totalHoursStr),
-        night,
+        night: nightCount > 0,
+        night_count: nightCount,
         driver_ta: Math.floor(toNum(driverTaStr)),
       },
       activeRate,
     );
     return { lines, total: tripTotal(lines) };
-  }, [activeRate, carType, mode, effectiveMethod, totalKmsStr, totalHoursStr, night, driverTaStr]);
+  }, [activeRate, carType, mode, effectiveMethod, totalKmsStr, totalHoursStr, nightCount, driverTaStr]);
 
   async function onSubmit(values: FormValues) {
     setPending(true);
@@ -199,7 +204,7 @@ export function TripForm({
     );
     fd.set("total_kms", values.total_kms);
     fd.set("total_hours", values.total_hours ?? "0");
-    fd.set("night", String(values.night));
+    fd.set("night_count", values.night_count ?? "0");
     fd.set("driver_ta", values.driver_ta ?? "0");
     fd.set("extra_charge_amount", values.extra_charge_amount ?? "0");
     fd.set("charge_toll", String(values.charge_toll));
@@ -257,7 +262,13 @@ export function TripForm({
               }}
             >
               <SelectTrigger id="client_id">
-                <SelectValue placeholder="Pick a client" />
+                <SelectValue placeholder="Pick a client">
+                  {(value) =>
+                    typeof value === "string" && value
+                      ? (clients.find((c) => c.id === value)?.name ?? null)
+                      : null
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {clients.map((c) => (
@@ -291,7 +302,14 @@ export function TripForm({
               }}
             >
               <SelectTrigger id="vehicle_id">
-                <SelectValue placeholder="Pick a vehicle" />
+                <SelectValue placeholder="Pick a vehicle">
+                  {(value) => {
+                    if (typeof value !== "string" || !value) return null;
+                    const v = vehicles.find((x) => x.id === value);
+                    if (!v) return null;
+                    return `${v.number} · ${v.type}${v.active ? "" : " (inactive)"}`;
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {vehicles.map((v) => (
@@ -420,20 +438,19 @@ export function TripForm({
           </div>
 
           {mode === "local" && (
-            <div className="sm:col-span-3 flex items-center justify-between rounded-lg border border-border px-3 py-3">
-              <div>
-                <Label htmlFor="night" className="font-medium">
-                  Night charges
-                </Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Adds the night fee from the rate card.
-                </p>
-              </div>
-              <Switch
-                id="night"
-                checked={night}
-                onCheckedChange={(v) => setValue("night", v)}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="night_count">Night charges (nights)</Label>
+              <Input
+                id="night_count"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                placeholder="0"
+                {...register("night_count")}
               />
+              <p className="text-xs text-muted-foreground">
+                Number of nights billed. Each one charges the rate-card night fee.
+              </p>
             </div>
           )}
         </CardContent>

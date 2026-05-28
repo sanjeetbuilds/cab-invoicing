@@ -71,6 +71,7 @@ function trip(o: Partial<Trip>): Trip {
     total_kms: 0,
     total_hours: 0,
     night: false,
+    night_count: 0,
     driver_ta: 0,
     toll: 0,
     extra_charge_amount: 0,
