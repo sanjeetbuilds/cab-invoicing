@@ -94,6 +94,42 @@ export interface Trip {
   updated_at: string;
 }
 
+export interface Quotation {
+  id: string;
+  company_id: string;
+  number: string;
+  client_id: string | null;
+  client_name: string | null;
+  client_address: string | null;
+  client_gstin: string | null;
+  client_contact: string | null;
+  date: string;
+  valid_until: string | null;
+  status: QuotationStatus;
+  notes: string | null;
+  source_pdf_url: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  accepted_at: string | null;
+}
+
+export interface QuotationLine {
+  id: string;
+  quotation_id: string;
+  car_type: CarType;
+  mode: TripMode;
+  base_rate: number | null;
+  base_kms: number | null;
+  base_hours: number | null;
+  extra_km: number | null;
+  extra_hour: number | null;
+  night: number | null;
+  per_km: number | null;
+  driver_ta: number | null;
+  sort_order: number;
+}
+
 export interface Invoice {
   id: string;
   company_id: string;

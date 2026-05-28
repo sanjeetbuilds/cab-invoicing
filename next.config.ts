@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   // them explicitly in the serverless function bundle on Vercel.
   outputFileTracingIncludes: {
     "/api/invoices/*/pdf": ["./public/fonts/**/*"],
+    "/api/quotations/*/pdf": ["./public/fonts/**/*"],
   },
 };
 
