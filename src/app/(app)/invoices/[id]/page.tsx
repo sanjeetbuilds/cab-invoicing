@@ -47,6 +47,9 @@ function splitVehicleLabel(label: string | null | undefined): {
   return { vehicle: label.slice(0, i), type: label.slice(i + 1) };
 }
 
+// Column widths shared between header and rows — same grid template across.
+const GRID = "52px 40px 46px 46px 1fr 44px 54px 70px";
+
 export default async function InvoiceViewPage({
   params,
 }: {
@@ -126,8 +129,8 @@ export default async function InvoiceViewPage({
 
       <Card>
         <CardContent className="py-8 px-8">
-          {/* ── Letterhead ── */}
-          <div className="grid grid-cols-12 gap-4 pb-3 border-b border-black">
+          {/* Letterhead */}
+          <div className="grid grid-cols-12 gap-4 pb-2.5 border-b border-black">
             <div className="col-span-12 sm:col-span-4">
               <p className="font-bold text-base tracking-[0.04em]">
                 {(company.name ?? "").toUpperCase()}
@@ -137,7 +140,7 @@ export default async function InvoiceViewPage({
               )}
               {company.email && <p className="text-xs">{company.email}</p>}
               {company.address && (
-                <p className="text-xs mt-3 whitespace-pre-line leading-snug">
+                <p className="text-xs mt-2.5 whitespace-pre-line leading-snug">
                   {company.address}
                 </p>
               )}
@@ -156,7 +159,7 @@ export default async function InvoiceViewPage({
                 {invoice.client_gstin ? `GSTIN ${invoice.client_gstin}` : "GSTIN NA"}
               </p>
               {invoice.client_booked_by && (
-                <p className="text-xs mt-3 text-muted-foreground">
+                <p className="text-xs mt-2.5 text-muted-foreground">
                   Booked By- {invoice.client_booked_by}
                 </p>
               )}
@@ -164,26 +167,30 @@ export default async function InvoiceViewPage({
 
             <div className="col-span-12 sm:col-span-3 text-right">
               {company.gstin && (
-                <p className="text-xs font-bold mb-4">GSTIN {company.gstin}</p>
+                <p className="text-xs font-bold mb-3.5">GSTIN {company.gstin}</p>
               )}
               <p className="font-bold">INVOICE- {fullNumber}</p>
               <p className="text-xs mt-1">Date: {fmtDate(invoice.invoice_date)}</p>
             </div>
           </div>
 
-          {/* ── Column headers ── */}
-          <div className="grid grid-cols-[56px_46px_50px_50px_1fr_72px_92px] gap-2 mt-6 pb-2 border-b border-black text-[10px] font-semibold uppercase tracking-wider text-foreground">
+          {/* Column headers */}
+          <div
+            className="grid gap-2 mt-5 pb-1.5 border-b border-black text-[10px] font-semibold uppercase tracking-wider text-foreground"
+            style={{ gridTemplateColumns: GRID }}
+          >
             <div>Date</div>
             <div>Vehicle</div>
             <div>Type</div>
             <div>HSN Code</div>
             <div>Particulars</div>
+            <div className="text-right">Qty</div>
             <div className="text-right">Rate</div>
             <div className="text-right">Amount</div>
           </div>
 
-          {/* ── Trip groups ── */}
-          <div>
+          {/* Trip groups — tight rows */}
+          <div className="text-[12.5px] leading-snug">
             {groups.map((group, gi) => {
               const { vehicle, type } = splitVehicleLabel(
                 group.lines[0]?.vehicle_label,
@@ -193,30 +200,33 @@ export default async function InvoiceViewPage({
               return (
                 <div
                   key={group.trip_id ?? `g${gi}`}
-                  className={`py-2.5 ${gi > 0 ? "border-t border-border/60" : ""}`}
+                  className={`py-1 ${gi > 0 ? "border-t border-border/50" : ""}`}
                 >
                   {group.lines.map((l, li) => {
                     const isFirst = li === 0;
                     return (
                       <div
                         key={l.id}
-                        className="grid grid-cols-[56px_46px_50px_50px_1fr_72px_92px] gap-2 text-sm py-0.5 leading-snug"
+                        className="grid gap-2 py-px"
+                        style={{ gridTemplateColumns: GRID }}
                       >
-                        <div className="font-mono text-xs">
+                        <div className="font-mono text-[11px]">
                           {isFirst ? firstDate : ""}
                         </div>
-                        <div className="font-mono text-xs text-muted-foreground">
+                        <div className="font-mono text-[11px] text-muted-foreground">
                           {isFirst ? vehicle : ""}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-[11px] text-muted-foreground">
                           {isFirst ? type : ""}
                         </div>
-                        <div className="font-mono text-xs text-muted-foreground">
+                        <div className="font-mono text-[11px] text-muted-foreground">
                           {isFirst ? hsn : ""}
                         </div>
                         <div className="whitespace-pre-line">
                           {l.particulars ?? ""}
-                          {l.qty != null ? `\n${formatQty(l.qty)}` : ""}
+                        </div>
+                        <div className="text-right tabular-nums">
+                          {formatQty(l.qty)}
                         </div>
                         <div className="text-right tabular-nums">
                           {formatINRBlank(l.rate)}
@@ -232,9 +242,9 @@ export default async function InvoiceViewPage({
             })}
           </div>
 
-          {/* ── Totals ── */}
-          <div className="mt-6 pt-3 border-t border-black flex justify-end">
-            <div className="w-full sm:w-72 flex flex-col gap-1.5 text-sm">
+          {/* Totals */}
+          <div className="mt-5 pt-2.5 border-t border-black flex justify-end">
+            <div className="w-full sm:w-72 flex flex-col gap-1 text-sm">
               <Row label="Total" value={formatINR(invoice.subtotal)} />
               {cgstLabel && (
                 <Row
@@ -259,21 +269,21 @@ export default async function InvoiceViewPage({
                   value={formatINR(invoice.toll_total)}
                 />
               )}
-              <div className="mt-2 pt-2 border-t border-black flex justify-between font-bold text-base">
+              <div className="mt-1.5 pt-1.5 border-t border-black flex justify-between font-bold text-base">
                 <span>Net Amount</span>
                 <span className="tabular-nums">{formatINR(invoice.net_amount)}</span>
               </div>
             </div>
           </div>
 
-          {/* ── In words ── */}
+          {/* In words */}
           <p className="mt-4 text-sm">
             <span className="font-bold">In Words: </span>
             {invoice.amount_in_words}
           </p>
 
-          {/* ── Footer ── */}
-          <div className="mt-6 text-xs text-muted-foreground leading-relaxed">
+          {/* Footer */}
+          <div className="mt-5 text-xs text-muted-foreground leading-relaxed">
             <p className="font-bold text-foreground">E&amp;OE</p>
             {terms.length > 0 && (
               <p className="mt-1">
@@ -282,7 +292,7 @@ export default async function InvoiceViewPage({
               </p>
             )}
             {terms.slice(1).map((t, i) => (
-              <p key={i} className="mt-1">{t}</p>
+              <p key={i} className="mt-0.5">{t}</p>
             ))}
           </div>
         </CardContent>

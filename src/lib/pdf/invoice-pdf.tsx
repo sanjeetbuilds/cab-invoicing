@@ -14,7 +14,8 @@ import type {
 } from "@/lib/supabase/types";
 import { formatINR, formatINRBlank, formatQty } from "@/lib/format";
 
-// Inter has ₹ (Helvetica Type-1 does not). Local files avoid CDN cold-start.
+// Inter latin-ext includes the rupee symbol (U+20B9). The plain latin
+// subset does NOT — that's why ₹ rendered as a fallback box before.
 const fontDir = path.join(process.cwd(), "public", "fonts");
 Font.register({
   family: "Inter",
@@ -44,7 +45,7 @@ const COLORS = {
   text: "#1a1a1a",
   muted: "#555555",
   faint: "#7a7a7a",
-  line: "#bfbfbf",
+  line: "#cccccc",
 };
 
 const PT = (mm: number) => (mm / 25.4) * 72;
@@ -52,12 +53,12 @@ const PT = (mm: number) => (mm / 25.4) * 72;
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Inter",
-    fontSize: 10,
+    fontSize: 9,
     paddingTop: PT(14) + 92,
     paddingBottom: PT(16) + 18,
     paddingHorizontal: PT(14),
     color: COLORS.text,
-    lineHeight: 1.4,
+    lineHeight: 1.3,
   },
 
   // ── Header band ──
@@ -77,57 +78,56 @@ const styles = StyleSheet.create({
 
   companyName: {
     fontFamily: "Inter-Bold",
-    fontSize: 15,
+    fontSize: 14,
     color: COLORS.black,
     letterSpacing: 0.6,
     marginBottom: 4,
   },
-  companyMeta: { fontSize: 9, marginBottom: 1 },
-  companyAddress: { fontSize: 9, marginTop: 5, lineHeight: 1.35 },
+  companyMeta: { fontSize: 8.5, marginBottom: 1 },
+  companyAddress: { fontSize: 8.5, marginTop: 4, lineHeight: 1.3 },
 
-  billLine: { fontSize: 9.5, marginBottom: 1 },
+  billLine: { fontSize: 9, marginBottom: 1 },
   billLineBold: {
     fontFamily: "Inter-Bold",
-    fontSize: 10,
+    fontSize: 9.5,
     marginBottom: 2,
   },
-  billContact: { fontSize: 9, marginTop: 4, color: COLORS.muted },
+  billContact: { fontSize: 8.5, marginTop: 3, color: COLORS.muted },
 
   gstinHeader: {
-    fontSize: 9,
+    fontSize: 8.5,
     fontFamily: "Inter-Bold",
     color: COLORS.black,
-    marginBottom: 14,
+    marginBottom: 12,
     textAlign: "right",
   },
   invoiceNumber: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontFamily: "Inter-Bold",
     color: COLORS.black,
-    marginBottom: 3,
+    marginBottom: 2,
     textAlign: "right",
   },
-  invoiceDate: { fontSize: 9.5, textAlign: "right" },
+  invoiceDate: { fontSize: 9, textAlign: "right" },
 
   // ── Table ──
-  table: { marginTop: 6 },
   thRow: {
     flexDirection: "row",
     paddingTop: 6,
-    paddingBottom: 5,
+    paddingBottom: 4,
     borderBottomWidth: 0.5,
     borderBottomColor: COLORS.black,
   },
   th: {
-    fontSize: 8.5,
+    fontSize: 8,
     fontFamily: "Inter-Bold",
     color: COLORS.black,
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
   },
   thNum: { textAlign: "right" },
 
-  // Trip-group wrapper — gives a touch of separation between duties
-  groupBlock: { paddingTop: 8, paddingBottom: 6 },
+  // Tight trip-group separation: just a thin grey rule between groups.
+  groupBlock: { paddingTop: 3, paddingBottom: 3 },
   groupBlockDivider: {
     borderTopWidth: 0.25,
     borderTopColor: COLORS.line,
@@ -135,41 +135,42 @@ const styles = StyleSheet.create({
 
   tr: {
     flexDirection: "row",
-    paddingVertical: 2,
+    paddingVertical: 0.5,
   },
   td: {
-    fontSize: 9.5,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
+    fontSize: 9,
+    paddingHorizontal: 3,
     color: COLORS.text,
+    lineHeight: 1.25,
   },
   tdMuted: { color: COLORS.muted },
   tdNum: { textAlign: "right" },
 
-  // Column widths (sum ≈ A4 usable width 545pt at 14mm margins).
-  colDate: { width: 56 },
-  colVehicle: { width: 46 },
-  colType: { width: 50 },
-  colHsn: { width: 50 },
+  // Column widths — A4 usable ~545pt at 14mm margins.
+  colDate: { width: 52 },
+  colVehicle: { width: 40 },
+  colType: { width: 46 },
+  colHsn: { width: 46 },
   colPart: { flex: 1 },
-  colRate: { width: 62 },
-  colAmount: { width: 78 },
+  colQty: { width: 44 },
+  colRate: { width: 54 },
+  colAmount: { width: 70 },
 
-  // ── Totals block ──
+  // ── Totals ──
   totalsWrap: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 14,
-    paddingTop: 10,
+    marginTop: 12,
+    paddingTop: 8,
     borderTopWidth: 0.5,
     borderTopColor: COLORS.black,
   },
-  totalsBox: { width: 250 },
+  totalsBox: { width: 240 },
   totalsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 2.5,
-    fontSize: 10,
+    paddingVertical: 2,
+    fontSize: 9.5,
   },
   totalsLabel: { color: COLORS.text },
   totalsValue: { color: COLORS.text },
@@ -177,27 +178,27 @@ const styles = StyleSheet.create({
   totalsGrandRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingTop: 8,
-    marginTop: 5,
+    paddingTop: 6,
+    marginTop: 4,
     borderTopWidth: 0.5,
     borderTopColor: COLORS.black,
   },
-  totalsGrandText: { fontFamily: "Inter-Bold", fontSize: 12 },
+  totalsGrandText: { fontFamily: "Inter-Bold", fontSize: 11 },
 
   words: {
-    fontSize: 10,
-    marginTop: 14,
+    fontSize: 9.5,
+    marginTop: 12,
   },
   wordsLabel: { fontFamily: "Inter-Bold" },
 
   foot: {
-    marginTop: 18,
+    marginTop: 14,
     fontSize: 8.5,
     color: COLORS.muted,
-    lineHeight: 1.5,
+    lineHeight: 1.45,
   },
   footBold: { fontFamily: "Inter-Bold", color: COLORS.black },
-  termLine: { marginTop: 2 },
+  termLine: { marginTop: 1.5 },
 
   pageNum: {
     position: "absolute",
@@ -260,7 +261,7 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
   return (
     <Document title={`Invoice ${fullNumber}`}>
       <Page size="A4" style={styles.page} wrap>
-        {/* ── Fixed top header ── */}
+        {/* Fixed top header */}
         <View fixed style={styles.header}>
           <View style={styles.hCol1}>
             <Text style={styles.companyName}>
@@ -299,18 +300,19 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
           </View>
         </View>
 
-        {/* ── Column headers (repeat on each page) ── */}
+        {/* Column headers — repeated on every page */}
         <View fixed style={styles.thRow}>
           <Text style={[styles.th, styles.colDate]}>Date</Text>
           <Text style={[styles.th, styles.colVehicle]}>Vehicle</Text>
           <Text style={[styles.th, styles.colType]}>Type</Text>
           <Text style={[styles.th, styles.colHsn]}>HSN Code</Text>
           <Text style={[styles.th, styles.colPart]}>Particulars</Text>
+          <Text style={[styles.th, styles.colQty, styles.thNum]}>Qty</Text>
           <Text style={[styles.th, styles.colRate, styles.thNum]}>Rate</Text>
           <Text style={[styles.th, styles.colAmount, styles.thNum]}>Amount</Text>
         </View>
 
-        {/* ── Trip groups ── */}
+        {/* Trip groups */}
         {groups.map((group, gi) => {
           const { vehicle, type } = splitVehicleLabel(
             group.lines[0]?.vehicle_label,
@@ -321,10 +323,7 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
             <View
               key={group.trip_id ?? `g${gi}`}
               wrap={false}
-              style={[
-                styles.groupBlock,
-                gi > 0 ? styles.groupBlockDivider : {},
-              ]}
+              style={[styles.groupBlock, gi > 0 ? styles.groupBlockDivider : {}]}
             >
               {group.lines.map((l, li) => {
                 const isFirst = li === 0;
@@ -344,7 +343,9 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
                     </Text>
                     <Text style={[styles.td, styles.colPart]}>
                       {l.particulars ?? ""}
-                      {l.qty != null ? `\n${formatQty(l.qty)}` : ""}
+                    </Text>
+                    <Text style={[styles.td, styles.colQty, styles.tdNum]}>
+                      {formatQty(l.qty)}
                     </Text>
                     <Text style={[styles.td, styles.colRate, styles.tdNum]}>
                       {formatINRBlank(l.rate)}
@@ -359,7 +360,7 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
           );
         })}
 
-        {/* ── Totals ── */}
+        {/* Totals */}
         <View wrap={false} style={styles.totalsWrap}>
           <View style={styles.totalsBox}>
             <View style={styles.totalsRow}>
@@ -376,9 +377,7 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
                       : styles.totalsValue
                   }
                 >
-                  {invoice.gst_mode === "RCM"
-                    ? "—"
-                    : formatINRBlank(invoice.cgst)}
+                  {invoice.gst_mode === "RCM" ? "—" : formatINRBlank(invoice.cgst)}
                 </Text>
               </View>
             )}
@@ -392,9 +391,7 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
                       : styles.totalsValue
                   }
                 >
-                  {invoice.gst_mode === "RCM"
-                    ? "—"
-                    : formatINRBlank(invoice.sgst)}
+                  {invoice.gst_mode === "RCM" ? "—" : formatINRBlank(invoice.sgst)}
                 </Text>
               </View>
             )}
@@ -423,13 +420,11 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
           </View>
         </View>
 
-        {/* ── In words ── */}
         <Text style={styles.words}>
           <Text style={styles.wordsLabel}>In Words: </Text>
           {invoice.amount_in_words}
         </Text>
 
-        {/* ── Footer ── */}
         <View wrap={false} style={styles.foot}>
           <Text style={styles.footBold}>E&OE</Text>
           {terms.length > 0 && (
