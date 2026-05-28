@@ -58,7 +58,7 @@ function rate(o: Partial<RateCard>): RateCard {
 }
 
 function trip(o: Partial<Trip>): Trip {
-  return {
+  const merged: Trip = {
     id: "t",
     company_id: "c",
     client_id: "client",
@@ -67,6 +67,7 @@ function trip(o: Partial<Trip>): Trip {
     end_date: null,
     car_type: "Sonet",
     mode: "local",
+    billing_method: "slab",
     total_kms: 0,
     total_hours: 0,
     night: false,
@@ -85,6 +86,11 @@ function trip(o: Partial<Trip>): Trip {
     updated_at: "2026-04-15",
     ...o,
   };
+  // Default billing_method from mode unless caller set it explicitly.
+  if (o.billing_method === undefined) {
+    merged.billing_method = merged.mode === "local" ? "slab" : "per_km";
+  }
+  return merged;
 }
 
 describe("buildInvoiceDraft", () => {
@@ -387,6 +393,89 @@ describe("buildInvoiceDraft", () => {
     expect(draft.toll_total).toBe(75);
     // No flags ticked → fallback label
     expect(draft.toll_label).toBe("Toll & Parking");
+  });
+
+  it("outstation trip with billing_method='slab' looks up the LOCAL rate card", () => {
+    // Same input as FHPL 149km/9.5hr/night but logged as outstation+slab.
+    // Must match the local-billing total (₹2,985 subtotal, ₹2,985 RCM net).
+    const trips = [
+      trip({
+        id: "outstation-slab",
+        client_id: rcmClient.id,
+        mode: "outstation",
+        billing_method: "slab",
+        total_kms: 149,
+        total_hours: 9.5,
+        night: true,
+      }),
+    ];
+    const rateCards = [
+      // Local rate card for the same car_type — slab logic reads from here.
+      rate({
+        client_id: rcmClient.id,
+        mode: "local",
+        base_rate: 1500,
+        base_kms: 80,
+        base_hours: 8,
+        extra_km: 15,
+        extra_hour: 100,
+        night: 300,
+      }),
+      // An outstation rate card also exists — it must be ignored when slab.
+      rate({
+        client_id: rcmClient.id,
+        mode: "outstation",
+        per_km: 99,  // deliberately wrong; would produce a different total
+        driver_ta: 300,
+      }),
+    ];
+
+    const draft = buildInvoiceDraft({
+      trips,
+      rateCards,
+      vehicles: [vehicle],
+      client: rcmClient,
+      company,
+    });
+
+    expect(draft.subtotal).toBe(2985);
+    expect(draft.unmatched_trip_ids).toEqual([]);
+    expect(draft.lines.map((l) => l.particulars)).toEqual([
+      "Total 149kms\n80kms/8hrs",
+      "Additional kms",
+      "Additional hrs",
+      "Night Charges",
+    ]);
+  });
+
+  it("outstation+slab flags trip as unmatched when no LOCAL rate card exists", () => {
+    const trips = [
+      trip({
+        id: "no-local-rate",
+        client_id: rcmClient.id,
+        mode: "outstation",
+        billing_method: "slab",
+        total_kms: 100,
+      }),
+    ];
+    const rateCards = [
+      // Only outstation rate card exists.
+      rate({
+        client_id: rcmClient.id,
+        mode: "outstation",
+        per_km: 15,
+      }),
+    ];
+
+    const draft = buildInvoiceDraft({
+      trips,
+      rateCards,
+      vehicles: [vehicle],
+      client: rcmClient,
+      company,
+    });
+    expect(draft.unmatched_trip_ids).toEqual(["no-local-rate"]);
+    expect(draft.subtotal).toBe(0);
   });
 
   it("amount in words ends with ' Rupees Only'", () => {

@@ -1,12 +1,19 @@
-import type { RateCard, TripMode } from "@/lib/supabase/types";
+import type { BillingMethod, RateCard, TripMode } from "@/lib/supabase/types";
 
 /**
  * The minimum trip shape required to compute lines.
  * Decoupled from the DB row so tests don't need full DB inserts.
+ *
+ * `billing_method` dispatches the line shape. `mode` is retained for the
+ * caller's rate-card lookup convention but doesn't change the math:
+ *   - billing_method='slab'   → base + additional kms + additional hrs + night
+ *   - billing_method='per_km' → total_kms × per_km
+ * Driver's TA is appended in both branches.
  */
 export interface ComputableTrip {
   car_type: string;
   mode: TripMode;
+  billing_method: BillingMethod;
   total_kms: number;
   total_hours: number;
   night: boolean;
@@ -32,7 +39,7 @@ export interface TripLine {
 export function tripToLines(trip: ComputableTrip, rate: RateCard): TripLine[] {
   const lines: TripLine[] = [];
 
-  if (trip.mode === "local") {
+  if (trip.billing_method === "slab") {
     const base_rate  = rate.base_rate  ?? 0;
     const base_kms   = rate.base_kms   ?? 0;
     const base_hours = rate.base_hours ?? 0;
@@ -81,7 +88,7 @@ export function tripToLines(trip: ComputableTrip, rate: RateCard): TripLine[] {
       });
     }
   } else {
-    // outstation
+    // per_km billing (the default for outstation)
     const per_km = rate.per_km ?? 0;
     lines.push({
       particulars: `Total kms ${trip.total_kms}`,

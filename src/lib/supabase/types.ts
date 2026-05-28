@@ -5,6 +5,7 @@
 export type Role = "owner" | "admin" | "staff" | "viewer";
 export type GstMode = "RCM" | "CGST_SGST" | "IGST";
 export type TripMode = "local" | "outstation";
+export type BillingMethod = "per_km" | "slab";
 export type CarType = "Dzire" | "Sonet" | "Crysta" | "Innova" | "Ertiga" | "Other";
 export type Ownership = "own" | "attached";
 export type QuotationStatus = "draft" | "sent" | "accepted" | "expired" | "rejected";
@@ -74,6 +75,7 @@ export interface Trip {
   end_date: string | null;
   car_type: CarType;
   mode: TripMode;
+  billing_method: BillingMethod;
   total_kms: number;
   total_hours: number;
   night: boolean;

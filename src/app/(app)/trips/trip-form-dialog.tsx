@@ -29,6 +29,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type {
+  BillingMethod,
   CarType,
   Client,
   RateCard,
@@ -52,6 +53,7 @@ const Schema = z
     vehicle_id: z.string().min(1, "Pick a vehicle."),
     car_type: z.enum(CAR_TYPES),
     mode: z.enum(["local", "outstation"]),
+    billing_method: z.enum(["per_km", "slab"]),
     total_kms: z.string().min(1, "Enter kms."),
     total_hours: z.string().optional(),
     night: z.boolean(),
@@ -124,6 +126,9 @@ export function TripFormDialog({
       vehicle_id: trip?.vehicle_id ?? "",
       car_type: trip?.car_type ?? "Sonet",
       mode: trip?.mode ?? "local",
+      billing_method:
+        trip?.billing_method ??
+        (trip?.mode === "outstation" ? "per_km" : "slab"),
       total_kms: trip ? String(trip.total_kms) : "",
       total_hours: trip ? String(trip.total_hours) : "",
       night: trip?.night ?? false,
@@ -144,6 +149,10 @@ export function TripFormDialog({
   const vehicleId = watch("vehicle_id");
   const carType = watch("car_type");
   const mode = watch("mode") as TripMode;
+  const formBillingMethod = watch("billing_method") as BillingMethod;
+  // Local trips are always slab. Outstation honours the form value.
+  const effectiveMethod: BillingMethod =
+    mode === "local" ? "slab" : formBillingMethod;
   const night = watch("night");
   const totalKmsStr = watch("total_kms");
   const totalHoursStr = watch("total_hours");
@@ -161,15 +170,18 @@ export function TripFormDialog({
     extraChargeAmount,
   );
 
+  // Slab billing → look up the LOCAL rate card; per_km → outstation.
+  const rateLookupMode: TripMode =
+    effectiveMethod === "slab" ? "local" : "outstation";
   const activeRate = useMemo(
     () =>
       rateCards.find(
         (r) =>
           r.client_id === clientId &&
           r.car_type === carType &&
-          r.mode === mode,
+          r.mode === rateLookupMode,
       ),
-    [rateCards, clientId, carType, mode],
+    [rateCards, clientId, carType, rateLookupMode],
   );
 
   const preview = useMemo(() => {
@@ -178,6 +190,7 @@ export function TripFormDialog({
       {
         car_type: carType,
         mode,
+        billing_method: effectiveMethod,
         total_kms: toNum(totalKmsStr),
         total_hours: toNum(totalHoursStr),
         night,
@@ -186,7 +199,7 @@ export function TripFormDialog({
       activeRate,
     );
     return { lines, total: tripTotal(lines) };
-  }, [activeRate, carType, mode, totalKmsStr, totalHoursStr, night, driverTaStr]);
+  }, [activeRate, carType, mode, effectiveMethod, totalKmsStr, totalHoursStr, night, driverTaStr]);
 
   async function onSubmit(values: FormValues) {
     setPending(true);
@@ -197,6 +210,10 @@ export function TripFormDialog({
     fd.set("vehicle_id", values.vehicle_id);
     fd.set("car_type", values.car_type);
     fd.set("mode", values.mode);
+    fd.set(
+      "billing_method",
+      values.mode === "local" ? "slab" : values.billing_method,
+    );
     fd.set("total_kms", values.total_kms);
     fd.set("total_hours", values.total_hours ?? "0");
     fd.set("night", String(values.night));
@@ -348,6 +365,12 @@ export function TripFormDialog({
               onValueChange={(v) => {
                 if (v === "local" || v === "outstation") {
                   setValue("mode", v, { shouldValidate: true });
+                  // Sensible default when switching modes.
+                  if (v === "outstation") {
+                    setValue("billing_method", "per_km");
+                  } else {
+                    setValue("billing_method", "slab");
+                  }
                 }
               }}
             >
@@ -360,6 +383,31 @@ export function TripFormDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {mode === "outstation" && (
+            <div className="flex items-start justify-between rounded-md border px-3 py-2 gap-3">
+              <div className="min-w-0 flex-1">
+                <Label htmlFor="billing_method" className="font-medium">
+                  Bill as slab (use local rate card)
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Default for outstation is per-km. Toggle on to bill this
+                  trip with the client&apos;s local rate card for{" "}
+                  <span className="font-medium">{carType}</span>: base + extra
+                  kms + extra hrs + night.
+                </p>
+              </div>
+              <Switch
+                id="billing_method"
+                checked={formBillingMethod === "slab"}
+                onCheckedChange={(v) =>
+                  setValue("billing_method", v ? "slab" : "per_km", {
+                    shouldValidate: true,
+                  })
+                }
+              />
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-3 border rounded-md p-4">
             <div className="flex flex-col gap-1">
@@ -502,8 +550,11 @@ export function TripFormDialog({
               </p>
             ) : !activeRate ? (
               <p className="text-destructive">
-                No rate card for this client + {carType} + {mode}. Add one on
-                the Rate cards page first.
+                No <span className="font-medium">{rateLookupMode}</span> rate
+                card for this client + {carType}.
+                {mode === "outstation" && effectiveMethod === "slab"
+                  ? " Slab billing borrows the local rate card — add a local rate for this car type or switch this trip back to per-km."
+                  : " Add one on the Rate cards page first."}
               </p>
             ) : preview ? (
               <div className="flex flex-col gap-1">

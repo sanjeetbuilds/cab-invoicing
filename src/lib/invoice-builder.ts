@@ -58,10 +58,35 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
   const unmatched: string[] = [];
   let sort_order = 0;
 
-  for (const trip of input.trips) {
-    const rate = rateByKey.get(
-      `${trip.client_id}|${trip.car_type}|${trip.mode}`,
+  // Local trips always use slab; outstation trips respect billing_method
+  // (default 'per_km' from DB, or 'slab' when the user toggles).
+  const effectiveMethod = (t: Trip): "slab" | "per_km" => {
+    if (t.mode === "local") return "slab";
+    return t.billing_method === "slab" ? "slab" : "per_km";
+  };
+
+  // Slab → look up the LOCAL rate card; per_km → outstation rate card.
+  const resolveRate = (t: Trip): RateCard | undefined => {
+    const lookupMode = effectiveMethod(t) === "slab" ? "local" : "outstation";
+    return rateByKey.get(`${t.client_id}|${t.car_type}|${lookupMode}`);
+  };
+
+  const computeTripLines = (t: Trip, rate: RateCard) =>
+    tripToLines(
+      {
+        car_type: t.car_type,
+        mode: t.mode,
+        billing_method: effectiveMethod(t),
+        total_kms: t.total_kms,
+        total_hours: t.total_hours,
+        night: t.night,
+        driver_ta: t.driver_ta,
+      },
+      rate,
     );
+
+  for (const trip of input.trips) {
+    const rate = resolveRate(trip);
     if (!rate) {
       unmatched.push(trip.id);
       continue;
@@ -72,17 +97,7 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
       : trip.car_type;
     const date = fmtTripDateRange(trip.date, trip.end_date);
 
-    const tripLines = tripToLines(
-      {
-        car_type: trip.car_type,
-        mode: trip.mode,
-        total_kms: trip.total_kms,
-        total_hours: trip.total_hours,
-        night: trip.night,
-        driver_ta: trip.driver_ta,
-      },
-      rate,
-    );
+    const tripLines = computeTripLines(trip, rate);
 
     for (const line of tripLines) {
       lines.push({
@@ -103,21 +118,9 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
 
   const subtotal = round2(
     matchedTrips.reduce((sum, trip) => {
-      const rate = rateByKey.get(
-        `${trip.client_id}|${trip.car_type}|${trip.mode}`,
-      );
+      const rate = resolveRate(trip);
       if (!rate) return sum;
-      return sum + tripTotal(tripToLines(
-        {
-          car_type: trip.car_type,
-          mode: trip.mode,
-          total_kms: trip.total_kms,
-          total_hours: trip.total_hours,
-          night: trip.night,
-          driver_ta: trip.driver_ta,
-        },
-        rate,
-      ));
+      return sum + tripTotal(computeTripLines(trip, rate));
     }, 0),
   );
 

@@ -207,13 +207,19 @@ export function InvoiceBuilderForm({
             ) : (
               trips.map((t) => {
                 const veh = vehicleById.get(t.vehicle_id);
-                const rate = rateByKey.get(`${t.client_id}|${t.car_type}|${t.mode}`);
+                const effectiveMethod =
+                  t.mode === "local"
+                    ? "slab"
+                    : (t.billing_method ?? "per_km");
+                const lookupMode = effectiveMethod === "slab" ? "local" : "outstation";
+                const rate = rateByKey.get(`${t.client_id}|${t.car_type}|${lookupMode}`);
                 const amount = rate
                   ? tripTotal(
                       tripToLines(
                         {
                           car_type: t.car_type,
                           mode: t.mode,
+                          billing_method: effectiveMethod,
                           total_kms: t.total_kms,
                           total_hours: t.total_hours,
                           night: t.night,

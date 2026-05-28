@@ -41,12 +41,18 @@ function fmtDate(iso: string) {
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
 }
 
+function effectiveBillingMethod(t: Trip): "slab" | "per_km" {
+  if (t.mode === "local") return "slab";
+  return t.billing_method === "slab" ? "slab" : "per_km";
+}
+
 function computeAmount(trip: Trip, rate: RateCard | undefined): number | null {
   if (!rate) return null;
   const lines = tripToLines(
     {
       car_type: trip.car_type,
       mode: trip.mode,
+      billing_method: effectiveBillingMethod(trip),
       total_kms: trip.total_kms,
       total_hours: trip.total_hours,
       night: trip.night,
@@ -200,7 +206,8 @@ export default async function TripsPage({
                 {tripList.map((t) => {
                   const c = clientById.get(t.client_id);
                   const v = vehicleById.get(t.vehicle_id);
-                  const r = rateByKey.get(`${t.client_id}|${t.car_type}|${t.mode}`);
+                  const lookupMode = effectiveBillingMethod(t) === "slab" ? "local" : "outstation";
+                  const r = rateByKey.get(`${t.client_id}|${t.car_type}|${lookupMode}`);
                   const amount = computeAmount(t, r);
                   return (
                     <TableRow key={t.id}>
