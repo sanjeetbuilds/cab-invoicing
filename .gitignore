@@ -43,3 +43,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Real Krishna Cabs invoices used as design references only
+*.pdf
+!node_modules/**/*.pdf
