@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireWriter } from "@/lib/auth";
+import { createClient as createUserClient } from "@/lib/supabase/server";
 import { buildInvoiceDraft } from "@/lib/invoice-builder";
 import type {
   Client,
@@ -110,8 +111,11 @@ export async function issueInvoiceAction(
     };
   }
 
-  // Atomically reserve the next invoice number for this company.
-  const { data: numberData, error: rpcErr } = await ctx.admin.rpc(
+  // Atomically reserve the next invoice number for this company. Must run
+  // through the user-scoped client so auth.uid() resolves inside the
+  // SECURITY DEFINER function — the admin client has no session.
+  const userSb = await createUserClient();
+  const { data: numberData, error: rpcErr } = await userSb.rpc(
     "allocate_invoice_number",
     { p_company_id: ctx.companyId },
   );
