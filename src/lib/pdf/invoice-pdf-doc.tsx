@@ -152,18 +152,19 @@ const styles = StyleSheet.create({
     borderTopWidth: 0.4,
     borderTopColor: COLORS.ruleSoft,
   },
+  // NotoSansMono is registered without an italic face, so do NOT set
+  // fontStyle: "italic" here — @react-pdf throws "Could not resolve font"
+  // on multi-page invoices (which are the only ones that render carry rows).
   carryRowBox: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: 260,
     fontSize: 9.5,
-    fontStyle: "italic",
     color: COLORS.muted,
     paddingVertical: 1,
   },
   carryRowGrand: {
     color: COLORS.text,
-    fontStyle: "normal",
   },
   broughtForwardWrap: {
     marginTop: 4,
