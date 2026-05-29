@@ -86,7 +86,14 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
       rate,
     );
 
-  for (const trip of input.trips) {
+  // Invoice listing must be chronological — start date ascending.
+  // Trips arrive from the caller in creation/edit order, which is not
+  // necessarily date-sorted.
+  const tripsByDate = [...input.trips].sort((a, b) =>
+    a.date.localeCompare(b.date),
+  );
+
+  for (const trip of tripsByDate) {
     const rate = resolveRate(trip);
     if (!rate) {
       unmatched.push(trip.id);

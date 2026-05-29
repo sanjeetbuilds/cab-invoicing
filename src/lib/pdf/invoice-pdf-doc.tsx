@@ -258,6 +258,21 @@ function groupLines(lines: InvoiceLine[]): LineGroup[] {
   return groups;
 }
 
+/**
+ * Parse the display date string ("17/4/26" or "15/4/26\nto\n16/4/26")
+ * into a YYYYMMDD integer for chronological sorting. Multi-day trips
+ * sort by their START date. Returns 0 for null/unparseable so those
+ * groups land at the top — unusual but stable.
+ */
+function dateSortKey(s: string | null | undefined): number {
+  if (!s) return 0;
+  const first = s.split("\n")[0]?.trim() ?? "";
+  const m = first.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+  if (!m) return 0;
+  const [, d, mo, yy] = m;
+  return (2000 + Number(yy)) * 10000 + Number(mo) * 100 + Number(d);
+}
+
 function sumLines(lines: InvoiceLine[]): number {
   return Math.round(lines.reduce((s, l) => s + Number(l.amount ?? 0), 0) * 100) / 100;
 }
@@ -496,13 +511,13 @@ function HeaderBand({
         <View style={styles.partyCol3}>
           <Text style={styles.partyLabel}>BILLED BY</Text>
           <Text style={styles.partyTextBold}>{company.name}</Text>
+          {company.gstin && (
+            <Text style={styles.partyText}>GSTIN {company.gstin}</Text>
+          )}
           {phones && <Text style={styles.partyText}>{phones}</Text>}
           {invoiceEmail && <Text style={styles.partyText}>{invoiceEmail}</Text>}
           {company.address && (
             <Text style={styles.partyText}>{company.address}</Text>
-          )}
-          {company.gstin && (
-            <Text style={styles.partyText}>GSTIN {company.gstin}</Text>
           )}
         </View>
 
@@ -540,7 +555,18 @@ function HeaderBand({
 
 export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
   const fullNumber = `${company.invoice_prefix ?? ""}${invoice.invoice_number}`;
-  const groups = groupLines([...lines].sort((a, b) => a.sort_order - b.sort_order));
+  // Sort lines by stored sort_order first (preserves the order of lines
+  // WITHIN a trip), group them, then sort whole groups chronologically by
+  // their first line's date. Result: trips listed oldest → newest, with
+  // each trip's internal line order (total / additional kms / hrs / night)
+  // intact.
+  const grouped = groupLines(
+    [...lines].sort((a, b) => a.sort_order - b.sort_order),
+  );
+  const groups = [...grouped].sort(
+    (a, b) =>
+      dateSortKey(a.lines[0]?.date) - dateSortKey(b.lines[0]?.date),
+  );
   const terms = (company.terms_invoice ?? []).filter(Boolean);
   const pages = paginateGroups(groups);
 

@@ -151,4 +151,24 @@ describe("InvoicePdf — multi-page", () => {
     );
     expect(buf.subarray(0, 5).toString()).toBe("%PDF-");
   });
+
+  it("renders even when input lines arrive in non-chronological order", async () => {
+    // Build chronologically, then shuffle group order to simulate the bug
+    // we're fixing: trips entered out of order.
+    const lines = makeLines(5);
+    // group ids are trip-0..trip-4, dates 1/4/26..5/4/26
+    const groups: Record<string, typeof lines> = {};
+    for (const l of lines) (groups[l.trip_id!] ??= []).push(l);
+    const shuffled = [
+      ...groups["trip-2"],
+      ...groups["trip-0"],
+      ...groups["trip-4"],
+      ...groups["trip-1"],
+      ...groups["trip-3"],
+    ];
+    const buf = await renderToBuffer(
+      <InvoicePdf company={company} invoice={makeInvoice()} lines={shuffled} />,
+    );
+    expect(buf.subarray(0, 5).toString()).toBe("%PDF-");
+  });
 });
