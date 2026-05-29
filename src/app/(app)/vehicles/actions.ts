@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireWriter } from "@/lib/auth";
+import type { Vehicle } from "@/lib/supabase/types";
 
 const CAR_TYPES = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"] as const;
 const OWNERSHIP = ["own", "attached"] as const;
@@ -79,6 +80,29 @@ export async function updateVehicleAction(
 
   revalidatePath("/vehicles");
   return { ok: true };
+}
+
+export type FetchVehicleResult =
+  | { ok: true; vehicle: Pick<Vehicle, "id" | "number" | "type" | "active"> }
+  | { ok: false; error: string };
+
+/** Look up a vehicle by its (normalized) number so the inline trip-form
+ *  flow can grab the newly-created row to select it. */
+export async function fetchVehicleByNumberAction(
+  number: string,
+): Promise<FetchVehicleResult> {
+  const ctx = await requireWriter();
+  if (!ctx.ok) return ctx;
+
+  const { data, error } = await ctx.admin
+    .from("vehicles")
+    .select("id, number, type, active")
+    .eq("company_id", ctx.companyId)
+    .eq("number", number)
+    .maybeSingle<Pick<Vehicle, "id" | "number" | "type" | "active">>();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: "Vehicle not found after save." };
+  return { ok: true, vehicle: data };
 }
 
 export async function deleteVehicleAction(id: string): Promise<ActionResult> {

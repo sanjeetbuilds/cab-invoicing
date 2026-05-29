@@ -33,7 +33,11 @@ import type {
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
 import { chargeLabel } from "@/lib/charges";
 import { formatINR } from "@/lib/format";
+import { ClientPicker } from "@/components/pickers/client-picker";
+import { VehiclePicker } from "@/components/pickers/vehicle-picker";
 import { createTripAction, updateTripAction } from "./actions";
+import { InlineVehicleForm } from "./inline-vehicle-form";
+import { InlineRateCardForm } from "./inline-rate-card-form";
 
 const CAR_TYPES: CarType[] = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"];
 const decimalRegex = /^\d*\.?\d*$/;
@@ -98,6 +102,13 @@ export function TripForm({
   const [pending, setPending] = useState(false);
   const editing = !!trip;
 
+  // Track vehicles & rate cards in local state so inline-create flows
+  // can append new rows without re-rendering / losing the form.
+  const [localVehicles, setLocalVehicles] = useState(vehicles);
+  const [localRateCards, setLocalRateCards] = useState(rateCards);
+  const [addingVehicle, setAddingVehicle] = useState(false);
+  const [addingRate, setAddingRate] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -160,15 +171,17 @@ export function TripForm({
 
   const rateLookupMode: TripMode =
     effectiveMethod === "slab" ? "local" : "outstation";
+  // Rate cards key by (client_id, car_type, mode) — not vehicle_id —
+  // so every Crysta for a given client shares one rate.
   const activeRate = useMemo(
     () =>
-      rateCards.find(
+      localRateCards.find(
         (r) =>
           r.client_id === clientId &&
           r.car_type === carType &&
           r.mode === rateLookupMode,
       ),
-    [rateCards, clientId, carType, rateLookupMode],
+    [localRateCards, clientId, carType, rateLookupMode],
   );
 
   const preview = useMemo(() => {
@@ -253,31 +266,14 @@ export function TripForm({
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="client_id">Client *</Label>
-            <Select
-              value={clientId || undefined}
-              onValueChange={(v) => {
-                if (typeof v === "string") {
-                  setValue("client_id", v, { shouldValidate: true });
-                }
-              }}
-            >
-              <SelectTrigger id="client_id">
-                <SelectValue placeholder="Pick a client">
-                  {(value) =>
-                    typeof value === "string" && value
-                      ? (clients.find((c) => c.id === value)?.name ?? null)
-                      : null
-                  }
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ClientPicker
+              id="client_id"
+              clients={clients}
+              value={clientId}
+              onValueChange={(v) =>
+                setValue("client_id", v, { shouldValidate: true })
+              }
+            />
             {errors.client_id && (
               <p className="text-sm text-destructive">{errors.client_id.message}</p>
             )}
@@ -290,38 +286,19 @@ export function TripForm({
         <CardContent className="grid gap-5 sm:grid-cols-3">
           <div className="sm:col-span-2 flex flex-col gap-2">
             <Label htmlFor="vehicle_id">Vehicle *</Label>
-            <Select
-              value={vehicleId || undefined}
+            <VehiclePicker
+              id="vehicle_id"
+              vehicles={localVehicles}
+              value={vehicleId}
               onValueChange={(v) => {
-                if (typeof v !== "string") return;
                 setValue("vehicle_id", v, { shouldValidate: true });
-                const veh = vehicles.find((x) => x.id === v);
+                const veh = localVehicles.find((x) => x.id === v);
                 if (veh && CAR_TYPES.includes(veh.type)) {
                   setValue("car_type", veh.type, { shouldValidate: true });
                 }
               }}
-            >
-              <SelectTrigger id="vehicle_id">
-                <SelectValue placeholder="Pick a vehicle">
-                  {(value) => {
-                    if (typeof value !== "string" || !value) return null;
-                    const v = vehicles.find((x) => x.id === value);
-                    if (!v) return null;
-                    return `${v.number} · ${v.type}${v.active ? "" : " (inactive)"}`;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {vehicles.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>
-                    <span className={v.active ? "" : "text-muted-foreground"}>
-                      {v.number} · {v.type}
-                      {v.active ? "" : " (inactive)"}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onAddNew={() => setAddingVehicle(true)}
+            />
             {errors.vehicle_id && (
               <p className="text-sm text-destructive">{errors.vehicle_id.message}</p>
             )}
@@ -399,6 +376,20 @@ export function TripForm({
           )}
         </CardContent>
       </Card>
+
+      {addingVehicle && (
+        <InlineVehicleForm
+          onCancel={() => setAddingVehicle(false)}
+          onCreated={(v) => {
+            setLocalVehicles((prev) => [...prev, v]);
+            setValue("vehicle_id", v.id, { shouldValidate: true });
+            if (CAR_TYPES.includes(v.type)) {
+              setValue("car_type", v.type, { shouldValidate: true });
+            }
+            setAddingVehicle(false);
+          }}
+        />
+      )}
 
       {/* Distances & hours & TA & night */}
       <Card>
@@ -553,13 +544,34 @@ export function TripForm({
               Pick client, car, and mode to preview the amount.
             </p>
           ) : !activeRate ? (
-            <p className="text-sm text-destructive">
-              No <span className="font-medium">{rateLookupMode}</span> rate
-              card for this client + {carType}.
-              {mode === "outstation" && effectiveMethod === "slab"
-                ? " Slab billing borrows the local rate card — add a local rate for this car type or switch this trip back to per-km."
-                : " Add one on the Rate cards page first."}
-            </p>
+            <div className="flex flex-col gap-3 rounded-md bg-warning-soft/60 p-3 text-sm">
+              <p className="text-foreground">
+                No rate set for{" "}
+                <span className="font-medium">
+                  {clients.find((c) => c.id === clientId)?.name ?? "this client"}
+                </span>{" "}
+                ·{" "}
+                <span className="font-medium">{carType}</span> ·{" "}
+                <span className="font-medium">{rateLookupMode}</span>.
+              </p>
+              {mode === "outstation" && effectiveMethod === "slab" && (
+                <p className="text-xs text-muted-foreground">
+                  Slab billing borrows the local rate card — add a local rate
+                  for this car type or switch this trip back to per-km.
+                </p>
+              )}
+              {!addingRate && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="self-start"
+                  onClick={() => setAddingRate(true)}
+                >
+                  + Add rate card
+                </Button>
+              )}
+            </div>
           ) : preview ? (
             <div className="flex flex-col gap-1 text-sm">
               {preview.lines.map((l, i) => (
@@ -589,6 +601,33 @@ export function TripForm({
           ) : null}
         </CardContent>
       </Card>
+
+      {addingRate && clientId && carType && (
+        <InlineRateCardForm
+          clientId={clientId}
+          clientName={
+            clients.find((c) => c.id === clientId)?.name ?? "this client"
+          }
+          carType={carType}
+          mode={rateLookupMode}
+          onCancel={() => setAddingRate(false)}
+          onCreated={(rc) => {
+            setLocalRateCards((prev) => {
+              // Replace any existing rate card with the same natural key.
+              const filtered = prev.filter(
+                (r) =>
+                  !(
+                    r.client_id === rc.client_id &&
+                    r.car_type === rc.car_type &&
+                    r.mode === rc.mode
+                  ),
+              );
+              return [...filtered, rc];
+            });
+            setAddingRate(false);
+          }}
+        />
+      )}
 
       {/* Footer */}
       <div className="flex items-center justify-end gap-2">

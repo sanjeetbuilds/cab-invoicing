@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import type { Vehicle } from "@/lib/supabase/types";
+import { normalizeVehicleNumber } from "@/lib/vehicle-format";
 import { createVehicleAction, updateVehicleAction } from "./actions";
 
 const CAR_TYPES = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"] as const;
@@ -63,7 +64,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
   async function onSubmit(values: FormValues) {
     setPending(true);
     const fd = new FormData();
-    fd.set("number", values.number);
+    fd.set("number", normalizeVehicleNumber(values.number));
     fd.set("type", values.type);
     fd.set("ownership", values.ownership);
     fd.set("vendor_name", values.vendor_name ?? "");
@@ -93,7 +94,24 @@ export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
               id="number"
               autoFocus
               placeholder="HR 26 ED 9083"
-              {...register("number")}
+              autoCapitalize="characters"
+              className="font-mono uppercase"
+              {...register("number", {
+                onChange: (e) => {
+                  // Normalize live so the user sees "HR 26 ED 9083"
+                  // even if they typed "hr26ed9083".
+                  const cursor = e.target.selectionStart;
+                  const cleaned = normalizeVehicleNumber(e.target.value);
+                  e.target.value = cleaned;
+                  // Re-place cursor at end — works fine for short numbers.
+                  if (cursor != null) {
+                    e.target.setSelectionRange(cleaned.length, cleaned.length);
+                  }
+                },
+                onBlur: (e) => {
+                  e.target.value = normalizeVehicleNumber(e.target.value);
+                },
+              })}
             />
             {errors.number && (
               <p className="text-sm text-destructive">{errors.number.message}</p>

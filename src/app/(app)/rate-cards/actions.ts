@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireWriter } from "@/lib/auth";
+import type { CarType, RateCard, TripMode } from "@/lib/supabase/types";
 
 const CAR_TYPES = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"] as const;
 const MODES = ["local", "outstation"] as const;
@@ -115,6 +116,33 @@ export async function updateRateCardAction(
 
   revalidatePath("/rate-cards");
   return { ok: true };
+}
+
+export type FetchRateCardResult =
+  | { ok: true; rateCard: RateCard }
+  | { ok: false; error: string };
+
+/** Look up a rate card by its natural key so the inline trip-form flow
+ *  can grab the row it just upserted. */
+export async function fetchRateCardAction(args: {
+  client_id: string;
+  car_type: CarType;
+  mode: TripMode;
+}): Promise<FetchRateCardResult> {
+  const ctx = await requireWriter();
+  if (!ctx.ok) return ctx;
+
+  const { data, error } = await ctx.admin
+    .from("rate_cards")
+    .select("*")
+    .eq("company_id", ctx.companyId)
+    .eq("client_id", args.client_id)
+    .eq("car_type", args.car_type)
+    .eq("mode", args.mode)
+    .maybeSingle<RateCard>();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: "Rate card not found after save." };
+  return { ok: true, rateCard: data };
 }
 
 export async function deleteRateCardAction(id: string): Promise<ActionResult> {
