@@ -499,4 +499,49 @@ describe("buildInvoiceDraft", () => {
     expect(draft.net_amount).toBe(5800);
     expect(draft.amount_in_words).toBe("Five Thousand Eight Hundred Only.");
   });
+
+  it("car-type override: vehicle is a Sonet, trip is billed as a Dzire", () => {
+    // Vehicle 9083 is master-typed as Sonet, but this trip's car_type is
+    // Dzire — we look up the Dzire rate AND the invoice label reads
+    // "9083 Dzire" (not "9083 Sonet").
+    const sonetVehicle: Pick<Vehicle, "id" | "number" | "type"> = {
+      id: "v-sonet",
+      number: "HR 26 ED 9083",
+      type: "Sonet",
+    };
+    const trips = [
+      trip({
+        id: "override",
+        client_id: haryanaClient.id,
+        vehicle_id: sonetVehicle.id,
+        car_type: "Dzire", // ← the override
+        total_kms: 80,
+        total_hours: 8,
+      }),
+    ];
+    const rateCards = [
+      // Only a Dzire rate exists; if the builder used vehicle.type (Sonet)
+      // for lookup it would mark the trip unmatched.
+      rate({
+        client_id: haryanaClient.id,
+        car_type: "Dzire",
+        mode: "local",
+        base_rate: 1200,
+        base_kms: 80,
+        base_hours: 8,
+      }),
+    ];
+
+    const draft = buildInvoiceDraft({
+      trips,
+      rateCards,
+      vehicles: [sonetVehicle],
+      client: haryanaClient,
+      company,
+    });
+
+    expect(draft.unmatched_trip_ids).toEqual([]);
+    expect(draft.subtotal).toBe(1200);
+    expect(draft.lines[0].vehicle_label).toBe("9083 Dzire");
+  });
 });

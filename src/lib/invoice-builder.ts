@@ -100,8 +100,12 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
       continue;
     }
     const v = vehicleById.get(trip.vehicle_id);
+    // Show the BILLED-AS type (trip.car_type), not the vehicle's master
+    // type. This is correct for the override case: e.g. vehicle 9083 is
+    // a Sonet but a particular trip is billed as a Dzire — the invoice
+    // line must read "9083 Dzire".
     const vehicle_label = v
-      ? `${lastSegment(v.number)} ${v.type}`
+      ? `${lastSegment(v.number)} ${trip.car_type}`
       : trip.car_type;
     const date = fmtTripDateRange(trip.date, trip.end_date);
 

@@ -324,6 +324,11 @@ export function TripForm({
                 ))}
               </SelectContent>
             </Select>
+            <CarTypeOverrideNote
+              vehicleId={vehicleId}
+              carType={carType}
+              vehicles={localVehicles}
+            />
           </div>
 
           <div className="sm:col-span-3 flex flex-col gap-2">
@@ -645,6 +650,31 @@ export function TripForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+function CarTypeOverrideNote({
+  vehicleId,
+  carType,
+  vehicles,
+}: {
+  vehicleId: string;
+  carType: CarType;
+  vehicles: Pick<Vehicle, "id" | "type">[];
+}) {
+  const vehicle = vehicles.find((v) => v.id === vehicleId);
+  if (!vehicle || vehicle.type === carType) return null;
+  return (
+    <div
+      className="flex items-start gap-2 rounded-md border border-amber-300/70 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200"
+      role="note"
+    >
+      <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+      <span>
+        Override: billed as <strong>{carType}</strong> (vehicle is actually{" "}
+        <strong>{vehicle.type}</strong>).
+      </span>
+    </div>
   );
 }
 

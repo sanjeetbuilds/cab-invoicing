@@ -217,8 +217,21 @@ export default async function TripsPage({
                       <TableCell className="font-medium">{c?.name ?? "—"}</TableCell>
                       <TableCell>
                         {v ? (
-                          <span className="font-mono text-xs">
+                          <span
+                            className="font-mono text-xs inline-flex items-center gap-1.5"
+                            title={
+                              v.type !== t.car_type
+                                ? `Override: billed as ${t.car_type} (vehicle is actually ${v.type}).`
+                                : undefined
+                            }
+                          >
                             {v.number} · {t.car_type}
+                            {v.type !== t.car_type && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
+                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                billed as
+                              </span>
+                            )}
                           </span>
                         ) : (
                           "—"
@@ -276,8 +289,14 @@ export default async function TripsPage({
                   <CardContent className="py-4 flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{c?.name ?? "—"}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
                         {fmtDate(t.date)} · {v?.number ?? "—"} · {t.car_type}
+                        {v && v.type !== t.car_type && (
+                          <span
+                            title={`Override: billed as ${t.car_type} (vehicle is actually ${v.type}).`}
+                            className="h-1.5 w-1.5 rounded-full bg-amber-500"
+                          />
+                        )}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {t.total_kms}km

@@ -349,18 +349,39 @@ export function BulkAddClient({
                     </select>
                   </td>
                   <td>
-                    <select
-                      value={r.car_type}
-                      onChange={(e) =>
-                        patchRow(i, { car_type: e.target.value as CarType | "" })
-                      }
-                      className="h-8 w-full rounded-lg border border-input px-2 text-sm bg-card focus:border-ring focus:ring-2 focus:ring-ring/20 focus:outline-none"
-                    >
-                      <option value="">—</option>
-                      {CAR_TYPES.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
+                    {(() => {
+                      const veh = r.vehicle_id
+                        ? vehiclesById.get(r.vehicle_id)
+                        : null;
+                      const override = Boolean(
+                        veh && r.car_type && veh.type !== r.car_type,
+                      );
+                      return (
+                        <select
+                          value={r.car_type}
+                          onChange={(e) =>
+                            patchRow(i, {
+                              car_type: e.target.value as CarType | "",
+                            })
+                          }
+                          title={
+                            override
+                              ? `Override: billed as ${r.car_type} (vehicle is actually ${veh!.type}).`
+                              : undefined
+                          }
+                          className={`h-8 w-full rounded-lg border px-2 text-sm focus:border-ring focus:ring-2 focus:ring-ring/20 focus:outline-none ${
+                            override
+                              ? "border-amber-400 bg-amber-50 text-amber-900 dark:border-amber-600 dark:bg-amber-950/50 dark:text-amber-200"
+                              : "border-input bg-card"
+                          }`}
+                        >
+                          <option value="">—</option>
+                          {CAR_TYPES.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      );
+                    })()}
                   </td>
                   <td>
                     <select
