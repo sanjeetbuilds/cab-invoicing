@@ -81,10 +81,19 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   topRight: { alignItems: "flex-end" },
-  invoiceNumber: { fontSize: 11, fontWeight: 700, color: COLORS.text },
-  invoiceDate: { fontSize: 9, marginTop: 2 },
+  taxInvoiceTitle: {
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: 1,
+    color: COLORS.text,
+  },
+  taxInvoiceSub: {
+    fontSize: 8.5,
+    color: COLORS.muted,
+    marginTop: 1,
+  },
 
-  // ── Parties band ──
+  // ── Parties band (3 columns: BILLED BY · BILLED TO · INVOICE) ──
   parties: {
     flexDirection: "row",
     marginTop: 10,
@@ -92,8 +101,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.4,
     borderBottomColor: COLORS.ruleSoft,
   },
-  partyCol: { width: "50%", paddingRight: 12 },
-  partyColRight: { width: "50%", paddingLeft: 12 },
+  partyCol3: { width: "33.33%", paddingRight: 10 },
+  partyColLast: { width: "33.33%", paddingLeft: 10 },
   partyLabel: {
     fontSize: 7.5,
     color: COLORS.muted,
@@ -469,21 +478,26 @@ function HeaderBand({
 }) {
   const phones = [company.phone, company.phone2].filter(Boolean).join(", ");
   const invoiceEmail = company.invoice_email ?? company.email ?? "";
-  const fromContact = [phones, invoiceEmail].filter(Boolean).join("  ·  ");
+  const hasPeriod = Boolean(invoice.period_from && invoice.period_to);
 
   return (
     <>
+      {/* Top band — brand left, TAX INVOICE / Original for Recipient right. */}
       <View style={styles.topBand}>
         <Text style={styles.brand}>{(company.name ?? "").toUpperCase()}</Text>
         <View style={styles.topRight}>
-          <Text style={styles.invoiceNumber}>INVOICE- {fullNumber}</Text>
-          <Text style={styles.invoiceDate}>Date: {fmtDate(invoice.invoice_date)}</Text>
+          <Text style={styles.taxInvoiceTitle}>TAX INVOICE</Text>
+          <Text style={styles.taxInvoiceSub}>Original for Recipient</Text>
         </View>
       </View>
+
+      {/* 3-column parties band — BILLED BY · BILLED TO · INVOICE. */}
       <View style={styles.parties}>
-        <View style={styles.partyCol}>
-          <Text style={styles.partyLabel}>FROM</Text>
-          {fromContact && <Text style={styles.partyText}>{fromContact}</Text>}
+        <View style={styles.partyCol3}>
+          <Text style={styles.partyLabel}>BILLED BY</Text>
+          <Text style={styles.partyTextBold}>{company.name}</Text>
+          {phones && <Text style={styles.partyText}>{phones}</Text>}
+          {invoiceEmail && <Text style={styles.partyText}>{invoiceEmail}</Text>}
           {company.address && (
             <Text style={styles.partyText}>{company.address}</Text>
           )}
@@ -491,19 +505,31 @@ function HeaderBand({
             <Text style={styles.partyText}>GSTIN {company.gstin}</Text>
           )}
         </View>
-        <View style={styles.partyColRight}>
-          <Text style={styles.partyLabel}>BILL TO</Text>
-          <Text style={styles.partyTextBold}>
-            To- {(invoice.client_name ?? "").toUpperCase()}
-          </Text>
+
+        <View style={styles.partyCol3}>
+          <Text style={styles.partyLabel}>BILLED TO</Text>
+          <Text style={styles.partyTextBold}>{invoice.client_name ?? ""}</Text>
           <Text style={styles.partyText}>
             {invoice.client_gstin
-              ? `GSTIN - ${invoice.client_gstin}`
+              ? `GSTIN ${invoice.client_gstin}`
               : "GSTIN NA"}
           </Text>
           {invoice.client_booked_by && (
             <Text style={styles.partyText}>
-              Booked By- {invoice.client_booked_by}
+              Booked By: {invoice.client_booked_by}
+            </Text>
+          )}
+        </View>
+
+        <View style={styles.partyColLast}>
+          <Text style={styles.partyLabel}>INVOICE</Text>
+          <Text style={styles.partyTextBold}>No. {fullNumber}</Text>
+          <Text style={styles.partyText}>
+            Date: {fmtDate(invoice.invoice_date)}
+          </Text>
+          {hasPeriod && (
+            <Text style={styles.partyText}>
+              Period: {fmtDate(invoice.period_from)} – {fmtDate(invoice.period_to)}
             </Text>
           )}
         </View>
