@@ -48,9 +48,13 @@ const COLORS = {
 const PT = (mm: number) => (mm / 25.4) * 72;
 
 // Per-page budgets in row units (one InvoiceLine = one row). Conservative
-// so the fixed bottom footer + totals on the last page don't overlap.
-const FIRST_PAGE_BUDGET = 30; // smaller — header + parties band eat space
-const NEXT_PAGE_BUDGET = 44;  // bigger — just column headers + brought-fwd
+// so the fixed bottom footer + totals + carry row on the last page don't
+// overlap. Reserve ~4 rows on every non-last page for the
+// Page subtotal / Carried forward block so it lands on the same page as
+// the trips it summarises — otherwise wrap={false} pushes it to a fresh
+// page, leaving an empty page in the middle of the invoice.
+const FIRST_PAGE_BUDGET = 26; // header + parties band + carry row
+const NEXT_PAGE_BUDGET = 40;  // brought-fwd row + carry row
 const LAST_PAGE_TOTALS_RESERVE = 12; // ~rows worth of totals space
 
 const styles = StyleSheet.create({
@@ -368,7 +372,7 @@ function TripGroupBlock({ group, isFirst }: { group: LineGroup; isFirst: boolean
 
 function BroughtForwardRow({ amount }: { amount: number }) {
   return (
-    <View style={styles.broughtForwardWrap}>
+    <View wrap={false} style={styles.broughtForwardWrap}>
       <View style={[styles.carryRowBox, { marginLeft: "auto" }]}>
         <Text>Brought forward</Text>
         <Text style={styles.carryRowGrand}>{formatINR(amount)}</Text>
@@ -384,8 +388,13 @@ function CarryForwardRow({
   pageSubtotal: number;
   carried: number;
 }) {
+  // wrap={false} keeps "Page subtotal" and "Carried forward" together.
+  // Without it @react-pdf was splitting them across pages: the subtotal
+  // line landed at the bottom of page 1, "Carried forward" got pushed to
+  // a fresh page on its own, and the next logical page started on page 3
+  // — yielding a near-empty page 2 in multi-page invoices.
   return (
-    <View style={styles.carryRow}>
+    <View wrap={false} style={styles.carryRow}>
       <View style={{ width: 260 }}>
         <View style={styles.carryRowBox}>
           <Text>Page subtotal</Text>
