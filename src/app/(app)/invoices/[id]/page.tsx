@@ -2,11 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireMembership } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
-import type {
-  Company,
-  Invoice,
-  InvoiceLine,
-} from "@/lib/supabase/types";
+import type { Company, Invoice } from "@/lib/supabase/types";
 import { InvoiceActions } from "./invoice-actions";
 import { InvoicePreview } from "./invoice-preview";
 
@@ -26,19 +22,13 @@ export default async function InvoiceViewPage({
   const { supabase, membership } = await requireMembership();
   const { id } = await params;
 
-  const [{ data: invoice }, { data: lines }, { data: company }] = await Promise.all([
+  const [{ data: invoice }, { data: company }] = await Promise.all([
     supabase
       .from("invoices")
       .select("*")
       .eq("id", id)
       .eq("company_id", membership.company_id)
       .maybeSingle<Invoice>(),
-    supabase
-      .from("invoice_lines")
-      .select("*")
-      .eq("invoice_id", id)
-      .order("sort_order", { ascending: true })
-      .returns<InvoiceLine[]>(),
     supabase
       .from("companies")
       .select("*")
@@ -77,13 +67,7 @@ export default async function InvoiceViewPage({
         <InvoiceActions invoice={invoice} />
       </div>
 
-      {/* Preview rendered by the SAME @react-pdf Document the route uses
-          for the downloadable PDF. What you see is what you download. */}
-      <InvoicePreview
-        company={company}
-        invoice={invoice}
-        lines={lines ?? []}
-      />
+      <InvoicePreview invoiceId={invoice.id} />
     </div>
   );
 }
