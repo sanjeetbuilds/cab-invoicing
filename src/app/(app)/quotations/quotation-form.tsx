@@ -107,7 +107,7 @@ export function QuotationForm({
   const editing = !!quotation;
   const [pending, setPending] = useState(false);
 
-  const [number, setNumber] = useState(quotation?.number ?? "");
+  const [number] = useState(quotation?.number ?? "");
   const [clientId, setClientId] = useState(quotation?.client_id ?? "");
   const [useNewClient, setUseNewClient] = useState(
     editing ? !quotation?.client_id : false,
@@ -195,15 +195,17 @@ export function QuotationForm({
       <Card>
         <CardContent className="grid gap-5 sm:grid-cols-3">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="q-number">Number</Label>
-            <Input
-              id="q-number"
-              placeholder="Auto-allocate"
-              value={number}
-              onChange={(e) => setNumber(e.target.value)}
-            />
+            <Label>Quotation #</Label>
+            <div className="h-9 flex items-center rounded-lg border border-input bg-muted/40 px-3 text-sm text-foreground">
+              {number || (
+                <span className="text-muted-foreground">
+                  Q- (auto-allocated on save)
+                </span>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Leave blank to auto-allocate from the company prefix.
+              Number is allocated from the company&apos;s next quotation number
+              when you save.
             </p>
           </div>
           <div className="flex flex-col gap-2">

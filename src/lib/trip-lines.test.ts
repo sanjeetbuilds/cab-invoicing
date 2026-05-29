@@ -67,10 +67,11 @@ describe("tripToLines — reference invoices from BUILD-SPEC.md", () => {
       r,
     );
     expect(lines).toEqual([
-      { particulars: "Total 149kms\n80kms/8hrs", qty: null, rate: null, amount: 1500 },
-      { particulars: "Additional kms",            qty: 69,   rate: 15,   amount: 1035 },
-      { particulars: "Additional hrs",            qty: 1.5,  rate: 100,  amount: 150 },
-      { particulars: "Night Charges",             qty: 1,    rate: 300,  amount: 300 },
+      { particulars: "Total 149kms",  qty: null, rate: null, amount: 0 },
+      { particulars: "80kms/8hrs",    qty: null, rate: 1500, amount: 1500 },
+      { particulars: "Additional kms", qty: 69,   rate: 15,   amount: 1035 },
+      { particulars: "Additional hrs", qty: 1.5,  rate: 100,  amount: 150 },
+      { particulars: "Night Charges",  qty: 1,    rate: 300,  amount: 300 },
     ]);
     expect(tripTotal(lines)).toBe(2985);
   });
@@ -146,9 +147,10 @@ describe("tripToLines — reference invoices from BUILD-SPEC.md", () => {
       r,
     );
     expect(lines).toEqual([
-      { particulars: "Total 159kms\n80kms/8hrs", qty: null, rate: null, amount: 1600 },
-      { particulars: "Additional kms",            qty: 79,   rate: 16,   amount: 1264 },
-      { particulars: "Additional hrs",            qty: 5,    rate: 150,  amount: 750 },
+      { particulars: "Total 159kms",   qty: null, rate: null, amount: 0 },
+      { particulars: "80kms/8hrs",     qty: null, rate: 1600, amount: 1600 },
+      { particulars: "Additional kms", qty: 79,   rate: 16,   amount: 1264 },
+      { particulars: "Additional hrs", qty: 5,    rate: 150,  amount: 750 },
     ]);
     expect(tripTotal(lines)).toBe(3614);
   });
@@ -182,10 +184,11 @@ describe("tripToLines — outstation billed as slab borrows the local rate card"
       r,
     );
     expect(lines).toEqual([
-      { particulars: "Total 149kms\n80kms/8hrs", qty: null, rate: null, amount: 1500 },
-      { particulars: "Additional kms",            qty: 69,   rate: 15,   amount: 1035 },
-      { particulars: "Additional hrs",            qty: 1.5,  rate: 100,  amount: 150 },
-      { particulars: "Night Charges",             qty: 1,    rate: 300,  amount: 300 },
+      { particulars: "Total 149kms",  qty: null, rate: null, amount: 0 },
+      { particulars: "80kms/8hrs",    qty: null, rate: 1500, amount: 1500 },
+      { particulars: "Additional kms", qty: 69,   rate: 15,   amount: 1035 },
+      { particulars: "Additional hrs", qty: 1.5,  rate: 100,  amount: 150 },
+      { particulars: "Night Charges",  qty: 1,    rate: 300,  amount: 300 },
     ]);
     expect(tripTotal(lines)).toBe(2985);
   });
@@ -239,7 +242,7 @@ describe("tripToLines — edge cases", () => {
       r,
     );
     expect(lines).toEqual([
-      { particulars: "80kms/8hrs", qty: null, rate: null, amount: 1500 },
+      { particulars: "80kms/8hrs", qty: null, rate: 1500, amount: 1500 },
     ]);
     expect(tripTotal(lines)).toBe(1500);
   });

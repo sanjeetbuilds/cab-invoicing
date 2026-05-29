@@ -2,6 +2,12 @@
  * Pure @react-pdf JSX for the invoice. Does NOT register fonts —
  * the caller (server route or client PDFViewer wrapper) registers
  * "NotoSansMono" with the appropriate font src first.
+ *
+ * Multi-page pagination is manual: trip groups are packed into pages
+ * with a per-page row budget so we can render proper accounting-style
+ * "Page subtotal / Carried forward" and "Brought forward" indicators.
+ * Totals + In Words appear only on the final page. Terms footer is
+ * fixed at the bottom of every page.
  */
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { Company, Invoice, InvoiceLine } from "@/lib/supabase/types";
@@ -41,18 +47,25 @@ const COLORS = {
 
 const PT = (mm: number) => (mm / 25.4) * 72;
 
+// Per-page budgets in row units (one InvoiceLine = one row). Conservative
+// so the fixed bottom footer + totals on the last page don't overlap.
+const FIRST_PAGE_BUDGET = 30; // smaller — header + parties band eat space
+const NEXT_PAGE_BUDGET = 44;  // bigger — just column headers + brought-fwd
+const LAST_PAGE_TOTALS_RESERVE = 12; // ~rows worth of totals space
+
 const styles = StyleSheet.create({
   page: {
     fontFamily: INVOICE_FONT_FAMILY,
     fontSize: 9,
     paddingTop: PT(14),
-    paddingBottom: PT(16) + 16,
+    // bottom padding has to reserve room for the fixed terms footer
+    paddingBottom: PT(16) + 70,
     paddingHorizontal: PT(12),
     color: COLORS.text,
     lineHeight: 1.3,
   },
 
-  // ── Top band (brand + invoice meta) ──
+  // ── Top band ──
   topBand: {
     flexDirection: "row",
     alignItems: "center",
@@ -68,14 +81,10 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   topRight: { alignItems: "flex-end" },
-  invoiceNumber: {
-    fontSize: 11,
-    fontWeight: 700,
-    color: COLORS.text,
-  },
+  invoiceNumber: { fontSize: 11, fontWeight: 700, color: COLORS.text },
   invoiceDate: { fontSize: 9, marginTop: 2 },
 
-  // ── Parties band (FROM | BILL TO) ──
+  // ── Parties band ──
   parties: {
     flexDirection: "row",
     marginTop: 10,
@@ -126,7 +135,6 @@ const styles = StyleSheet.create({
   tdMuted: { color: COLORS.muted },
   tdNum: { textAlign: "right" },
 
-  // Column widths — A4 usable ~528pt at 12mm margins.
   colDate: { width: 64 },
   colVehicle: { width: 82 },
   colHsn: { width: 50 },
@@ -135,16 +143,45 @@ const styles = StyleSheet.create({
   colRate: { width: 56 },
   colAmount: { width: 76 },
 
-  // ── Totals ──
+  // ── Carry rows ──
+  carryRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 6,
+    paddingTop: 4,
+    borderTopWidth: 0.4,
+    borderTopColor: COLORS.ruleSoft,
+  },
+  carryRowBox: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: 260,
+    fontSize: 9.5,
+    fontStyle: "italic",
+    color: COLORS.muted,
+    paddingVertical: 1,
+  },
+  carryRowGrand: {
+    color: COLORS.text,
+    fontStyle: "normal",
+  },
+  broughtForwardWrap: {
+    marginTop: 4,
+    paddingBottom: 4,
+    borderBottomWidth: 0.25,
+    borderBottomColor: COLORS.ruleSoft,
+  },
+
+  // ── Totals (last page only) ──
   totalsWrap: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 12,
+    marginTop: 10,
     paddingTop: 8,
     borderTopWidth: 0.5,
     borderTopColor: COLORS.ruleStrong,
   },
-  totalsBox: { width: 240 },
+  totalsBox: { width: 260 },
   totalsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -152,10 +189,9 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
   },
   totalsLabel: { color: COLORS.text },
+  totalsLabelBold: { color: COLORS.text, fontWeight: 700 },
   totalsValue: { color: COLORS.text },
   totalsValueMuted: { color: COLORS.muted },
-  // "Total" label gets emphasis (matches user's spec).
-  totalsLabelBold: { color: COLORS.text, fontWeight: 700 },
   totalsGrandRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -168,11 +204,18 @@ const styles = StyleSheet.create({
 
   words: { fontSize: 9.5, marginTop: 12 },
 
+  // ── Fixed terms footer ──
   foot: {
-    marginTop: 14,
+    position: "absolute",
+    left: PT(12),
+    right: PT(12),
+    bottom: PT(8) + 14,
     fontSize: 8.5,
     color: COLORS.muted,
     lineHeight: 1.4,
+    borderTopWidth: 0.25,
+    borderTopColor: COLORS.ruleSoft,
+    paddingTop: 5,
   },
   termLine: { marginTop: 1 },
 
@@ -205,15 +248,134 @@ function groupLines(lines: InvoiceLine[]): LineGroup[] {
   return groups;
 }
 
-export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
-  const fullNumber = `${company.invoice_prefix ?? ""}${invoice.invoice_number}`;
-  const groups = groupLines([...lines].sort((a, b) => a.sort_order - b.sort_order));
-  const terms = (company.terms_invoice ?? []).filter(Boolean);
+function sumLines(lines: InvoiceLine[]): number {
+  return Math.round(lines.reduce((s, l) => s + Number(l.amount ?? 0), 0) * 100) / 100;
+}
 
-  const phones = [company.phone, company.phone2].filter(Boolean).join(", ");
-  const invoiceEmail = company.invoice_email ?? company.email ?? "";
-  const fromContact = [phones, invoiceEmail].filter(Boolean).join("  ·  ");
+/**
+ * Pack groups into pages. Page 1 has a smaller budget (header + parties
+ * eat space); subsequent pages have a bigger budget. The last page also
+ * needs to reserve room for the Total / GST / Net Amount block; we pre-check
+ * whether the natural last page can fit those and push to a new page if not.
+ */
+function paginateGroups(groups: LineGroup[]): LineGroup[][] {
+  const pages: LineGroup[][] = [];
+  let current: LineGroup[] = [];
+  let currentRows = 0;
+  for (const g of groups) {
+    const budget = pages.length === 0 ? FIRST_PAGE_BUDGET : NEXT_PAGE_BUDGET;
+    if (currentRows + g.lines.length > budget && current.length > 0) {
+      pages.push(current);
+      current = [];
+      currentRows = 0;
+    }
+    current.push(g);
+    currentRows += g.lines.length;
+  }
+  if (current.length > 0) pages.push(current);
 
+  // If the last page is "too full" for the totals block, add an empty page.
+  if (pages.length > 0) {
+    const lastIdx = pages.length - 1;
+    const lastBudget = lastIdx === 0 ? FIRST_PAGE_BUDGET : NEXT_PAGE_BUDGET;
+    const lastUsed = pages[lastIdx].reduce((s, g) => s + g.lines.length, 0);
+    if (lastUsed + LAST_PAGE_TOTALS_RESERVE > lastBudget) {
+      pages.push([]);
+    }
+  }
+  return pages;
+}
+
+function ColumnHeader() {
+  return (
+    <View fixed style={styles.thRow}>
+      <Text style={[styles.th, styles.colDate]}>Date</Text>
+      <Text style={[styles.th, styles.colVehicle]}>Vehicle / Type</Text>
+      <Text style={[styles.th, styles.colHsn]}>HSN Code</Text>
+      <Text style={[styles.th, styles.colPart]}>Particulars</Text>
+      <Text style={[styles.th, styles.colUnits, styles.thNum]}>Units</Text>
+      <Text style={[styles.th, styles.colRate, styles.thNum]}>Rate</Text>
+      <Text style={[styles.th, styles.colAmount, styles.thNum]}>Amount</Text>
+    </View>
+  );
+}
+
+function TripGroupBlock({ group, isFirst }: { group: LineGroup; isFirst: boolean }) {
+  const vehicle = group.lines[0]?.vehicle_label ?? "";
+  const firstDate = group.lines[0]?.date ?? "";
+  const hsn = group.lines[0]?.hsn_code ?? "";
+  return (
+    <View
+      wrap={false}
+      style={[styles.groupBlock, !isFirst ? styles.groupBlockDivider : {}]}
+    >
+      {group.lines.map((l, li) => {
+        const isFirstLineOfGroup = li === 0;
+        return (
+          <View key={l.id} style={styles.tr}>
+            <Text style={[styles.td, styles.colDate]}>
+              {isFirstLineOfGroup ? firstDate : ""}
+            </Text>
+            <Text style={[styles.td, styles.colVehicle, styles.tdMuted]}>
+              {isFirstLineOfGroup ? vehicle : ""}
+            </Text>
+            <Text style={[styles.td, styles.colHsn, styles.tdMuted]}>
+              {isFirstLineOfGroup ? hsn : ""}
+            </Text>
+            <Text style={[styles.td, styles.colPart]}>
+              {l.particulars ?? ""}
+            </Text>
+            <Text style={[styles.td, styles.colUnits, styles.tdNum]}>
+              {formatQty(l.qty)}
+            </Text>
+            <Text style={[styles.td, styles.colRate, styles.tdNum]}>
+              {formatINRBlank(l.rate)}
+            </Text>
+            <Text style={[styles.td, styles.colAmount, styles.tdNum]}>
+              {formatINRBlank(l.amount)}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+function BroughtForwardRow({ amount }: { amount: number }) {
+  return (
+    <View style={styles.broughtForwardWrap}>
+      <View style={[styles.carryRowBox, { marginLeft: "auto" }]}>
+        <Text>Brought forward</Text>
+        <Text style={styles.carryRowGrand}>{formatINR(amount)}</Text>
+      </View>
+    </View>
+  );
+}
+
+function CarryForwardRow({
+  pageSubtotal,
+  carried,
+}: {
+  pageSubtotal: number;
+  carried: number;
+}) {
+  return (
+    <View style={styles.carryRow}>
+      <View style={{ width: 260 }}>
+        <View style={styles.carryRowBox}>
+          <Text>Page subtotal</Text>
+          <Text>{formatINR(pageSubtotal)}</Text>
+        </View>
+        <View style={[styles.carryRowBox, styles.carryRowGrand]}>
+          <Text>Carried forward</Text>
+          <Text>{formatINR(carried)}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function TotalsBlock({ invoice }: { invoice: Invoice }) {
   const cgstLabel =
     invoice.gst_mode === "CGST_SGST"
       ? "CGST @ 2.5%"
@@ -229,175 +391,185 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
   const igstLabel = invoice.gst_mode === "IGST" ? "IGST @ 5%" : null;
 
   return (
-    <Document title={`Invoice ${fullNumber}`}>
-      <Page size="A4" style={styles.page} wrap>
-        {/* Top band */}
-        <View style={styles.topBand}>
-          <Text style={styles.brand}>{(company.name ?? "").toUpperCase()}</Text>
-          <View style={styles.topRight}>
-            <Text style={styles.invoiceNumber}>INVOICE- {fullNumber}</Text>
-            <Text style={styles.invoiceDate}>Date: {fmtDate(invoice.invoice_date)}</Text>
+    <View wrap={false}>
+      <View style={styles.totalsWrap}>
+        <View style={styles.totalsBox}>
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsLabelBold}>Total</Text>
+            <Text style={styles.totalsValue}>{formatINR(invoice.subtotal)}</Text>
           </View>
-        </View>
-
-        {/* Parties band */}
-        <View style={styles.parties}>
-          <View style={styles.partyCol}>
-            <Text style={styles.partyLabel}>FROM</Text>
-            {fromContact && <Text style={styles.partyText}>{fromContact}</Text>}
-            {company.address && (
-              <Text style={styles.partyText}>{company.address}</Text>
-            )}
-            {company.gstin && (
-              <Text style={styles.partyText}>GSTIN {company.gstin}</Text>
-            )}
-          </View>
-          <View style={styles.partyColRight}>
-            <Text style={styles.partyLabel}>BILL TO</Text>
-            <Text style={styles.partyTextBold}>
-              To- {(invoice.client_name ?? "").toUpperCase()}
-            </Text>
-            <Text style={styles.partyText}>
-              {invoice.client_gstin
-                ? `GSTIN - ${invoice.client_gstin}`
-                : "GSTIN NA"}
-            </Text>
-            {invoice.client_booked_by && (
-              <Text style={styles.partyText}>
-                Booked By- {invoice.client_booked_by}
-              </Text>
-            )}
-          </View>
-        </View>
-
-        {/* Column headers (repeat on each page) */}
-        <View fixed style={styles.thRow}>
-          <Text style={[styles.th, styles.colDate]}>Date</Text>
-          <Text style={[styles.th, styles.colVehicle]}>Vehicle / Type</Text>
-          <Text style={[styles.th, styles.colHsn]}>HSN Code</Text>
-          <Text style={[styles.th, styles.colPart]}>Particulars</Text>
-          <Text style={[styles.th, styles.colUnits, styles.thNum]}>Units</Text>
-          <Text style={[styles.th, styles.colRate, styles.thNum]}>Rate</Text>
-          <Text style={[styles.th, styles.colAmount, styles.thNum]}>Amount</Text>
-        </View>
-
-        {/* Rows */}
-        {groups.map((group, gi) => {
-          const vehicle = group.lines[0]?.vehicle_label ?? "";
-          const firstDate = group.lines[0]?.date ?? "";
-          const hsn = group.lines[0]?.hsn_code ?? "";
-          return (
-            <View
-              key={group.trip_id ?? `g${gi}`}
-              wrap={false}
-              style={[styles.groupBlock, gi > 0 ? styles.groupBlockDivider : {}]}
-            >
-              {group.lines.map((l, li) => {
-                const isFirst = li === 0;
-                return (
-                  <View key={l.id} style={styles.tr}>
-                    <Text style={[styles.td, styles.colDate]}>
-                      {isFirst ? firstDate : ""}
-                    </Text>
-                    <Text style={[styles.td, styles.colVehicle, styles.tdMuted]}>
-                      {isFirst ? vehicle : ""}
-                    </Text>
-                    <Text style={[styles.td, styles.colHsn, styles.tdMuted]}>
-                      {isFirst ? hsn : ""}
-                    </Text>
-                    <Text style={[styles.td, styles.colPart]}>
-                      {l.particulars ?? ""}
-                    </Text>
-                    <Text style={[styles.td, styles.colUnits, styles.tdNum]}>
-                      {formatQty(l.qty)}
-                    </Text>
-                    <Text style={[styles.td, styles.colRate, styles.tdNum]}>
-                      {formatINRBlank(l.rate)}
-                    </Text>
-                    <Text style={[styles.td, styles.colAmount, styles.tdNum]}>
-                      {formatINRBlank(l.amount)}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          );
-        })}
-
-        {/* Totals */}
-        <View wrap={false} style={styles.totalsWrap}>
-          <View style={styles.totalsBox}>
+          {cgstLabel && (
             <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabelBold}>Total</Text>
-              <Text style={styles.totalsValue}>{formatINR(invoice.subtotal)}</Text>
-            </View>
-            {cgstLabel && (
-              <View style={styles.totalsRow}>
-                <Text style={styles.totalsLabel}>{cgstLabel}</Text>
-                <Text
-                  style={invoice.gst_mode === "RCM" ? styles.totalsValueMuted : {}}
-                >
-                  {invoice.gst_mode === "RCM" ? "—" : formatINRBlank(invoice.cgst)}
-                </Text>
-              </View>
-            )}
-            {sgstLabel && (
-              <View style={styles.totalsRow}>
-                <Text style={styles.totalsLabel}>{sgstLabel}</Text>
-                <Text
-                  style={invoice.gst_mode === "RCM" ? styles.totalsValueMuted : {}}
-                >
-                  {invoice.gst_mode === "RCM" ? "—" : formatINRBlank(invoice.sgst)}
-                </Text>
-              </View>
-            )}
-            {igstLabel && (
-              <View style={styles.totalsRow}>
-                <Text style={styles.totalsLabel}>{igstLabel}</Text>
-                <Text>{formatINR(invoice.igst)}</Text>
-              </View>
-            )}
-            {invoice.toll_total !== 0 && (
-              <View style={styles.totalsRow}>
-                <Text style={styles.totalsLabel}>
-                  {invoice.toll_label ?? "Toll & Parking"}
-                </Text>
-                <Text>{formatINR(invoice.toll_total)}</Text>
-              </View>
-            )}
-            <View style={styles.totalsGrandRow}>
-              <Text style={styles.totalsGrandText}>Net Amount</Text>
-              <Text style={styles.totalsGrandText}>
-                {formatINR(invoice.net_amount)}
+              <Text style={styles.totalsLabel}>{cgstLabel}</Text>
+              <Text style={invoice.gst_mode === "RCM" ? styles.totalsValueMuted : {}}>
+                {invoice.gst_mode === "RCM" ? "—" : formatINRBlank(invoice.cgst)}
               </Text>
             </View>
+          )}
+          {sgstLabel && (
+            <View style={styles.totalsRow}>
+              <Text style={styles.totalsLabel}>{sgstLabel}</Text>
+              <Text style={invoice.gst_mode === "RCM" ? styles.totalsValueMuted : {}}>
+                {invoice.gst_mode === "RCM" ? "—" : formatINRBlank(invoice.sgst)}
+              </Text>
+            </View>
+          )}
+          {igstLabel && (
+            <View style={styles.totalsRow}>
+              <Text style={styles.totalsLabel}>{igstLabel}</Text>
+              <Text>{formatINR(invoice.igst)}</Text>
+            </View>
+          )}
+          {invoice.toll_total !== 0 && (
+            <View style={styles.totalsRow}>
+              <Text style={styles.totalsLabel}>
+                {invoice.toll_label ?? "Toll & Parking"}
+              </Text>
+              <Text>{formatINR(invoice.toll_total)}</Text>
+            </View>
+          )}
+          <View style={styles.totalsGrandRow}>
+            <Text style={styles.totalsGrandText}>Net Amount</Text>
+            <Text style={styles.totalsGrandText}>
+              {formatINR(invoice.net_amount)}
+            </Text>
           </View>
         </View>
+      </View>
+      <Text style={styles.words}>In Words: {invoice.amount_in_words}</Text>
+    </View>
+  );
+}
 
-        {/* In words */}
-        <Text style={styles.words}>In Words: {invoice.amount_in_words}</Text>
+function TermsFooter({ terms }: { terms: string[] }) {
+  return (
+    <View fixed style={styles.foot}>
+      <Text>E&OE</Text>
+      {terms.length > 0 && (
+        <Text style={styles.termLine}>TERMS &amp; CONDITIONS : {terms[0]}</Text>
+      )}
+      {terms.slice(1).map((t, i) => (
+        <Text key={i} style={styles.termLine}>
+          {t}
+        </Text>
+      ))}
+    </View>
+  );
+}
 
-        {/* Footer */}
-        <View wrap={false} style={styles.foot}>
-          <Text>E&OE</Text>
-          {terms.length > 0 && (
-            <Text style={styles.termLine}>TERMS &amp; CONDITIONS : {terms[0]}</Text>
-          )}
-          {terms.slice(1).map((t, i) => (
-            <Text key={i} style={styles.termLine}>
-              {t}
-            </Text>
-          ))}
+function HeaderBand({
+  company,
+  invoice,
+  fullNumber,
+}: {
+  company: InvoicePdfProps["company"];
+  invoice: Invoice;
+  fullNumber: string;
+}) {
+  const phones = [company.phone, company.phone2].filter(Boolean).join(", ");
+  const invoiceEmail = company.invoice_email ?? company.email ?? "";
+  const fromContact = [phones, invoiceEmail].filter(Boolean).join("  ·  ");
+
+  return (
+    <>
+      <View style={styles.topBand}>
+        <Text style={styles.brand}>{(company.name ?? "").toUpperCase()}</Text>
+        <View style={styles.topRight}>
+          <Text style={styles.invoiceNumber}>INVOICE- {fullNumber}</Text>
+          <Text style={styles.invoiceDate}>Date: {fmtDate(invoice.invoice_date)}</Text>
         </View>
+      </View>
+      <View style={styles.parties}>
+        <View style={styles.partyCol}>
+          <Text style={styles.partyLabel}>FROM</Text>
+          {fromContact && <Text style={styles.partyText}>{fromContact}</Text>}
+          {company.address && (
+            <Text style={styles.partyText}>{company.address}</Text>
+          )}
+          {company.gstin && (
+            <Text style={styles.partyText}>GSTIN {company.gstin}</Text>
+          )}
+        </View>
+        <View style={styles.partyColRight}>
+          <Text style={styles.partyLabel}>BILL TO</Text>
+          <Text style={styles.partyTextBold}>
+            To- {(invoice.client_name ?? "").toUpperCase()}
+          </Text>
+          <Text style={styles.partyText}>
+            {invoice.client_gstin
+              ? `GSTIN - ${invoice.client_gstin}`
+              : "GSTIN NA"}
+          </Text>
+          {invoice.client_booked_by && (
+            <Text style={styles.partyText}>
+              Booked By- {invoice.client_booked_by}
+            </Text>
+          )}
+        </View>
+      </View>
+    </>
+  );
+}
 
-        <Text
-          fixed
-          style={styles.pageNum}
-          render={({ pageNumber, totalPages }) =>
-            `Page ${pageNumber} of ${totalPages}`
-          }
-        />
-      </Page>
+export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
+  const fullNumber = `${company.invoice_prefix ?? ""}${invoice.invoice_number}`;
+  const groups = groupLines([...lines].sort((a, b) => a.sort_order - b.sort_order));
+  const terms = (company.terms_invoice ?? []).filter(Boolean);
+  const pages = paginateGroups(groups);
+
+  return (
+    <Document title={`Invoice ${fullNumber}`}>
+      {pages.map((pageGroups, pi) => {
+        const isFirstPage = pi === 0;
+        const isLastPage = pi === pages.length - 1;
+        const broughtForward = sumLines(
+          pages
+            .slice(0, pi)
+            .flat()
+            .flatMap((g) => g.lines),
+        );
+        const pageSubtotal = sumLines(pageGroups.flatMap((g) => g.lines));
+        const carriedForward = broughtForward + pageSubtotal;
+
+        return (
+          <Page key={pi} size="A4" style={styles.page} wrap>
+            {isFirstPage && (
+              <HeaderBand
+                company={company}
+                invoice={invoice}
+                fullNumber={fullNumber}
+              />
+            )}
+            <ColumnHeader />
+            {!isFirstPage && <BroughtForwardRow amount={broughtForward} />}
+
+            {pageGroups.map((group, gi) => (
+              <TripGroupBlock
+                key={group.trip_id ?? `g${pi}-${gi}`}
+                group={group}
+                isFirst={gi === 0}
+              />
+            ))}
+
+            {!isLastPage && (
+              <CarryForwardRow
+                pageSubtotal={pageSubtotal}
+                carried={carriedForward}
+              />
+            )}
+            {isLastPage && <TotalsBlock invoice={invoice} />}
+
+            <TermsFooter terms={terms} />
+            <Text
+              fixed
+              style={styles.pageNum}
+              render={({ pageNumber, totalPages }) =>
+                `Page ${pageNumber} of ${totalPages}`
+              }
+            />
+          </Page>
+        );
+      })}
     </Document>
   );
 }

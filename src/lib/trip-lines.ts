@@ -52,12 +52,22 @@ export function tripToLines(trip: ComputableTrip, rate: RateCard): TripLine[] {
     const overKms   = trip.total_kms   > base_kms;
     const overHours = trip.total_hours > base_hours;
 
+    // When the duty went over the base kms, emit a context-only "Total Nkms"
+    // line above the base slab line. The slab line carries the base rate and
+    // amount so the Rate / Amount columns visually align with "Nkms/Nhrs",
+    // matching the real Krishna Cabs invoice format.
+    if (overKms) {
+      lines.push({
+        particulars: `Total ${trip.total_kms}kms`,
+        qty: null,
+        rate: null,
+        amount: 0,
+      });
+    }
     lines.push({
-      particulars: overKms
-        ? `Total ${trip.total_kms}kms\n${base_kms}kms/${base_hours}hrs`
-        : `${base_kms}kms/${base_hours}hrs`,
+      particulars: `${base_kms}kms/${base_hours}hrs`,
       qty: null,
-      rate: null,
+      rate: base_rate,
       amount: round2(base_rate),
     });
 

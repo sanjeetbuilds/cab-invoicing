@@ -132,7 +132,7 @@ describe("buildInvoiceDraft", () => {
     expect(draft.toll_total).toBe(0);
     expect(draft.net_amount).toBe(3134.26);
     expect(draft.unmatched_trip_ids).toEqual([]);
-    expect(draft.lines).toHaveLength(4);
+    expect(draft.lines).toHaveLength(5);
     expect(draft.lines[0].date).toBe("15/4/26");
     expect(draft.lines[0].vehicle_label).toBe("9083 Sonet");
     expect(draft.lines[0].hsn_code).toBe("996601");
@@ -442,7 +442,8 @@ describe("buildInvoiceDraft", () => {
     expect(draft.subtotal).toBe(2985);
     expect(draft.unmatched_trip_ids).toEqual([]);
     expect(draft.lines.map((l) => l.particulars)).toEqual([
-      "Total 149kms\n80kms/8hrs",
+      "Total 149kms",
+      "80kms/8hrs",
       "Additional kms",
       "Additional hrs",
       "Night Charges",
