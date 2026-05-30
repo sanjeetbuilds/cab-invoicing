@@ -11,6 +11,7 @@ import {
   MoreVertical,
   RotateCcw,
   Search,
+  Share2,
   Undo2,
   X,
 } from "lucide-react";
@@ -52,6 +53,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/format";
+import { invoiceFilename } from "@/lib/filename";
+import { sharePdf } from "@/lib/share-pdf";
 import {
   shouldShowFilter,
   shouldShowPeriodFilter,
@@ -444,11 +447,35 @@ function DesktopInvoiceRow({
 
   const fullNumber = `${prefix}${invoice.invoice_number}`;
   const pdfUrl = `/api/invoices/${invoice.id}/pdf`;
+  const downloadName = invoiceFilename(fullNumber, invoice.client_name);
   const reversed = invoice.status === "reversed";
   const paid = invoice.status === "paid";
 
   function openPdf() {
     window.open(pdfUrl, "_blank", "noopener,noreferrer");
+  }
+
+  // WhatsApp / email / Drive share — hands the file blob to the OS
+  // share sheet so the recipient sees "Invoice_2037_Bharti_Foundation.pdf"
+  // not the Vercel URL. Falls back to a triggered download with the
+  // same filename when Web Share Level 2 isn't available.
+  async function shareInvoicePdf() {
+    try {
+      const result = await sharePdf({
+        url: pdfUrl,
+        filename: downloadName,
+        title: `Invoice ${fullNumber}`,
+      });
+      toast.success(
+        result === "shared"
+          ? "Share sheet opened."
+          : `Downloaded ${downloadName}.`,
+      );
+    } catch (err) {
+      const e = err as Error;
+      if (e.name === "AbortError") return; // user closed the share sheet
+      toast.error(e.message || "Share failed.");
+    }
   }
 
   async function togglePaid(target: boolean) {
@@ -516,7 +543,11 @@ function DesktopInvoiceRow({
             >
               <MoreVertical className="h-4 w-4" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[200px]">
+            <DropdownMenuContent align="end" className="min-w-[220px]">
+              <DropdownMenuItem onClick={shareInvoicePdf}>
+                <Share2 className="h-4 w-4" />
+                Share PDF
+              </DropdownMenuItem>
               {!reversed && !paid && (
                 <DropdownMenuItem onClick={() => setConfirmPaid("mark")}>
                   <Check className="h-4 w-4" />
@@ -586,11 +617,29 @@ function MobileInvoiceCard({
 
   const fullNumber = `${prefix}${invoice.invoice_number}`;
   const pdfUrl = `/api/invoices/${invoice.id}/pdf`;
+  const downloadName = invoiceFilename(fullNumber, invoice.client_name);
   const reversed = invoice.status === "reversed";
   const paid = invoice.status === "paid";
 
   function openPdf() {
     window.open(pdfUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function shareInvoicePdf() {
+    try {
+      const result = await sharePdf({
+        url: pdfUrl,
+        filename: downloadName,
+        title: `Invoice ${fullNumber}`,
+      });
+      if (result === "downloaded") {
+        toast.success(`Downloaded ${downloadName}.`);
+      }
+    } catch (err) {
+      const e = err as Error;
+      if (e.name === "AbortError") return;
+      toast.error(e.message || "Share failed.");
+    }
   }
 
   async function togglePaid(target: boolean) {
@@ -676,25 +725,37 @@ function MobileInvoiceCard({
             </p>
           </button>
 
-          {/* Action row */}
+          {/* Action row — Share is primary because the most common job is
+              sending the invoice to the client. Open PDF stays as a
+              secondary outline button for previewing first. */}
           <div className="flex items-center gap-2 border-t border-border pt-3">
             <button
               type="button"
-              onClick={openPdf}
+              onClick={shareInvoicePdf}
               className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-hover"
             >
+              <Share2 className="h-4 w-4" />
+              Share PDF
+            </button>
+            <button
+              type="button"
+              onClick={openPdf}
+              aria-label="Open PDF"
+              title="Open PDF"
+              className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
+            >
               <FileText className="h-4 w-4" />
-              Open PDF
             </button>
             {!reversed && !paid && (
               <button
                 type="button"
                 onClick={() => setConfirmPaid("mark")}
                 disabled={pending}
-                className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-md border border-border bg-card text-foreground font-medium text-sm hover:bg-muted"
+                aria-label="Mark paid"
+                title="Mark paid"
+                className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
               >
                 <Check className="h-4 w-4" />
-                Mark paid
               </button>
             )}
             {!reversed && paid && (
@@ -702,10 +763,11 @@ function MobileInvoiceCard({
                 type="button"
                 onClick={() => setConfirmPaid("unmark")}
                 disabled={pending}
-                className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-md border border-border bg-card text-foreground font-medium text-sm hover:bg-muted"
+                aria-label="Mark unpaid"
+                title="Mark unpaid"
+                className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
               >
                 <Undo2 className="h-4 w-4" />
-                Mark unpaid
               </button>
             )}
             <DropdownMenu>
@@ -715,7 +777,7 @@ function MobileInvoiceCard({
               >
                 <MoreVertical className="h-4 w-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[200px]">
+              <DropdownMenuContent align="end" className="min-w-[220px]">
                 <DropdownMenuItem onClick={copyNumber}>
                   <Copy className="h-4 w-4" />
                   Copy invoice number

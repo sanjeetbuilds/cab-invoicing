@@ -12,6 +12,7 @@ import {
   MoreVertical,
   Pencil,
   Search,
+  Share2,
   Trash2,
   X,
 } from "lucide-react";
@@ -52,6 +53,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { quotationFilename } from "@/lib/filename";
+import { sharePdf } from "@/lib/share-pdf";
 import {
   shouldShowFilter,
   shouldShowPeriodFilter,
@@ -423,11 +426,29 @@ function DesktopQuotationRow({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const pdfUrl = `/api/quotations/${quotation.id}/pdf`;
+  const downloadName = quotationFilename(quotation.number, clientName);
   const editUrl = `/quotations/${quotation.id}/edit`;
   const accepted = quotation.status === "accepted";
 
   function openPdf() {
     window.open(pdfUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function shareQuotationPdf() {
+    try {
+      const result = await sharePdf({
+        url: pdfUrl,
+        filename: downloadName,
+        title: `Quotation ${quotation.number}`,
+      });
+      if (result === "downloaded") {
+        toast.success(`Downloaded ${downloadName}.`);
+      }
+    } catch (err) {
+      const e = err as Error;
+      if (e.name === "AbortError") return;
+      toast.error(e.message || "Share failed.");
+    }
   }
 
   async function onAccept() {
@@ -486,7 +507,11 @@ function DesktopQuotationRow({
             >
               <MoreVertical className="h-4 w-4" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[200px]">
+            <DropdownMenuContent align="end" className="min-w-[220px]">
+              <DropdownMenuItem onClick={shareQuotationPdf}>
+                <Share2 className="h-4 w-4" />
+                Share PDF
+              </DropdownMenuItem>
               {!accepted && (
                 <DropdownMenuItem
                   onClick={() => setConfirmAccept(true)}
@@ -547,11 +572,29 @@ function MobileQuotationCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const pdfUrl = `/api/quotations/${quotation.id}/pdf`;
+  const downloadName = quotationFilename(quotation.number, clientName);
   const editUrl = `/quotations/${quotation.id}/edit`;
   const accepted = quotation.status === "accepted";
 
   function openPdf() {
     window.open(pdfUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function shareQuotationPdf() {
+    try {
+      const result = await sharePdf({
+        url: pdfUrl,
+        filename: downloadName,
+        title: `Quotation ${quotation.number}`,
+      });
+      if (result === "downloaded") {
+        toast.success(`Downloaded ${downloadName}.`);
+      }
+    } catch (err) {
+      const e = err as Error;
+      if (e.name === "AbortError") return;
+      toast.error(e.message || "Share failed.");
+    }
   }
 
   async function onAccept() {
@@ -623,21 +666,31 @@ function MobileQuotationCard({
           <div className="flex items-center gap-2 border-t border-border pt-3">
             <button
               type="button"
-              onClick={openPdf}
+              onClick={shareQuotationPdf}
               className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-hover"
             >
+              <Share2 className="h-4 w-4" />
+              Share PDF
+            </button>
+            <button
+              type="button"
+              onClick={openPdf}
+              aria-label="Open PDF"
+              title="Open PDF"
+              className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
+            >
               <FileText className="h-4 w-4" />
-              Open PDF
             </button>
             {!accepted && (
               <button
                 type="button"
                 onClick={() => setConfirmAccept(true)}
                 disabled={pending}
-                className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-md border border-border bg-card text-foreground font-medium text-sm hover:bg-muted"
+                aria-label="Accept"
+                title="Accept & create rate cards"
+                className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
               >
                 <CheckCircle2 className="h-4 w-4" />
-                Accept
               </button>
             )}
             <DropdownMenu>
@@ -647,7 +700,7 @@ function MobileQuotationCard({
               >
                 <MoreVertical className="h-4 w-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[200px]">
+              <DropdownMenuContent align="end" className="min-w-[220px]">
                 <DropdownMenuItem render={<Link href={editUrl} />}>
                   <Pencil className="h-4 w-4" />
                   Edit
