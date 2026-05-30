@@ -248,6 +248,7 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
+      {recentInvoices && recentInvoices.length > 0 && (
       <Card>
         <CardHeader>
           <div>
@@ -264,50 +265,44 @@ export default async function DashboardPage() {
           </CardAction>
         </CardHeader>
         <CardContent>
-          {(!recentInvoices || recentInvoices.length === 0) ? (
-            <p className="text-sm text-muted-foreground py-3">
-              No invoices yet.{" "}
-              <Link href="/invoices/build" className="underline">Build one</Link>.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Number</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentInvoices.map((inv) => (
+                <TableRow key={inv.id}>
+                  <TableCell className="font-medium">
+                    <Link
+                      href="/invoices"
+                      className="text-foreground hover:text-primary"
+                    >
+                      {inv.invoice_number}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="tabular-nums text-muted-foreground">
+                    {fmtDate(inv.invoice_date)}
+                  </TableCell>
+                  <TableCell>{inv.client_name}</TableCell>
+                  <TableCell className="text-right tabular-nums font-medium">
+                    {formatINR(Number(inv.net_amount))}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <StatusBadge status={inv.status} />
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentInvoices.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-medium">
-                      <Link
-                        href="/invoices"
-                        className="text-foreground hover:text-primary"
-                      >
-                        {inv.invoice_number}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="tabular-nums text-muted-foreground">
-                      {fmtDate(inv.invoice_date)}
-                    </TableCell>
-                    <TableCell>{inv.client_name}</TableCell>
-                    <TableCell className="text-right tabular-nums font-medium">
-                      {formatINR(Number(inv.net_amount))}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <StatusBadge status={inv.status} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

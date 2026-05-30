@@ -90,6 +90,8 @@ export default async function TripsPage({
     { data: clients },
     { data: vehicles },
     { data: rateCards },
+    { count: invoicedCount },
+    { count: uninvoicedCount },
   ] = await Promise.all([
     tripsQuery.returns<Trip[]>(),
     supabase
@@ -109,6 +111,17 @@ export default async function TripsPage({
       .select("*")
       .eq("company_id", membership.company_id)
       .returns<RateCard[]>(),
+    // Used for progressive disclosure of the status pills below.
+    supabase
+      .from("trips")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", membership.company_id)
+      .eq("invoiced", true),
+    supabase
+      .from("trips")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", membership.company_id)
+      .eq("invoiced", false),
   ]);
 
   const tripList = trips ?? [];
@@ -123,6 +136,10 @@ export default async function TripsPage({
   );
 
   const noPrereqs = clientList.length === 0 || vehicleList.length === 0;
+  // Status pills earn their space only when there's at least one of each
+  // — otherwise switching tabs can't change what's shown.
+  const showStatusPills =
+    (invoicedCount ?? 0) > 0 && (uninvoicedCount ?? 0) > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -154,25 +171,27 @@ export default async function TripsPage({
         </Card>
       )}
 
-      <div className="flex gap-2">
-        {FILTERS.map((f) => {
-          const active = f.value === status;
-          return (
-            <Link
-              key={f.value}
-              href={f.value === "uninvoiced" ? "/trips" : `/trips?status=${f.value}`}
-              className={cn(
-                "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150",
-                active
-                  ? "bg-accent-soft text-accent-foreground border-accent-soft"
-                  : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {f.label}
-            </Link>
-          );
-        })}
-      </div>
+      {showStatusPills && (
+        <div className="flex gap-2">
+          {FILTERS.map((f) => {
+            const active = f.value === status;
+            return (
+              <Link
+                key={f.value}
+                href={f.value === "uninvoiced" ? "/trips" : `/trips?status=${f.value}`}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150",
+                  active
+                    ? "bg-accent-soft text-accent-foreground border-accent-soft"
+                    : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+                )}
+              >
+                {f.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {tripsError && (
         <p className="text-sm text-destructive">Failed to load: {tripsError.message}</p>

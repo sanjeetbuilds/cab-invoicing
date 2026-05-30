@@ -44,6 +44,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import {
+  shouldShowFilter,
+  shouldShowPeriodFilter,
+  shouldShowSearch,
+  shouldShowSort,
+  visibleStatusPills,
+} from "@/lib/list-controls";
 import type { Client, Quotation } from "@/lib/supabase/types";
 import { acceptQuotationAction, deleteQuotationAction } from "./actions";
 
@@ -124,6 +131,25 @@ export function QuotationsList({
     [clients],
   );
 
+  const showSearch = shouldShowSearch(quotations.length);
+  const showSort = shouldShowSort(quotations.length);
+  const statusPills = useMemo(
+    () => visibleStatusPills(quotations, STATUS_PILLS, (q) => q.status),
+    [quotations],
+  );
+  const showClientFilter = useMemo(
+    () =>
+      shouldShowFilter(quotations, (q) =>
+        q.client_id ?? q.client_name ?? null,
+      ),
+    [quotations],
+  );
+  const showPeriodFilter = useMemo(
+    () => shouldShowPeriodFilter(quotations, (q) => q.date),
+    [quotations],
+  );
+  const showFiltersButton = showClientFilter || showPeriodFilter;
+
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
     const bounds = periodBounds(period);
@@ -168,135 +194,154 @@ export function QuotationsList({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background/95 backdrop-blur border-b border-border flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search number or client…"
-              className="pl-9"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowFilters((v) => !v)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-lg border px-3 h-10 text-sm font-medium shrink-0",
-              showFilters || activeFilterCount > 0
-                ? "bg-accent-soft text-accent-foreground border-accent-soft"
-                : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
-            )}
-          >
-            <Filter className="h-4 w-4" />
-            <span className="hidden sm:inline">Filters</span>
-            {activeFilterCount > 0 && (
-              <span className="ml-0.5 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex gap-1.5 flex-wrap">
-            {STATUS_PILLS.map((p) => (
-              <button
-                key={p.value}
-                type="button"
-                onClick={() => setStatus(p.value)}
-                className={cn(
-                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors duration-150",
-                  status === p.value
-                    ? "bg-foreground text-background border-foreground"
-                    : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
-                )}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <Label htmlFor="qsort" className="text-xs text-muted-foreground">
-              Sort
-            </Label>
-            <Select
-              value={sort}
-              onValueChange={(v) =>
-                typeof v === "string" && setSort(v as SortKey)
-              }
-            >
-              <SelectTrigger id="qsort" className="h-9 min-w-[150px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SORT_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {showFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="qf-client" className="text-xs">Client</Label>
-              <Select
-                value={clientId}
-                onValueChange={(v) =>
-                  typeof v === "string" && setClientId(v)
-                }
-              >
-                <SelectTrigger id="qf-client">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All clients</SelectItem>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {(showSearch || showFiltersButton || statusPills.length > 0 || showSort) && (
+        <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background/95 backdrop-blur border-b border-border flex flex-col gap-3">
+          {(showSearch || showFiltersButton) && (
+            <div className="flex items-center gap-2">
+              {showSearch && (
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search number or client…"
+                    className="pl-9"
+                  />
+                </div>
+              )}
+              {showFiltersButton && (
+                <button
+                  type="button"
+                  onClick={() => setShowFilters((v) => !v)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg border px-3 h-10 text-sm font-medium shrink-0",
+                    !showSearch && "ml-auto",
+                    showFilters || activeFilterCount > 0
+                      ? "bg-accent-soft text-accent-foreground border-accent-soft"
+                      : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  <Filter className="h-4 w-4" />
+                  <span className="hidden sm:inline">Filters</span>
+                  {activeFilterCount > 0 && (
+                    <span className="ml-0.5 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="qf-period" className="text-xs">Period</Label>
-              <Select
-                value={period}
-                onValueChange={(v) =>
-                  typeof v === "string" && setPeriod(v as PeriodFilter)
-                }
-              >
-                <SelectTrigger id="qf-period">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PERIOD_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
+          )}
+
+          {(statusPills.length > 0 || showSort) && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {statusPills.length > 0 && (
+                <div className="flex gap-1.5 flex-wrap">
+                  {statusPills.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => setStatus(p.value)}
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-xs font-medium transition-colors duration-150",
+                        status === p.value
+                          ? "bg-foreground text-background border-foreground"
+                          : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      {p.label}
+                    </button>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
+              {showSort && (
+                <div className="ml-auto flex items-center gap-2">
+                  <Label htmlFor="qsort" className="text-xs text-muted-foreground">
+                    Sort
+                  </Label>
+                  <Select
+                    value={sort}
+                    onValueChange={(v) =>
+                      typeof v === "string" && setSort(v as SortKey)
+                    }
+                  >
+                    <SelectTrigger id="qsort" className="h-9 min-w-[150px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SORT_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
-            {(activeFilterCount > 0 || search) && (
-              <button
-                type="button"
-                onClick={clearAll}
-                className="sm:col-span-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground self-start"
-              >
-                <X className="h-3 w-3" />
-                Clear all filters
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+          )}
+
+          {showFilters && showFiltersButton && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {showClientFilter && (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="qf-client" className="text-xs">Client</Label>
+                  <Select
+                    value={clientId}
+                    onValueChange={(v) =>
+                      typeof v === "string" && setClientId(v)
+                    }
+                  >
+                    <SelectTrigger id="qf-client">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All clients</SelectItem>
+                      {clients.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {showPeriodFilter && (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="qf-period" className="text-xs">Period</Label>
+                  <Select
+                    value={period}
+                    onValueChange={(v) =>
+                      typeof v === "string" && setPeriod(v as PeriodFilter)
+                    }
+                  >
+                    <SelectTrigger id="qf-period">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PERIOD_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {(activeFilterCount > 0 || search) && (
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  className="sm:col-span-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground self-start"
+                >
+                  <X className="h-3 w-3" />
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <Card>
