@@ -55,3 +55,20 @@ export function formatINRPlain(n: number | string | null | undefined): string {
   const v = safeNumber(n);
   return numberFormatter.format(v ?? 0);
 }
+
+/**
+ * Duty-table cell formatter — returns an em dash for empty / null,
+ * never a blank cell. Used in the Units / Rate / Amount columns of
+ * the invoice's duty rows so missing fields stay visible as "—".
+ */
+export function formatINRDash(n: number | string | null | undefined): string {
+  const v = safeNumber(n);
+  if (v == null || v === 0) return "—";
+  return inrFormatter.format(v);
+}
+
+export function formatQtyDash(n: number | string | null | undefined): string {
+  const v = safeNumber(n);
+  if (v == null) return "—";
+  return numberFormatter.format(v);
+}

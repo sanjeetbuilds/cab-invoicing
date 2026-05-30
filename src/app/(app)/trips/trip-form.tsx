@@ -302,10 +302,10 @@ export function TripForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
       {/* Top: dates + client */}
       <Card>
-        <CardContent className="grid gap-5 sm:grid-cols-3">
+        <CardContent className="grid gap-4 md:grid-cols-3">
           <div className="flex flex-col gap-2">
             <Label htmlFor="date">Date *</Label>
             <Input id="date" type="date" {...register("date")} />
@@ -340,10 +340,10 @@ export function TripForm({
         </CardContent>
       </Card>
 
-      {/* Vehicle + car type + mode + slab toggle */}
+      {/* Vehicle + car type + rate plan + slab toggle */}
       <Card>
-        <CardContent className="grid gap-5 sm:grid-cols-3">
-          <div className="sm:col-span-2 flex flex-col gap-2">
+        <CardContent className="grid gap-4 md:grid-cols-3">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="vehicle_id">Vehicle *</Label>
             <VehiclePicker
               id="vehicle_id"
@@ -390,7 +390,7 @@ export function TripForm({
             />
           </div>
 
-          <div className="sm:col-span-3 flex flex-col gap-2">
+          <div className="md:col-span-3 flex flex-col gap-2">
             <Label htmlFor="mode">Rate plan *</Label>
             {availableRatePlans.length === 0 ? (
               <div className="flex flex-col gap-2 rounded-md bg-warning-soft/60 p-3 text-sm">
@@ -496,7 +496,7 @@ export function TripForm({
       {/* Distances & hours & TA & night — kms/hrs are required only for
           slab/per_km modes. Fixed-price modes (transfer/package) skip them. */}
       <Card>
-        <CardContent className="grid gap-5 sm:grid-cols-3">
+        <CardContent className="grid gap-4 md:grid-cols-4">
           {!isFixed && (
             <div className="flex flex-col gap-2">
               <Label htmlFor="total_kms">Total kms *</Label>
@@ -645,7 +645,7 @@ export function TripForm({
 
       {/* Slip + notes */}
       <Card>
-        <CardContent className="grid gap-5 sm:grid-cols-2">
+        <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="flex flex-col gap-2">
             <Label htmlFor="duty_slip_no">Duty slip no.</Label>
             <Input id="duty_slip_no" {...register("duty_slip_no")} />

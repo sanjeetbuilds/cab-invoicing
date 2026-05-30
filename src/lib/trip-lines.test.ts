@@ -303,7 +303,7 @@ describe("tripToLines — edge cases", () => {
         r,
       );
       expect(lines).toEqual([
-        { particulars: "Airport T3 Drop", qty: null, rate: null, amount: 1500 },
+        { particulars: "Airport T3 Drop", qty: 1, rate: 1500, amount: 1500 },
       ]);
       expect(tripTotal(lines)).toBe(1500);
     });
@@ -327,7 +327,7 @@ describe("tripToLines — edge cases", () => {
         r,
       );
       expect(lines).toEqual([
-        { particulars: "Manali 3D2N package", qty: null, rate: null, amount: 18000 },
+        { particulars: "Manali 3D2N package", qty: 1, rate: 18000, amount: 18000 },
         { particulars: "Driver's TA", qty: 3, rate: 500, amount: 1500 },
       ]);
       expect(tripTotal(lines)).toBe(19500);
@@ -347,7 +347,7 @@ describe("tripToLines — edge cases", () => {
         r,
       );
       expect(lines).toEqual([
-        { particulars: "Transfer", qty: null, rate: null, amount: 800 },
+        { particulars: "Transfer", qty: 1, rate: 800, amount: 800 },
       ]);
     });
   });

@@ -63,32 +63,36 @@ const invoice: Invoice = {
   updated_at: "2026-05-30",
 };
 
-// Lines mimic what invoice-builder would emit for: one Local FHPL duty
-// (149 km, 9.5 hr, 1 night) + one Transfer (Airport T3 Drop, fixed).
+// Lines mirror what invoice-builder actually emits for: one Local FHPL
+// duty (149 km, 9.5 hr, 1 night) + one Transfer (Airport T3 Drop, fixed).
 const lines: InvoiceLine[] = [
-  // Local trip
-  { id: "l1", invoice_id: invoice.id, trip_id: "trip-local", date: "10/5/26",
+  // Local — "Total 149kms" header row (over base kms), then slab line
+  { id: "l1a", invoice_id: invoice.id, trip_id: "trip-local", date: "10/5/26",
     vehicle_label: "9083 Sonet", hsn_code: "996601",
-    particulars: "Total 149kms\n80kms/8hrs", qty: null, rate: null,
-    amount: 1500, sort_order: 0 },
+    particulars: "Total 149kms", qty: null, rate: null,
+    amount: 0, sort_order: 0 },
+  { id: "l1b", invoice_id: invoice.id, trip_id: "trip-local", date: "10/5/26",
+    vehicle_label: "9083 Sonet", hsn_code: "996601",
+    particulars: "80kms/8hrs", qty: null, rate: 1500,
+    amount: 1500, sort_order: 1 },
   { id: "l2", invoice_id: invoice.id, trip_id: "trip-local", date: "10/5/26",
     vehicle_label: "9083 Sonet", hsn_code: "996601",
     particulars: "Additional kms", qty: 69, rate: 15,
-    amount: 1035, sort_order: 1 },
+    amount: 1035, sort_order: 2 },
   { id: "l3", invoice_id: invoice.id, trip_id: "trip-local", date: "10/5/26",
     vehicle_label: "9083 Sonet", hsn_code: "996601",
     particulars: "Additional hrs", qty: 1.5, rate: 100,
-    amount: 150, sort_order: 2 },
+    amount: 150, sort_order: 3 },
   { id: "l4", invoice_id: invoice.id, trip_id: "trip-local", date: "10/5/26",
     vehicle_label: "9083 Sonet", hsn_code: "996601",
-    particulars: "Night Charges", qty: null, rate: null,
-    amount: 300, sort_order: 3 },
+    particulars: "Night Charges", qty: 1, rate: 300,
+    amount: 300, sort_order: 4 },
 
-  // Transfer trip — single fixed-price line
+  // Transfer — fixed-price duty: qty=1, rate=fixed_price
   { id: "l5", invoice_id: invoice.id, trip_id: "trip-transfer", date: "15/5/26",
     vehicle_label: "9083 Sonet", hsn_code: "996601",
-    particulars: "Airport T3 Drop", qty: null, rate: null,
-    amount: 1500, sort_order: 4 },
+    particulars: "Airport T3 Drop", qty: 1, rate: 1500,
+    amount: 1500, sort_order: 5 },
 ];
 
 describe.runIf(process.env.SAMPLE === "1")("FHPL mixed sample PDF", () => {

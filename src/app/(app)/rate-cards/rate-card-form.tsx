@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -64,6 +64,11 @@ function toStr(n: number | null | undefined) {
   return n == null ? "" : String(n);
 }
 
+function defaultDriverTaForMode(m: TripMode): number {
+  // Transfer / Package usually fold TA into the fixed price.
+  return m === "transfer" || m === "package" ? 0 : 300;
+}
+
 function modeLabel(m: TripMode): string {
   switch (m) {
     case "local": return "Local (kms + hours)";
@@ -112,7 +117,10 @@ export function RateCardForm({
       extra_hour: toStr(rateCard?.extra_hour),
       night:      toStr(rateCard?.night),
       per_km:     toStr(rateCard?.per_km),
-      driver_ta:  toStr(rateCard?.driver_ta ?? 300),
+      driver_ta: toStr(
+        rateCard?.driver_ta ??
+          defaultDriverTaForMode(rateCard?.mode ?? defaultMode ?? "local"),
+      ),
       plan_name:  rateCard?.plan_name ?? "",
       fixed_price: toStr(rateCard?.fixed_price),
       includes_toll: rateCard?.includes_toll ?? false,
@@ -125,6 +133,23 @@ export function RateCardForm({
   const clientId = watch("client_id");
   const carType = watch("car_type");
   const mode = watch("mode") as TripMode;
+
+  // When the user switches mode, sync Driver TA to the new mode's
+  // canonical default — but only if the field is still on a canonical
+  // value (0 or 300). User-typed numbers stay untouched. Skip the first
+  // run so initial defaults aren't overwritten on mount.
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    const current = (watch("driver_ta") ?? "").trim();
+    if (current === "" || current === "0" || current === "300") {
+      setValue("driver_ta", String(defaultDriverTaForMode(mode)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
   const includesToll = watch("includes_toll") ?? false;
   const includesTax = watch("includes_tax") ?? false;
   const includesParking = watch("includes_parking") ?? false;
@@ -157,10 +182,10 @@ export function RateCardForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
       <Card>
-        <CardContent className="grid gap-5 sm:grid-cols-3">
-          <div className="sm:col-span-3 flex flex-col gap-2">
+        <CardContent className="grid gap-4 md:grid-cols-3">
+          <div className="md:col-span-1 flex flex-col gap-2">
             <Label htmlFor="client_id">Client *</Label>
             <Select
               value={clientId || undefined}
@@ -215,7 +240,7 @@ export function RateCardForm({
             </Select>
           </div>
 
-          <div className="sm:col-span-2 flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="mode">Mode *</Label>
             <Select
               value={mode}
@@ -245,20 +270,25 @@ export function RateCardForm({
         </CardContent>
       </Card>
 
-      {/* Per-mode fields */}
+      {/* Per-mode fields. Mobile keeps everything stacked; md+ uses
+          horizontal rows of 3-4. Driver TA folds into each mode card so
+          we don't ship a trailing single-field card. */}
       {mode === "local" && (
         <Card>
-          <CardContent>
-            <p className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-3">
+          <CardContent className="flex flex-col gap-4">
+            <p className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
               Local rates
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Field label="Base rate ₹" id="base_rate" register={register("base_rate")} />
               <Field label="Base kms"    id="base_kms"   register={register("base_kms")} />
               <Field label="Base hours"  id="base_hours" register={register("base_hours")} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Field label="Extra km ₹"  id="extra_km"   register={register("extra_km")} />
               <Field label="Extra hour ₹" id="extra_hour" register={register("extra_hour")} />
               <Field label="Night ₹"     id="night"      register={register("night")} />
+              <Field label="Driver TA ₹ / day" id="driver_ta" register={register("driver_ta")} />
             </div>
           </CardContent>
         </Card>
@@ -266,12 +296,13 @@ export function RateCardForm({
 
       {mode === "outstation" && (
         <Card>
-          <CardContent>
-            <p className="text-xs uppercase tracking-wider font-medium text-muted-foreground mb-3">
+          <CardContent className="flex flex-col gap-4">
+            <p className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
               Outstation rates
             </p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Per km ₹" id="per_km" register={register("per_km")} />
+              <Field label="Driver TA ₹ / day" id="driver_ta" register={register("driver_ta")} />
             </div>
           </CardContent>
         </Card>
@@ -283,9 +314,9 @@ export function RateCardForm({
             <p className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
               {mode === "transfer" ? "Transfer plan" : "Package plan"}
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="plan_name">Plan name *</Label>
+                <Label htmlFor="plan_name" className="text-xs">Plan name *</Label>
                 <Input
                   id="plan_name"
                   list="rate-card-plan-suggestions"
@@ -308,12 +339,17 @@ export function RateCardForm({
                 id="fixed_price"
                 register={register("fixed_price")}
               />
+              <Field
+                label="Driver TA ₹ / day"
+                id="driver_ta"
+                register={register("driver_ta")}
+              />
             </div>
 
             {mode === "package" && (
               <div className="flex flex-col gap-2 border-t border-border pt-4">
                 <Label className="text-xs">Price includes</Label>
-                <div className="flex flex-wrap gap-4 mt-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-1">
                   <CheckboxLabel
                     id="includes_toll"
                     checked={includesToll}
@@ -360,12 +396,6 @@ export function RateCardForm({
           </CardContent>
         </Card>
       )}
-
-      <Card>
-        <CardContent className="grid grid-cols-2 gap-4">
-          <Field label="Driver TA ₹ / day" id="driver_ta" register={register("driver_ta")} />
-        </CardContent>
-      </Card>
 
       <div className="flex items-center justify-end gap-2">
         <Button

@@ -45,13 +45,15 @@ export function tripToLines(trip: ComputableTrip, rate: RateCard): TripLine[] {
   // Transfer + Package: single fixed-price line. Plan name lives on the
   // rate card so the invoice particulars read "Airport T3 Drop" /
   // "Manali 3D2N package" — the renderer pulls plan_name when present.
+  // Units = 1, Rate = fixed price so the invoice doesn't ship an oddly
+  // empty Rate column for these duties.
   if (trip.mode === "transfer" || trip.mode === "package") {
     const fixed = rate.fixed_price ?? 0;
     const planLabel = rate.plan_name?.trim() || (trip.mode === "transfer" ? "Transfer" : "Package");
     lines.push({
       particulars: trip.mode === "package" ? `${planLabel} package` : planLabel,
-      qty: null,
-      rate: null,
+      qty: 1,
+      rate: round2(fixed),
       amount: round2(fixed),
     });
     if (trip.driver_ta > 0) {

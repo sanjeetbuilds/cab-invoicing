@@ -9,6 +9,10 @@ import { InvoicesList } from "./invoices-list";
 
 export const metadata = { title: "Invoices" };
 
+// Always fetch fresh — the listing must reflect every invoice the
+// moment it's issued, including the one the user just navigated from.
+export const dynamic = "force-dynamic";
+
 export default async function InvoicesPage() {
   const { supabase, membership } = await requireMembership();
 

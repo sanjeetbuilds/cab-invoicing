@@ -11,7 +11,7 @@
  */
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { Company, Invoice, InvoiceLine } from "@/lib/supabase/types";
-import { formatINR, formatINRBlank, formatQty } from "@/lib/format";
+import { formatINR, formatINRBlank, formatINRDash, formatQtyDash } from "@/lib/format";
 
 export const INVOICE_FONT_FAMILY = "NotoSansMono";
 
@@ -355,13 +355,13 @@ function TripGroupBlock({ group, isFirst }: { group: LineGroup; isFirst: boolean
               {l.particulars ?? ""}
             </Text>
             <Text style={[styles.td, styles.colUnits, styles.tdNum]}>
-              {formatQty(l.qty)}
+              {formatQtyDash(l.qty)}
             </Text>
             <Text style={[styles.td, styles.colRate, styles.tdNum]}>
-              {formatINRBlank(l.rate)}
+              {formatINRDash(l.rate)}
             </Text>
             <Text style={[styles.td, styles.colAmount, styles.tdNum]}>
-              {formatINRBlank(l.amount)}
+              {formatINRDash(l.amount)}
             </Text>
           </View>
         );
@@ -410,19 +410,14 @@ function CarryForwardRow({
 }
 
 function TotalsBlock({ invoice }: { invoice: Invoice }) {
-  const cgstLabel =
-    invoice.gst_mode === "CGST_SGST"
-      ? "CGST @ 2.5%"
-      : invoice.gst_mode === "RCM"
-        ? "CGST @ 2.5% Under RCM"
-        : null;
-  const sgstLabel =
-    invoice.gst_mode === "CGST_SGST"
-      ? "SGST @ 2.5%"
-      : invoice.gst_mode === "RCM"
-        ? "SGST @ 2.5% Under RCM"
-        : null;
-  const igstLabel = invoice.gst_mode === "IGST" ? "IGST @ 5%" : null;
+  const isRcm = invoice.gst_mode === "RCM";
+  // GST rows are kept under RCM (informational) but hidden when the
+  // value is zero under any other mode.
+  const showCgst = isRcm || (invoice.gst_mode === "CGST_SGST" && invoice.cgst !== 0);
+  const showSgst = isRcm || (invoice.gst_mode === "CGST_SGST" && invoice.sgst !== 0);
+  const showIgst = invoice.gst_mode === "IGST" && invoice.igst !== 0;
+  const cgstLabel = isRcm ? "CGST @ 2.5% Under RCM" : "CGST @ 2.5%";
+  const sgstLabel = isRcm ? "SGST @ 2.5% Under RCM" : "SGST @ 2.5%";
 
   return (
     <View wrap={false}>
@@ -432,25 +427,25 @@ function TotalsBlock({ invoice }: { invoice: Invoice }) {
             <Text style={styles.totalsLabelBold}>Total</Text>
             <Text style={styles.totalsValue}>{formatINR(invoice.subtotal)}</Text>
           </View>
-          {cgstLabel && (
+          {showCgst && (
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>{cgstLabel}</Text>
-              <Text style={invoice.gst_mode === "RCM" ? styles.totalsValueMuted : {}}>
-                {invoice.gst_mode === "RCM" ? "—" : formatINRBlank(invoice.cgst)}
+              <Text style={isRcm ? styles.totalsValueMuted : {}}>
+                {isRcm ? "—" : formatINRBlank(invoice.cgst)}
               </Text>
             </View>
           )}
-          {sgstLabel && (
+          {showSgst && (
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>{sgstLabel}</Text>
-              <Text style={invoice.gst_mode === "RCM" ? styles.totalsValueMuted : {}}>
-                {invoice.gst_mode === "RCM" ? "—" : formatINRBlank(invoice.sgst)}
+              <Text style={isRcm ? styles.totalsValueMuted : {}}>
+                {isRcm ? "—" : formatINRBlank(invoice.sgst)}
               </Text>
             </View>
           )}
-          {igstLabel && (
+          {showIgst && (
             <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>{igstLabel}</Text>
+              <Text style={styles.totalsLabel}>IGST @ 5%</Text>
               <Text>{formatINR(invoice.igst)}</Text>
             </View>
           )}
