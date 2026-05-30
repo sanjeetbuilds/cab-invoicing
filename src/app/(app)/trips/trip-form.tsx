@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -303,6 +303,19 @@ export function TripForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      {/* Sticky running total — visible while scrolling the form so the
+          user always sees what they're about to commit. */}
+      {activeRate && preview && (
+        <div className="sticky top-11 sm:top-12 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-card border-b border-border shadow-sm flex items-center justify-between gap-3">
+          <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+            Trip total
+          </span>
+          <span className="font-mono text-lg font-semibold tabular-nums">
+            {formatINR(preview.total)}
+          </span>
+        </div>
+      )}
+
       {/* Top: dates + client */}
       <Card>
         <CardContent className="grid gap-4 md:grid-cols-3">
@@ -451,6 +464,14 @@ export function TripForm({
                 {errors.plan_name.message}
               </p>
             )}
+            {activeRate && (
+              <p className="md:col-span-3 text-xs text-muted-foreground leading-relaxed">
+                <span className="font-medium text-foreground/80">
+                  Active rate card:
+                </span>{" "}
+                {rateCardSummary(activeRate)}
+              </p>
+            )}
           </div>
 
           {mode === "outstation" && (
@@ -494,62 +515,58 @@ export function TripForm({
         />
       )}
 
-      {/* Distances & hours & TA & night — kms/hrs are required only for
-          slab/per_km modes. Fixed-price modes (transfer/package) skip them. */}
+      {/* Distances & quantities. Quantity-style fields (TA, Night) use
+          the count × rate = amount layout so the math is visible at a
+          glance. Rate values come from the active rate card and are
+          shown as metadata (not editable here — edit on the Rate Cards
+          page). */}
       <Card>
-        <CardContent className="grid gap-4 md:grid-cols-4">
-          {!isFixed && (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="total_kms">Total kms *</Label>
-              <Input
-                id="total_kms"
-                type="number"
-                inputMode="numeric"
-                {...register("total_kms")}
-              />
-              {errors.total_kms && (
-                <p className="text-xs text-destructive">{errors.total_kms.message}</p>
+        <CardContent className="flex flex-col gap-4">
+          {(mode === "local" || mode === "outstation") && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="total_kms">Total kms *</Label>
+                <Input
+                  id="total_kms"
+                  type="number"
+                  inputMode="numeric"
+                  {...register("total_kms")}
+                />
+                {errors.total_kms && (
+                  <p className="text-xs text-destructive">{errors.total_kms.message}</p>
+                )}
+              </div>
+              {mode === "local" && (
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="total_hours">Total hrs</Label>
+                  <Input
+                    id="total_hours"
+                    type="number"
+                    inputMode="decimal"
+                    step="any"
+                    {...register("total_hours")}
+                  />
+                </div>
               )}
             </div>
           )}
-          {mode === "local" && (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="total_hours">Total hrs</Label>
-              <Input
-                id="total_hours"
-                type="number"
-                inputMode="decimal"
-                step="any"
-                {...register("total_hours")}
-              />
-            </div>
-          )}
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="driver_ta">Driver TA</Label>
-            <Input
-              id="driver_ta"
-              type="number"
-              inputMode="numeric"
-              {...register("driver_ta")}
-            />
-            <p className="text-xs text-muted-foreground">Number of days.</p>
-          </div>
+
+          <CountRateAmountRow
+            label="Driver TA"
+            unit="day"
+            count={Math.floor(toNum(driverTaStr))}
+            rate={activeRate?.driver_ta ?? null}
+            register={register("driver_ta")}
+          />
 
           {mode === "local" && (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="night_count">Night charges</Label>
-              <Input
-                id="night_count"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                placeholder="0"
-                {...register("night_count")}
-              />
-              <p className="text-xs text-muted-foreground">
-                Number of nights billed. Each one charges the rate-card night fee.
-              </p>
-            </div>
+            <CountRateAmountRow
+              label="Night charges"
+              unit="night"
+              count={nightCount}
+              rate={activeRate?.night ?? null}
+              register={register("night_count")}
+            />
           )}
         </CardContent>
       </Card>
@@ -771,6 +788,98 @@ export function TripForm({
       </div>
     </form>
   );
+}
+
+/**
+ * Inline [count] × ₹rate/unit = ₹amount row. The count is editable; the
+ * rate is pulled from the active rate card (read-only here — edit it on
+ * the Rate Cards page); the amount is the computed result. Renders an
+ * "Rate not set" hint if the rate card is missing the relevant field.
+ */
+function CountRateAmountRow({
+  label,
+  unit,
+  count,
+  rate,
+  register,
+}: {
+  label: string;
+  unit: string;
+  count: number;
+  rate: number | null;
+  register: UseFormRegisterReturn;
+}) {
+  const amount = rate != null && count > 0 ? Math.round(count * rate * 100) / 100 : 0;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-xs">{label}</Label>
+      <div className="flex items-center gap-2 flex-wrap">
+        <Input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          className="w-24 shrink-0"
+          {...register}
+        />
+        {rate == null ? (
+          <span className="text-xs text-muted-foreground">
+            × <span className="italic">rate not set</span>
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground tabular-nums">
+            ×{" "}
+            <span className="text-foreground/80 font-medium">
+              {formatINR(rate)}
+            </span>
+            /{unit}
+          </span>
+        )}
+        <span className="text-xs text-muted-foreground">=</span>
+        <span className="font-mono font-semibold tabular-nums text-sm">
+          {formatINR(amount)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Compact one-line summary of a rate card, e.g.
+ *   "Local · 80km/8hr · ₹1,500 base · ₹15/extra km · ₹100/extra hr · Night ₹300 · TA ₹300/day"
+ * Used in the trip form to show the user which rate card is driving the
+ * preview without taking up a separate panel of input-looking boxes.
+ */
+function rateCardSummary(r: RateCard): string {
+  const fmt = (n: number | null | undefined) =>
+    n == null ? "—" : formatINR(n);
+  const ta = `TA ${fmt(r.driver_ta)}/day`;
+  if (r.mode === "local") {
+    return [
+      "Local",
+      `${r.base_kms ?? "—"}km/${r.base_hours ?? "—"}hr`,
+      `${fmt(r.base_rate)} base`,
+      `${fmt(r.extra_km)}/extra km`,
+      `${fmt(r.extra_hour)}/extra hr`,
+      `Night ${fmt(r.night)}`,
+      ta,
+    ].join(" · ");
+  }
+  if (r.mode === "outstation") {
+    return ["Outstation", `${fmt(r.per_km)}/km`, ta].join(" · ");
+  }
+  // transfer / package
+  const inclusions: string[] = [];
+  if (r.includes_toll) inclusions.push("toll");
+  if (r.includes_tax) inclusions.push("tax");
+  if (r.includes_parking) inclusions.push("parking");
+  const incl = inclusions.length > 0 ? `incl. ${inclusions.join(" / ")}` : null;
+  return [
+    r.mode === "transfer" ? "Transfer" : "Package",
+    r.plan_name ?? "—",
+    `${fmt(r.fixed_price)} fixed`,
+    ta,
+    ...(incl ? [incl] : []),
+  ].join(" · ");
 }
 
 function CarTypeOverrideNote({

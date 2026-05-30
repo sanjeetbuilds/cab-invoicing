@@ -41,7 +41,8 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-full items-center justify-between gap-1.5 rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground whitespace-nowrap",
+        // text-base on mobile (16px) prevents iOS Safari focus zoom.
+        "flex w-full items-center justify-between gap-1.5 rounded-lg border border-input bg-card px-3 py-2 text-base sm:text-sm text-foreground whitespace-nowrap",
         "transition-colors duration-150 outline-none select-none",
         "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20",
         "disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-muted",

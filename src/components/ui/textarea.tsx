@@ -7,7 +7,9 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
     <textarea
       data-slot="textarea"
       className={cn(
-        "flex min-h-[72px] w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground",
+        // text-base on mobile prevents iOS Safari focus zoom; text-sm at
+        // sm+ keeps desktop forms dense.
+        "flex min-h-[72px] w-full rounded-lg border border-input bg-card px-3 py-2 text-base sm:text-sm text-foreground",
         "placeholder:text-muted-foreground",
         "transition-colors duration-150 outline-none",
         "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20",

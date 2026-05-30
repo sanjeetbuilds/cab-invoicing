@@ -9,8 +9,9 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       type={type}
       data-slot="input"
       className={cn(
-        // Base
-        "h-9 w-full min-w-0 rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground",
+        // Base. text-base on mobile (16px) suppresses iOS Safari's
+        // auto-zoom on focus; tighter text-sm at sm+ keeps desktop density.
+        "h-9 w-full min-w-0 rounded-lg border border-input bg-card px-3 py-2 text-base sm:text-sm text-foreground",
         "placeholder:text-muted-foreground",
         "transition-colors duration-150 outline-none",
         // Focus
