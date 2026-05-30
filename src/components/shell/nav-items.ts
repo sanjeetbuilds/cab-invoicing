@@ -23,12 +23,15 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
+  // Primary — bottom-nav slots (4 items + the More tab = 5 total).
+  // Five is the comfortable max for thumb reach on a phone; six
+  // wrapped to a second row before this commit.
   { label: "Dashboard",  href: "/",           icon: LayoutDashboard, mobile: true },
   { label: "Trips",      href: "/trips",      icon: Car,             mobile: true },
   { label: "Invoices",   href: "/invoices",   icon: Receipt,         mobile: true },
   { label: "Quotations", href: "/quotations", icon: FileSignature,   mobile: true },
-  { label: "Clients",    href: "/clients",    icon: Users,           mobile: true },
-  // Secondary — only inside the /more drawer.
+  // Secondary — surface only inside the /more drawer.
+  { label: "Clients",    href: "/clients",    icon: Users },
   { label: "Fleet",      href: "/vehicles",   icon: Truck },
   { label: "Settings",   href: "/settings",   icon: Settings },
 ];

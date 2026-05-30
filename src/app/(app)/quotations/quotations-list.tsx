@@ -56,6 +56,9 @@ import { cn } from "@/lib/utils";
 import { quotationFilename } from "@/lib/filename";
 import { hapticDestructive, hapticSuccess } from "@/lib/haptics";
 import { sharePdf } from "@/lib/share-pdf";
+import { useIsMobile } from "@/lib/use-is-mobile";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Button } from "@/components/ui/button";
 import {
   shouldShowFilter,
   shouldShowPeriodFilter,
@@ -136,6 +139,7 @@ export function QuotationsList({
   const [period, setPeriod] = useState<PeriodFilter>("all");
   const [sort, setSort] = useState<SortKey>("newest");
   const [showFilters, setShowFilters] = useState(false);
+  const isMobile = useIsMobile();
 
   const clientById = useMemo(
     () => new Map(clients.map((c) => [c.id, c.name])),
@@ -290,58 +294,24 @@ export function QuotationsList({
             </div>
           )}
 
-          {showFilters && showFiltersButton && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          {/* Desktop (md+): inline panel below the toolbar. */}
+          {showFilters && showFiltersButton && !isMobile && (
+            <div className="hidden md:grid grid-cols-2 gap-3 pt-1">
               {showClientFilter && (
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="qf-client" className="text-xs">Client</Label>
-                  <Select
-                    value={clientId}
-                    onValueChange={(v) =>
-                      typeof v === "string" && setClientId(v)
-                    }
-                  >
-                    <SelectTrigger id="qf-client">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All clients</SelectItem>
-                      {clients.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <QFilterClient
+                  clientId={clientId}
+                  clients={clients}
+                  setClientId={setClientId}
+                />
               )}
               {showPeriodFilter && (
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="qf-period" className="text-xs">Period</Label>
-                  <Select
-                    value={period}
-                    onValueChange={(v) =>
-                      typeof v === "string" && setPeriod(v as PeriodFilter)
-                    }
-                  >
-                    <SelectTrigger id="qf-period">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PERIOD_OPTIONS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <QFilterPeriod period={period} setPeriod={setPeriod} />
               )}
               {(activeFilterCount > 0 || search) && (
                 <button
                   type="button"
                   onClick={clearAll}
-                  className="sm:col-span-2 inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground self-start"
+                  className="col-span-2 inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground self-start"
                 >
                   <X className="h-3 w-3" />
                   Clear all filters
@@ -351,6 +321,45 @@ export function QuotationsList({
           )}
         </div>
       )}
+
+      {/* Mobile: bottom-sheet with the same filter form. */}
+      <BottomSheet
+        open={isMobile && showFilters && showFiltersButton}
+        onOpenChange={(o) => setShowFilters(o)}
+        title="Filters"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => clearAll()}
+            >
+              Reset
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setShowFilters(false)}
+            >
+              Apply
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          {showClientFilter && (
+            <QFilterClient
+              clientId={clientId}
+              clients={clients}
+              setClientId={setClientId}
+            />
+          )}
+          {showPeriodFilter && (
+            <QFilterPeriod period={period} setPeriod={setPeriod} />
+          )}
+        </div>
+      </BottomSheet>
 
       {filtered.length === 0 ? (
         <Card>
@@ -811,6 +820,73 @@ function DeleteDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+function QFilterClient({
+  clientId,
+  clients,
+  setClientId,
+}: {
+  clientId: string;
+  clients: Pick<Client, "id" | "name">[];
+  setClientId: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Label htmlFor="qf-client" className="text-xs">
+        Client
+      </Label>
+      <Select
+        value={clientId}
+        onValueChange={(v) => typeof v === "string" && setClientId(v)}
+      >
+        <SelectTrigger id="qf-client">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All clients</SelectItem>
+          {clients.map((c) => (
+            <SelectItem key={c.id} value={c.id}>
+              {c.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function QFilterPeriod({
+  period,
+  setPeriod,
+}: {
+  period: PeriodFilter;
+  setPeriod: (v: PeriodFilter) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Label htmlFor="qf-period" className="text-xs">
+        Period
+      </Label>
+      <Select
+        value={period}
+        onValueChange={(v) =>
+          typeof v === "string" && setPeriod(v as PeriodFilter)
+        }
+      >
+        <SelectTrigger id="qf-period">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {PERIOD_OPTIONS.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 

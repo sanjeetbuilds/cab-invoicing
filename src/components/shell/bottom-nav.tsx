@@ -20,7 +20,9 @@ export function BottomNav() {
       className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <ul className="grid grid-cols-5 h-14">
+      {/* 4 primary destinations + the More tab = 5 columns in a single
+          row. h-16 (64px) gives thumb-friendly tap targets. */}
+      <ul className="grid grid-cols-5 h-16">
         {MOBILE_PRIMARY.map((item) => {
           const Icon = item.icon;
           const active =
