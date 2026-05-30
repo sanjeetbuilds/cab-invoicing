@@ -43,10 +43,10 @@ export default async function EditQuotationPage({
       <div>
         <p className="text-xs text-muted-foreground">
           <Link
-            href="/quotations"
+            href={`/quotations/${id}`}
             className="font-medium text-primary hover:text-primary-hover"
           >
-            ← Quotations
+            ← Quotation {q.number}
           </Link>
         </p>
         <PageHeader title={`Edit ${q.number}`} />

@@ -1,19 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import {
-  Check,
-  CheckCircle2,
-  Copy,
-  FileText,
-  Filter,
-  MoreVertical,
-  RotateCcw,
-  Search,
-  X,
-} from "lucide-react";
+import Link from "next/link";
+import { Filter, Search, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,21 +16,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/format";
 import {
@@ -52,19 +33,10 @@ import {
   visibleStatusPills,
 } from "@/lib/list-controls";
 import type { Client, Invoice } from "@/lib/supabase/types";
-import { markInvoicePaidAction, reverseInvoiceAction } from "./actions";
 
 type StatusFilter = "all" | "unpaid" | "paid" | "reversed";
-type SortKey =
-  | "newest"
-  | "oldest"
-  | "amount_desc"
-  | "amount_asc";
-type PeriodFilter =
-  | "all"
-  | "this_month"
-  | "last_month"
-  | "this_year";
+type SortKey = "newest" | "oldest" | "amount_desc" | "amount_asc";
+type PeriodFilter = "all" | "this_month" | "last_month" | "this_year";
 
 const STATUS_PILLS: { value: StatusFilter; label: string }[] = [
   { value: "all", label: "All" },
@@ -97,12 +69,10 @@ function fmtDate(iso: string | null | undefined): string {
 function startOfMonthIso(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
 }
-
 function endOfMonthIso(d: Date): string {
   const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
   return `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, "0")}-${String(last.getDate()).padStart(2, "0")}`;
 }
-
 function periodBounds(period: PeriodFilter): [string, string] | null {
   if (period === "all") return null;
   const now = new Date();
@@ -112,7 +82,6 @@ function periodBounds(period: PeriodFilter): [string, string] | null {
     const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     return [startOfMonthIso(prev), endOfMonthIso(prev)];
   }
-  // this_year
   return [`${now.getFullYear()}-01-01`, `${now.getFullYear()}-12-31`];
 }
 
@@ -134,9 +103,7 @@ export function InvoicesList({
   const [sort, setSort] = useState<SortKey>("newest");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Progressive disclosure — visibility flags derived from the underlying
-  // dataset (not the filtered view) so the controls don't flicker as the
-  // user types.
+  // Progressive disclosure — flags derived from the unfiltered dataset.
   const showSearch = shouldShowSearch(invoices.length);
   const showSort = shouldShowSort(invoices.length);
   const statusPills = useMemo(
@@ -219,7 +186,6 @@ export function InvoicesList({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Sticky toolbar: each control disclosed only if useful */}
       {(showSearch || showFiltersButton || statusPills.length > 0 || showSort) && (
         <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background/95 backdrop-blur border-b border-border flex flex-col gap-3">
           {(showSearch || showFiltersButton) && (
@@ -374,7 +340,6 @@ export function InvoicesList({
         </div>
       )}
 
-      {/* Results */}
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground flex flex-col items-center gap-3">
@@ -389,221 +354,113 @@ export function InvoicesList({
           </CardContent>
         </Card>
       ) : (
-        <div className="flex flex-col gap-2.5">
-          {filtered.map((inv) => (
-            <InvoiceRow
-              key={inv.id}
-              invoice={inv}
-              prefix={prefix}
-              duties={dutiesByInvoice[inv.id] ?? 0}
-            />
-          ))}
-        </div>
+        <>
+          {/* Desktop: structured table, whole row navigates to detail */}
+          <div className="hidden md:block rounded-lg border border-border bg-card overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Number</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Period</TableHead>
+                  <TableHead className="text-right">Duties</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((inv) => {
+                  const duties = dutiesByInvoice[inv.id] ?? 0;
+                  return (
+                    <TableRow
+                      key={inv.id}
+                      className="cursor-pointer hover:bg-muted/40"
+                      onClick={(e) => {
+                        // Let the anchor handle modifier-key navigation itself
+                        if (
+                          e.target instanceof HTMLAnchorElement ||
+                          (e.target as HTMLElement).closest("a")
+                        )
+                          return;
+                        window.location.href = `/invoices/${inv.id}`;
+                      }}
+                    >
+                      <TableCell className="font-mono font-medium">
+                        <Link
+                          href={`/invoices/${inv.id}`}
+                          className="hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {prefix}
+                          {inv.invoice_number}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{inv.client_name ?? "—"}</TableCell>
+                      <TableCell className="font-mono">
+                        {fmtDate(inv.invoice_date)}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {inv.period_from && inv.period_to
+                          ? `${fmtDate(inv.period_from)} – ${fmtDate(inv.period_to)}`
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {duties || "—"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {formatINR(inv.net_amount)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <StatusBadge status={inv.status} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile: cards, whole card tappable, no inline action icons */}
+          <div className="md:hidden flex flex-col gap-2.5">
+            {filtered.map((inv) => {
+              const duties = dutiesByInvoice[inv.id] ?? 0;
+              return (
+                <Link key={inv.id} href={`/invoices/${inv.id}`}>
+                  <Card className="active:bg-muted transition-colors">
+                    <CardContent className="py-3 px-3 flex flex-col gap-0.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono font-semibold tracking-tight">
+                          {prefix}
+                          {inv.invoice_number}
+                        </span>
+                        <StatusBadge status={inv.status} />
+                      </div>
+                      <p className="text-sm text-foreground truncate">
+                        {inv.client_name ?? "—"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {fmtDate(inv.invoice_date)}
+                        {inv.period_from && inv.period_to ? (
+                          <>
+                            {" · "}
+                            {fmtDate(inv.period_from)}–{fmtDate(inv.period_to)}
+                          </>
+                        ) : null}
+                        {duties > 0 ? ` · Duties: ${duties}` : null}
+                      </p>
+                      <p className="font-mono text-base font-semibold tabular-nums mt-1">
+                        {formatINR(inv.net_amount)}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
-  );
-}
-
-function InvoiceRow({
-  invoice,
-  prefix,
-  duties,
-}: {
-  invoice: Invoice;
-  prefix: string;
-  duties: number;
-}) {
-  const router = useRouter();
-  const [pending, setPending] = useState(false);
-  const [confirmPaid, setConfirmPaid] = useState<null | "mark" | "unmark">(
-    null,
-  );
-  const [confirmReverse, setConfirmReverse] = useState(false);
-
-  const fullNumber = `${prefix}${invoice.invoice_number}`;
-  const pdfUrl = `/api/invoices/${invoice.id}/pdf`;
-  const reversed = invoice.status === "reversed";
-  const paid = invoice.status === "paid";
-
-  async function togglePaid(target: boolean) {
-    setPending(true);
-    const result = await markInvoicePaidAction({
-      id: invoice.id,
-      paid: target,
-    });
-    setPending(false);
-    if (result.ok) {
-      toast.success(target ? "Marked paid." : "Marked unpaid.");
-      setConfirmPaid(null);
-      router.refresh();
-    } else {
-      toast.error(result.error);
-    }
-  }
-
-  async function onReverse() {
-    setPending(true);
-    const result = await reverseInvoiceAction({ id: invoice.id });
-    setPending(false);
-    if (result.ok) {
-      toast.success(`${fullNumber} reversed.`);
-      setConfirmReverse(false);
-      router.refresh();
-    } else {
-      toast.error(result.error);
-    }
-  }
-
-  function copyNumber() {
-    navigator.clipboard
-      .writeText(fullNumber)
-      .then(() => toast.success(`Copied ${fullNumber}`))
-      .catch(() => toast.error("Copy failed."));
-  }
-
-  return (
-    <>
-      <Card>
-        <CardContent className="py-3 px-3 sm:px-4 flex items-center gap-2">
-          {/* Tappable left side — opens PDF */}
-          <a
-            href={pdfUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="min-w-0 flex-1 flex flex-col gap-0.5 -m-1 p-1 rounded-md hover:bg-muted/40 active:bg-muted transition-colors"
-          >
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono font-semibold tracking-tight">
-                {fullNumber}
-              </span>
-              <StatusBadge status={invoice.status} />
-            </div>
-            <p className="text-sm text-muted-foreground truncate">
-              {invoice.client_name ?? "—"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {fmtDate(invoice.invoice_date)}
-              {invoice.period_from && invoice.period_to ? (
-                <>
-                  {" · "}
-                  {fmtDate(invoice.period_from)}–{fmtDate(invoice.period_to)}
-                </>
-              ) : null}
-              {duties > 0 ? ` · Duties: ${duties}` : null}
-            </p>
-            <p className="font-mono text-base font-semibold tabular-nums mt-0.5">
-              {formatINR(invoice.net_amount)}
-            </p>
-          </a>
-
-          {/* Inline actions */}
-          <div className="flex items-center gap-0.5 shrink-0">
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noreferrer"
-              title="Open PDF"
-              aria-label="Open PDF"
-              className="inline-flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <FileText className="h-4 w-4" />
-            </a>
-            <button
-              type="button"
-              onClick={() =>
-                reversed
-                  ? toast.error("Reversed invoices can't be paid.")
-                  : setConfirmPaid(paid ? "unmark" : "mark")
-              }
-              disabled={pending || reversed}
-              title={paid ? "Mark unpaid" : "Mark paid"}
-              aria-label={paid ? "Mark unpaid" : "Mark paid"}
-              className={cn(
-                "inline-flex items-center justify-center h-9 w-9 rounded-md disabled:opacity-40",
-                paid
-                  ? "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {paid ? (
-                <CheckCircle2 className="h-5 w-5 fill-emerald-100 dark:fill-emerald-950/40" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}
-            </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label="More actions"
-                className="inline-flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[180px]">
-                <DropdownMenuItem onClick={copyNumber}>
-                  <Copy className="h-4 w-4" />
-                  Copy invoice number
-                </DropdownMenuItem>
-                {!reversed && (
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => setConfirmReverse(true)}
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    Reverse invoice
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </CardContent>
-      </Card>
-
-      <AlertDialog
-        open={confirmPaid !== null}
-        onOpenChange={(o) => !o && setConfirmPaid(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmPaid === "mark" ? "Mark as paid?" : "Mark as unpaid?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Invoice <strong>{fullNumber}</strong> for{" "}
-              <strong>{invoice.client_name}</strong> ·{" "}
-              {formatINR(invoice.net_amount)}.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => togglePaid(confirmPaid === "mark")}
-              disabled={pending}
-            >
-              {pending ? "Saving…" : confirmPaid === "mark" ? "Mark paid" : "Mark unpaid"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={confirmReverse} onOpenChange={setConfirmReverse}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reverse this invoice?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Invoice <strong>{fullNumber}</strong> will be marked reversed and
-              its trips will return to the open list so you can re-invoice
-              them. The invoice number stays reserved and is never reused.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onReverse} disabled={pending}>
-              {pending ? "Reversing…" : "Reverse"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
   );
 }
 

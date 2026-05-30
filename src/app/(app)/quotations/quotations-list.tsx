@@ -2,19 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import {
-  CheckCircle2,
-  Copy,
-  FileText,
-  Filter,
-  MoreVertical,
-  Pencil,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Filter, Search, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,21 +16,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import {
   shouldShowFilter,
@@ -52,7 +32,6 @@ import {
   visibleStatusPills,
 } from "@/lib/list-controls";
 import type { Client, Quotation } from "@/lib/supabase/types";
-import { acceptQuotationAction, deleteQuotationAction } from "./actions";
 
 type StatusFilter =
   | "all"
@@ -63,7 +42,6 @@ type StatusFilter =
   | "rejected";
 
 type SortKey = "newest" | "oldest";
-
 type PeriodFilter = "all" | "this_month" | "last_month" | "this_year";
 
 const STATUS_PILLS: { value: StatusFilter; label: string }[] = [
@@ -139,9 +117,7 @@ export function QuotationsList({
   );
   const showClientFilter = useMemo(
     () =>
-      shouldShowFilter(quotations, (q) =>
-        q.client_id ?? q.client_name ?? null,
-      ),
+      shouldShowFilter(quotations, (q) => q.client_id ?? q.client_name ?? null),
     [quotations],
   );
   const showPeriodFilter = useMemo(
@@ -357,182 +333,95 @@ export function QuotationsList({
           </CardContent>
         </Card>
       ) : (
-        <div className="flex flex-col gap-2.5">
-          {filtered.map((q) => (
-            <QuotationRow
-              key={q.id}
-              quotation={q}
-              clientName={
-                q.client_id ? clientById.get(q.client_id) ?? null : q.client_name
-              }
-            />
-          ))}
-        </div>
+        <>
+          {/* Desktop: table; whole row navigates */}
+          <div className="hidden md:block rounded-lg border border-border bg-card overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Number</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Valid until</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((q) => {
+                  const name =
+                    (q.client_id ? clientById.get(q.client_id) : q.client_name) ??
+                    "—";
+                  return (
+                    <TableRow
+                      key={q.id}
+                      className="cursor-pointer hover:bg-muted/40"
+                      onClick={(e) => {
+                        if (
+                          e.target instanceof HTMLAnchorElement ||
+                          (e.target as HTMLElement).closest("a")
+                        )
+                          return;
+                        window.location.href = `/quotations/${q.id}`;
+                      }}
+                    >
+                      <TableCell className="font-mono font-medium">
+                        <Link
+                          href={`/quotations/${q.id}`}
+                          className="hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {q.number}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{name}</TableCell>
+                      <TableCell className="font-mono">
+                        {fmtDate(q.date)}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {fmtDate(q.valid_until)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <StatusBadge status={q.status} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile: cards, tappable, no inline icons */}
+          <div className="md:hidden flex flex-col gap-2.5">
+            {filtered.map((q) => {
+              const name =
+                (q.client_id ? clientById.get(q.client_id) : q.client_name) ??
+                "—";
+              return (
+                <Link key={q.id} href={`/quotations/${q.id}`}>
+                  <Card className="active:bg-muted transition-colors">
+                    <CardContent className="py-3 px-3 flex flex-col gap-0.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono font-semibold tracking-tight">
+                          {q.number}
+                        </span>
+                        <StatusBadge status={q.status} />
+                      </div>
+                      <p className="text-sm text-foreground truncate">{name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {fmtDate(q.date)}
+                        {q.valid_until
+                          ? ` · Valid till ${fmtDate(q.valid_until)}`
+                          : null}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
-  );
-}
-
-function QuotationRow({
-  quotation,
-  clientName,
-}: {
-  quotation: Quotation;
-  clientName: string | null;
-}) {
-  const router = useRouter();
-  const [pending, setPending] = useState(false);
-  const [confirmAccept, setConfirmAccept] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
-  const pdfUrl = `/api/quotations/${quotation.id}/pdf`;
-  const editUrl = `/quotations/${quotation.id}/edit`;
-  const accepted = quotation.status === "accepted";
-
-  async function onAccept() {
-    setPending(true);
-    const result = await acceptQuotationAction(quotation.id);
-    setPending(false);
-    if (result.ok) {
-      toast.success(`${quotation.number} accepted — rate cards upserted.`);
-      setConfirmAccept(false);
-      router.refresh();
-    } else {
-      toast.error(result.error);
-    }
-  }
-
-  async function onDelete() {
-    setPending(true);
-    const result = await deleteQuotationAction(quotation.id);
-    setPending(false);
-    if (result.ok) {
-      toast.success(`${quotation.number} deleted.`);
-      setConfirmDelete(false);
-      router.refresh();
-    } else {
-      toast.error(result.error);
-    }
-  }
-
-  function copyNumber() {
-    navigator.clipboard
-      .writeText(quotation.number)
-      .then(() => toast.success(`Copied ${quotation.number}`))
-      .catch(() => toast.error("Copy failed."));
-  }
-
-  return (
-    <>
-      <Card>
-        <CardContent className="py-3 px-3 sm:px-4 flex items-center gap-2">
-          <a
-            href={pdfUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="min-w-0 flex-1 flex flex-col gap-0.5 -m-1 p-1 rounded-md hover:bg-muted/40 active:bg-muted transition-colors"
-          >
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono font-semibold tracking-tight">
-                {quotation.number}
-              </span>
-              <StatusBadge status={quotation.status} />
-            </div>
-            <p className="text-sm text-muted-foreground truncate">
-              {clientName ?? "—"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {fmtDate(quotation.date)}
-              {quotation.valid_until ? ` · Valid till ${fmtDate(quotation.valid_until)}` : null}
-            </p>
-          </a>
-
-          <div className="flex items-center gap-0.5 shrink-0">
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noreferrer"
-              title="Open PDF"
-              aria-label="Open PDF"
-              className="inline-flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <FileText className="h-4 w-4" />
-            </a>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label="More actions"
-                className="inline-flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[200px]">
-                {!accepted && (
-                  <DropdownMenuItem
-                    onClick={() => setConfirmAccept(true)}
-                    disabled={pending}
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    Accept &amp; create rate cards
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem render={<Link href={editUrl} />}>
-                  <Pencil className="h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={copyNumber}>
-                  <Copy className="h-4 w-4" />
-                  Copy number
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => setConfirmDelete(true)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </CardContent>
-      </Card>
-
-      <AlertDialog open={confirmAccept} onOpenChange={setConfirmAccept}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Accept this quotation?</AlertDialogTitle>
-            <AlertDialogDescription>
-              The rate lines on quotation <strong>{quotation.number}</strong>{" "}
-              will be upserted into rate cards for this client. Existing rate
-              cards for the same (car, mode) are overwritten.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onAccept} disabled={pending}>
-              {pending ? "Accepting…" : "Accept"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this quotation?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Quotation <strong>{quotation.number}</strong> will be removed.
-              Rate cards created from accepting it stay in place.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onDelete} disabled={pending}>
-              {pending ? "Deleting…" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
   );
 }
 

@@ -182,7 +182,7 @@ export function QuotationForm({
 
     if (result.ok) {
       toast.success(editing ? "Quotation saved." : "Quotation created.");
-      router.push("/quotations");
+      router.push(`/quotations/${result.id}`);
       router.refresh();
     } else {
       toast.error(result.error);
