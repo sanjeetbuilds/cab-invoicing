@@ -142,7 +142,7 @@ export function InvoiceBuilderForm({
 
     if (result.ok) {
       toast.success(`Invoice #${result.invoice_number} issued.`);
-      router.push(`/invoices/${result.invoice_id}`);
+      router.push("/invoices");
     } else {
       toast.error(result.error);
     }

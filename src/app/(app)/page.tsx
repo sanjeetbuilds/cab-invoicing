@@ -285,7 +285,7 @@ export default async function DashboardPage() {
                   <TableRow key={inv.id}>
                     <TableCell className="font-medium">
                       <Link
-                        href={`/invoices/${inv.id}`}
+                        href="/invoices"
                         className="text-foreground hover:text-primary"
                       >
                         {inv.invoice_number}
