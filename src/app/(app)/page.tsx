@@ -280,12 +280,14 @@ export default async function DashboardPage() {
               {recentInvoices.map((inv) => (
                 <TableRow key={inv.id}>
                   <TableCell className="font-medium">
-                    <Link
-                      href={`/invoices/${inv.id}`}
+                    <a
+                      href={`/api/invoices/${inv.id}/pdf`}
+                      target="_blank"
+                      rel="noreferrer"
                       className="text-foreground hover:text-primary"
                     >
                       {inv.invoice_number}
-                    </Link>
+                    </a>
                   </TableCell>
                   <TableCell className="tabular-nums text-muted-foreground">
                     {fmtDate(inv.invoice_date)}

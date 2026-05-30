@@ -2,7 +2,19 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Filter, Search, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import {
+  CheckCircle2,
+  Copy,
+  FileText,
+  Filter,
+  MoreVertical,
+  Pencil,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +35,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
   shouldShowFilter,
@@ -32,6 +60,7 @@ import {
   visibleStatusPills,
 } from "@/lib/list-controls";
 import type { Client, Quotation } from "@/lib/supabase/types";
+import { acceptQuotationAction, deleteQuotationAction } from "./actions";
 
 type StatusFilter =
   | "all"
@@ -334,7 +363,7 @@ export function QuotationsList({
         </Card>
       ) : (
         <>
-          {/* Desktop: table; whole row navigates */}
+          {/* Desktop (md+): table; row click opens PDF in new tab */}
           <div className="hidden md:block rounded-lg border border-border bg-card overflow-hidden">
             <Table>
               <TableHeader>
@@ -344,85 +373,386 @@ export function QuotationsList({
                   <TableHead>Date</TableHead>
                   <TableHead>Valid until</TableHead>
                   <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((q) => {
-                  const name =
-                    (q.client_id ? clientById.get(q.client_id) : q.client_name) ??
-                    "—";
-                  return (
-                    <TableRow
-                      key={q.id}
-                      className="cursor-pointer hover:bg-muted/40"
-                      onClick={(e) => {
-                        if (
-                          e.target instanceof HTMLAnchorElement ||
-                          (e.target as HTMLElement).closest("a")
-                        )
-                          return;
-                        window.location.href = `/quotations/${q.id}`;
-                      }}
-                    >
-                      <TableCell className="font-mono font-medium">
-                        <Link
-                          href={`/quotations/${q.id}`}
-                          className="hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {q.number}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{name}</TableCell>
-                      <TableCell className="font-mono">
-                        {fmtDate(q.date)}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {fmtDate(q.valid_until)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <StatusBadge status={q.status} />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {filtered.map((q) => (
+                  <DesktopQuotationRow
+                    key={q.id}
+                    quotation={q}
+                    clientName={
+                      (q.client_id ? clientById.get(q.client_id) : q.client_name) ??
+                      null
+                    }
+                  />
+                ))}
               </TableBody>
             </Table>
           </div>
 
-          {/* Mobile: client name first; number / dates as muted meta. */}
-          <div className="md:hidden flex flex-col gap-2">
-            {filtered.map((q) => {
-              const name =
-                (q.client_id ? clientById.get(q.client_id) : q.client_name) ??
-                "—";
-              return (
-                <Link key={q.id} href={`/quotations/${q.id}`}>
-                  <Card className="active:bg-muted transition-colors">
-                    <CardContent className="py-2.5 px-3 flex flex-col gap-0.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="font-semibold text-foreground truncate">
-                          {name}
-                        </p>
-                        <StatusBadge status={q.status} />
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        <span className="font-mono">{q.number}</span>
-                        {" · "}
-                        {fmtDate(q.date)}
-                        {q.valid_until
-                          ? ` · Valid till ${fmtDate(q.valid_until)}`
-                          : null}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
+          {/* Mobile (<md): rich summary cards */}
+          <div className="md:hidden flex flex-col gap-3">
+            {filtered.map((q) => (
+              <MobileQuotationCard
+                key={q.id}
+                quotation={q}
+                clientName={
+                  (q.client_id ? clientById.get(q.client_id) : q.client_name) ??
+                  null
+                }
+              />
+            ))}
           </div>
         </>
       )}
     </div>
+  );
+}
+
+function DesktopQuotationRow({
+  quotation,
+  clientName,
+}: {
+  quotation: Quotation;
+  clientName: string | null;
+}) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const [confirmAccept, setConfirmAccept] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const pdfUrl = `/api/quotations/${quotation.id}/pdf`;
+  const editUrl = `/quotations/${quotation.id}/edit`;
+  const accepted = quotation.status === "accepted";
+
+  function openPdf() {
+    window.open(pdfUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function onAccept() {
+    setPending(true);
+    const result = await acceptQuotationAction(quotation.id);
+    setPending(false);
+    if (result.ok) {
+      toast.success(`${quotation.number} accepted — rate cards upserted.`);
+      setConfirmAccept(false);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  async function onDelete() {
+    setPending(true);
+    const result = await deleteQuotationAction(quotation.id);
+    setPending(false);
+    if (result.ok) {
+      toast.success(`${quotation.number} deleted.`);
+      setConfirmDelete(false);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  function copyNumber() {
+    navigator.clipboard
+      .writeText(quotation.number)
+      .then(() => toast.success(`Copied ${quotation.number}`))
+      .catch(() => toast.error("Copy failed."));
+  }
+
+  return (
+    <>
+      <TableRow
+        className="cursor-pointer hover:bg-muted/40"
+        onClick={openPdf}
+      >
+        <TableCell className="font-mono font-medium">{quotation.number}</TableCell>
+        <TableCell>{clientName ?? "—"}</TableCell>
+        <TableCell className="font-mono">{fmtDate(quotation.date)}</TableCell>
+        <TableCell className="font-mono text-xs text-muted-foreground">
+          {fmtDate(quotation.valid_until)}
+        </TableCell>
+        <TableCell className="text-center">
+          <StatusBadge status={quotation.status} />
+        </TableCell>
+        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label="More actions"
+              className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[200px]">
+              {!accepted && (
+                <DropdownMenuItem
+                  onClick={() => setConfirmAccept(true)}
+                  disabled={pending}
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Accept &amp; create rate cards
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem render={<Link href={editUrl} />}>
+                <Pencil className="h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={copyNumber}>
+                <Copy className="h-4 w-4" />
+                Copy number
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => setConfirmDelete(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+      </TableRow>
+
+      <AcceptDialog
+        open={confirmAccept}
+        number={quotation.number}
+        pending={pending}
+        onCancel={() => setConfirmAccept(false)}
+        onConfirm={onAccept}
+      />
+      <DeleteDialog
+        open={confirmDelete}
+        number={quotation.number}
+        pending={pending}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={onDelete}
+      />
+    </>
+  );
+}
+
+function MobileQuotationCard({
+  quotation,
+  clientName,
+}: {
+  quotation: Quotation;
+  clientName: string | null;
+}) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const [confirmAccept, setConfirmAccept] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const pdfUrl = `/api/quotations/${quotation.id}/pdf`;
+  const editUrl = `/quotations/${quotation.id}/edit`;
+  const accepted = quotation.status === "accepted";
+
+  function openPdf() {
+    window.open(pdfUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function onAccept() {
+    setPending(true);
+    const result = await acceptQuotationAction(quotation.id);
+    setPending(false);
+    if (result.ok) {
+      toast.success(`${quotation.number} accepted — rate cards upserted.`);
+      setConfirmAccept(false);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  async function onDelete() {
+    setPending(true);
+    const result = await deleteQuotationAction(quotation.id);
+    setPending(false);
+    if (result.ok) {
+      toast.success(`${quotation.number} deleted.`);
+      setConfirmDelete(false);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  function copyNumber() {
+    navigator.clipboard
+      .writeText(quotation.number)
+      .then(() => toast.success(`Copied ${quotation.number}`))
+      .catch(() => toast.error("Copy failed."));
+  }
+
+  return (
+    <>
+      <Card>
+        <CardContent className="py-3 px-3 flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={openPdf}
+            className="text-left flex flex-col gap-2.5 -m-1 p-1 rounded-md hover:bg-muted/40 active:bg-muted transition-colors"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <StatusBadge status={quotation.status} />
+              <span className="font-mono text-xs text-muted-foreground">
+                Quotation #{quotation.number}
+              </span>
+            </div>
+
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                For
+              </p>
+              <p className="font-semibold text-foreground leading-tight">
+                {clientName ?? "—"}
+              </p>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Dated {fmtDate(quotation.date)}
+              {quotation.valid_until
+                ? ` · Valid till ${fmtDate(quotation.valid_until)}`
+                : null}
+            </p>
+          </button>
+
+          <div className="flex items-center gap-2 border-t border-border pt-3">
+            <button
+              type="button"
+              onClick={openPdf}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-hover"
+            >
+              <FileText className="h-4 w-4" />
+              Open PDF
+            </button>
+            {!accepted && (
+              <button
+                type="button"
+                onClick={() => setConfirmAccept(true)}
+                disabled={pending}
+                className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-md border border-border bg-card text-foreground font-medium text-sm hover:bg-muted"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Accept
+              </button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label="More actions"
+                className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[200px]">
+                <DropdownMenuItem render={<Link href={editUrl} />}>
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={copyNumber}>
+                  <Copy className="h-4 w-4" />
+                  Copy number
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardContent>
+      </Card>
+
+      <AcceptDialog
+        open={confirmAccept}
+        number={quotation.number}
+        pending={pending}
+        onCancel={() => setConfirmAccept(false)}
+        onConfirm={onAccept}
+      />
+      <DeleteDialog
+        open={confirmDelete}
+        number={quotation.number}
+        pending={pending}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={onDelete}
+      />
+    </>
+  );
+}
+
+function AcceptDialog({
+  open,
+  number,
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  number: string;
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Accept this quotation?</AlertDialogTitle>
+          <AlertDialogDescription>
+            The rate lines on quotation <strong>{number}</strong> will be
+            upserted into rate cards for this client. Existing rate cards for
+            the same (car, mode) are overwritten.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} disabled={pending}>
+            {pending ? "Accepting…" : "Accept"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function DeleteDialog({
+  open,
+  number,
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  number: string;
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this quotation?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Quotation <strong>{number}</strong> will be removed. Rate cards
+            created from accepting it stay in place.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} disabled={pending}>
+            {pending ? "Deleting…" : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

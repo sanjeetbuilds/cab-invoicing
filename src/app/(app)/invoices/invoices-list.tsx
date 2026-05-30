@@ -1,8 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { Filter, Search, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import {
+  Check,
+  Copy,
+  FileText,
+  Filter,
+  MoreVertical,
+  RotateCcw,
+  Search,
+  Undo2,
+  X,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +34,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/format";
 import {
@@ -33,6 +60,7 @@ import {
   visibleStatusPills,
 } from "@/lib/list-controls";
 import type { Client, Invoice } from "@/lib/supabase/types";
+import { markInvoicePaidAction, reverseInvoiceAction } from "./actions";
 
 type StatusFilter = "all" | "unpaid" | "paid" | "reversed";
 type SortKey = "newest" | "oldest" | "amount_desc" | "amount_asc";
@@ -103,7 +131,6 @@ export function InvoicesList({
   const [sort, setSort] = useState<SortKey>("newest");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Progressive disclosure — flags derived from the unfiltered dataset.
   const showSearch = shouldShowSearch(invoices.length);
   const showSort = shouldShowSort(invoices.length);
   const statusPills = useMemo(
@@ -212,7 +239,6 @@ export function InvoicesList({
                       ? "bg-accent-soft text-accent-foreground border-accent-soft"
                       : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
                   )}
-                  aria-expanded={showFilters}
                 >
                   <Filter className="h-4 w-4" />
                   <span className="hidden sm:inline">Filters</span>
@@ -355,116 +381,461 @@ export function InvoicesList({
         </Card>
       ) : (
         <>
-          {/* Desktop: structured table, whole row navigates to detail */}
+          {/* Desktop (md+): clean table; row click opens PDF */}
           <div className="hidden md:block rounded-lg border border-border bg-card overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Number</TableHead>
+                  <TableHead>Invoice #</TableHead>
                   <TableHead>Client</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Period</TableHead>
                   <TableHead className="text-right">Duties</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((inv) => {
-                  const duties = dutiesByInvoice[inv.id] ?? 0;
-                  return (
-                    <TableRow
-                      key={inv.id}
-                      className="cursor-pointer hover:bg-muted/40"
-                      onClick={(e) => {
-                        // Let the anchor handle modifier-key navigation itself
-                        if (
-                          e.target instanceof HTMLAnchorElement ||
-                          (e.target as HTMLElement).closest("a")
-                        )
-                          return;
-                        window.location.href = `/invoices/${inv.id}`;
-                      }}
-                    >
-                      <TableCell className="font-mono font-medium">
-                        <Link
-                          href={`/invoices/${inv.id}`}
-                          className="hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {prefix}
-                          {inv.invoice_number}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{inv.client_name ?? "—"}</TableCell>
-                      <TableCell className="font-mono">
-                        {fmtDate(inv.invoice_date)}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {inv.period_from && inv.period_to
-                          ? `${fmtDate(inv.period_from)} – ${fmtDate(inv.period_to)}`
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {duties || "—"}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {formatINR(inv.net_amount)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <StatusBadge status={inv.status} />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {filtered.map((inv) => (
+                  <DesktopInvoiceRow
+                    key={inv.id}
+                    invoice={inv}
+                    prefix={prefix}
+                    duties={dutiesByInvoice[inv.id] ?? 0}
+                  />
+                ))}
               </TableBody>
             </Table>
           </div>
 
-          {/* Mobile: client name is the headline, number/period are muted,
-              amount sits prominent on the right. */}
-          <div className="md:hidden flex flex-col gap-2">
-            {filtered.map((inv) => {
-              const duties = dutiesByInvoice[inv.id] ?? 0;
-              return (
-                <Link key={inv.id} href={`/invoices/${inv.id}`}>
-                  <Card className="active:bg-muted transition-colors">
-                    <CardContent className="py-2.5 px-3 flex items-start gap-3">
-                      <div className="min-w-0 flex-1 flex flex-col gap-0.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-semibold text-foreground truncate">
-                            {inv.client_name ?? "—"}
-                          </p>
-                          <StatusBadge status={inv.status} />
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          <span className="font-mono">
-                            {prefix}
-                            {inv.invoice_number}
-                          </span>
-                          {inv.period_from && inv.period_to ? (
-                            <>
-                              {" · "}
-                              {fmtDate(inv.period_from)}–{fmtDate(inv.period_to)}
-                            </>
-                          ) : (
-                            <>{" · "}{fmtDate(inv.invoice_date)}</>
-                          )}
-                          {duties > 0 ? ` · Duties: ${duties}` : null}
-                        </p>
-                      </div>
-                      <p className="font-mono text-base font-semibold tabular-nums shrink-0 self-center">
-                        {formatINR(inv.net_amount)}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
+          {/* Mobile (<md): rich summary cards — replace the detail page */}
+          <div className="md:hidden flex flex-col gap-3">
+            {filtered.map((inv) => (
+              <MobileInvoiceCard
+                key={inv.id}
+                invoice={inv}
+                prefix={prefix}
+                duties={dutiesByInvoice[inv.id] ?? 0}
+              />
+            ))}
           </div>
         </>
       )}
     </div>
+  );
+}
+
+function DesktopInvoiceRow({
+  invoice,
+  prefix,
+  duties,
+}: {
+  invoice: Invoice;
+  prefix: string;
+  duties: number;
+}) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const [confirmPaid, setConfirmPaid] = useState<null | "mark" | "unmark">(
+    null,
+  );
+  const [confirmReverse, setConfirmReverse] = useState(false);
+
+  const fullNumber = `${prefix}${invoice.invoice_number}`;
+  const pdfUrl = `/api/invoices/${invoice.id}/pdf`;
+  const reversed = invoice.status === "reversed";
+  const paid = invoice.status === "paid";
+
+  function openPdf() {
+    window.open(pdfUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function togglePaid(target: boolean) {
+    setPending(true);
+    const result = await markInvoicePaidAction({
+      id: invoice.id,
+      paid: target,
+    });
+    setPending(false);
+    if (result.ok) {
+      toast.success(target ? "Marked paid." : "Marked unpaid.");
+      setConfirmPaid(null);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  async function onReverse() {
+    setPending(true);
+    const result = await reverseInvoiceAction({ id: invoice.id });
+    setPending(false);
+    if (result.ok) {
+      toast.success(`${fullNumber} reversed.`);
+      setConfirmReverse(false);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  function copyNumber() {
+    navigator.clipboard
+      .writeText(fullNumber)
+      .then(() => toast.success(`Copied ${fullNumber}`))
+      .catch(() => toast.error("Copy failed."));
+  }
+
+  return (
+    <>
+      <TableRow
+        className="cursor-pointer hover:bg-muted/40"
+        onClick={openPdf}
+      >
+        <TableCell className="font-mono font-medium">{fullNumber}</TableCell>
+        <TableCell>{invoice.client_name ?? "—"}</TableCell>
+        <TableCell className="font-mono">{fmtDate(invoice.invoice_date)}</TableCell>
+        <TableCell className="text-xs text-muted-foreground">
+          {invoice.period_from && invoice.period_to
+            ? `${fmtDate(invoice.period_from)} – ${fmtDate(invoice.period_to)}`
+            : "—"}
+        </TableCell>
+        <TableCell className="text-right font-mono">{duties || "—"}</TableCell>
+        <TableCell className="text-right font-mono">
+          {formatINR(invoice.net_amount)}
+        </TableCell>
+        <TableCell className="text-center">
+          <StatusBadge status={invoice.status} />
+        </TableCell>
+        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label="More actions"
+              className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[200px]">
+              {!reversed && !paid && (
+                <DropdownMenuItem onClick={() => setConfirmPaid("mark")}>
+                  <Check className="h-4 w-4" />
+                  Mark paid
+                </DropdownMenuItem>
+              )}
+              {!reversed && paid && (
+                <DropdownMenuItem onClick={() => setConfirmPaid("unmark")}>
+                  <Undo2 className="h-4 w-4" />
+                  Mark unpaid
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={copyNumber}>
+                <Copy className="h-4 w-4" />
+                Copy invoice number
+              </DropdownMenuItem>
+              {!reversed && (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setConfirmReverse(true)}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Reverse invoice
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+      </TableRow>
+
+      <PaidDialog
+        open={confirmPaid !== null}
+        mode={confirmPaid}
+        invoice={invoice}
+        fullNumber={fullNumber}
+        pending={pending}
+        onCancel={() => setConfirmPaid(null)}
+        onConfirm={() => togglePaid(confirmPaid === "mark")}
+      />
+      <ReverseDialog
+        open={confirmReverse}
+        invoice={invoice}
+        fullNumber={fullNumber}
+        pending={pending}
+        onCancel={() => setConfirmReverse(false)}
+        onConfirm={onReverse}
+      />
+    </>
+  );
+}
+
+function MobileInvoiceCard({
+  invoice,
+  prefix,
+  duties,
+}: {
+  invoice: Invoice;
+  prefix: string;
+  duties: number;
+}) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const [confirmPaid, setConfirmPaid] = useState<null | "mark" | "unmark">(
+    null,
+  );
+  const [confirmReverse, setConfirmReverse] = useState(false);
+
+  const fullNumber = `${prefix}${invoice.invoice_number}`;
+  const pdfUrl = `/api/invoices/${invoice.id}/pdf`;
+  const reversed = invoice.status === "reversed";
+  const paid = invoice.status === "paid";
+
+  function openPdf() {
+    window.open(pdfUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function togglePaid(target: boolean) {
+    setPending(true);
+    const result = await markInvoicePaidAction({
+      id: invoice.id,
+      paid: target,
+    });
+    setPending(false);
+    if (result.ok) {
+      toast.success(target ? "Marked paid." : "Marked unpaid.");
+      setConfirmPaid(null);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  async function onReverse() {
+    setPending(true);
+    const result = await reverseInvoiceAction({ id: invoice.id });
+    setPending(false);
+    if (result.ok) {
+      toast.success(`${fullNumber} reversed.`);
+      setConfirmReverse(false);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  function copyNumber() {
+    navigator.clipboard
+      .writeText(fullNumber)
+      .then(() => toast.success(`Copied ${fullNumber}`))
+      .catch(() => toast.error("Copy failed."));
+  }
+
+  return (
+    <>
+      <Card>
+        <CardContent className="py-3 px-3 flex flex-col gap-3">
+          {/* Tappable summary block — anywhere on this area opens the PDF */}
+          <button
+            type="button"
+            onClick={openPdf}
+            className="text-left flex flex-col gap-2.5 -m-1 p-1 rounded-md hover:bg-muted/40 active:bg-muted transition-colors"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <StatusBadge status={invoice.status} />
+              <span className="font-mono text-xs text-muted-foreground">
+                Invoice #{fullNumber}
+              </span>
+            </div>
+
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Billed to
+              </p>
+              <p className="font-semibold text-foreground leading-tight">
+                {invoice.client_name ?? "—"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Net amount
+              </p>
+              <p className="font-mono text-2xl font-semibold tabular-nums leading-tight">
+                {formatINR(invoice.net_amount)}
+              </p>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              {fmtDate(invoice.invoice_date)}
+              {invoice.period_from && invoice.period_to ? (
+                <>
+                  {" · Period "}
+                  {fmtDate(invoice.period_from)}–{fmtDate(invoice.period_to)}
+                </>
+              ) : null}
+              {duties > 0 ? ` · Duties: ${duties}` : null}
+            </p>
+          </button>
+
+          {/* Action row */}
+          <div className="flex items-center gap-2 border-t border-border pt-3">
+            <button
+              type="button"
+              onClick={openPdf}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-hover"
+            >
+              <FileText className="h-4 w-4" />
+              Open PDF
+            </button>
+            {!reversed && !paid && (
+              <button
+                type="button"
+                onClick={() => setConfirmPaid("mark")}
+                disabled={pending}
+                className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-md border border-border bg-card text-foreground font-medium text-sm hover:bg-muted"
+              >
+                <Check className="h-4 w-4" />
+                Mark paid
+              </button>
+            )}
+            {!reversed && paid && (
+              <button
+                type="button"
+                onClick={() => setConfirmPaid("unmark")}
+                disabled={pending}
+                className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-md border border-border bg-card text-foreground font-medium text-sm hover:bg-muted"
+              >
+                <Undo2 className="h-4 w-4" />
+                Mark unpaid
+              </button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label="More actions"
+                className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[200px]">
+                <DropdownMenuItem onClick={copyNumber}>
+                  <Copy className="h-4 w-4" />
+                  Copy invoice number
+                </DropdownMenuItem>
+                {!reversed && (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => setConfirmReverse(true)}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Reverse invoice
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardContent>
+      </Card>
+
+      <PaidDialog
+        open={confirmPaid !== null}
+        mode={confirmPaid}
+        invoice={invoice}
+        fullNumber={fullNumber}
+        pending={pending}
+        onCancel={() => setConfirmPaid(null)}
+        onConfirm={() => togglePaid(confirmPaid === "mark")}
+      />
+      <ReverseDialog
+        open={confirmReverse}
+        invoice={invoice}
+        fullNumber={fullNumber}
+        pending={pending}
+        onCancel={() => setConfirmReverse(false)}
+        onConfirm={onReverse}
+      />
+    </>
+  );
+}
+
+function PaidDialog({
+  open,
+  mode,
+  invoice,
+  fullNumber,
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  mode: "mark" | "unmark" | null;
+  invoice: Invoice;
+  fullNumber: string;
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {mode === "mark" ? "Mark as paid?" : "Mark as unpaid?"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            Invoice <strong>{fullNumber}</strong> for{" "}
+            <strong>{invoice.client_name}</strong> ·{" "}
+            {formatINR(invoice.net_amount)}.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} disabled={pending}>
+            {pending
+              ? "Saving…"
+              : mode === "mark"
+                ? "Mark paid"
+                : "Mark unpaid"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function ReverseDialog({
+  open,
+  invoice,
+  fullNumber,
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  invoice: Invoice;
+  fullNumber: string;
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Reverse this invoice?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Invoice <strong>{fullNumber}</strong> for{" "}
+            <strong>{invoice.client_name}</strong> will be marked reversed and
+            its trips will return to the open list so you can re-invoice them.
+            The invoice number stays reserved and is never reused.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} disabled={pending}>
+            {pending ? "Reversing…" : "Reverse"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
