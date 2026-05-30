@@ -1,10 +1,23 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/sign-in", "/auth/callback"];
+// Marketing surfaces. Signed-out users see these without being bounced
+// to /sign-in. The landing page at "/" handles its own "if signed-in,
+// jump to /dashboard" redirect inside the server component.
+const PUBLIC_PATHS = [
+  "/",
+  "/sign-in",
+  "/auth/callback",
+  "/privacy",
+  "/terms",
+  "/contact",
+];
 
 function isPublic(pathname: string) {
-  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  if (pathname === "/") return true;
+  return PUBLIC_PATHS.some(
+    (p) => p !== "/" && (pathname === p || pathname.startsWith(p + "/")),
+  );
 }
 
 export async function updateSession(request: NextRequest) {
@@ -47,10 +60,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Signed in and on /sign-in → send to dashboard
+  // Signed in and on /sign-in → send to the dashboard.
   if (user && pathname === "/sign-in") {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/dashboard";
     url.searchParams.delete("next");
     return NextResponse.redirect(url);
   }

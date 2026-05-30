@@ -94,7 +94,7 @@ export async function seedFromPrototype(force = false): Promise<SeedResult> {
   const { error: rErr } = await admin.from("rate_cards").insert(cardRows);
   if (rErr) return { ok: false, error: `rate_cards: ${rErr.message}` };
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath("/clients");
   revalidatePath("/vehicles");
   revalidatePath("/rate-cards");

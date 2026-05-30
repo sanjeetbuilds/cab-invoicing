@@ -21,7 +21,7 @@ import { buttonVariants } from "@/components/ui/button";
 import type { Invoice } from "@/lib/supabase/types";
 import { formatINR } from "@/lib/format";
 import { PageHeader } from "@/components/ui/page-header";
-import { SeedBanner } from "./seed/seed-banner";
+import { SeedBanner } from "../seed/seed-banner";
 
 export const metadata = {
   title: "Dashboard",

@@ -122,7 +122,7 @@ export async function createTripAction(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/trips");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -156,7 +156,7 @@ export async function updateTripAction(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/trips");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -184,6 +184,6 @@ export async function deleteTripAction(id: string): Promise<ActionResult> {
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/trips");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }

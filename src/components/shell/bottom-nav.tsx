@@ -26,9 +26,7 @@ export function BottomNav() {
         {MOBILE_PRIMARY.map((item) => {
           const Icon = item.icon;
           const active =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname === item.href || pathname.startsWith(item.href + "/");
+            pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <li key={item.href} className="flex">
               <Link

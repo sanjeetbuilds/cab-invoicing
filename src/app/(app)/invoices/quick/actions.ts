@@ -360,7 +360,7 @@ export async function issueQuickInvoiceAction(
   revalidatePath("/invoices");
   revalidatePath("/trips");
   revalidatePath("/clients");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return {
     ok: true,
     invoice_id: invoiceRow.id,

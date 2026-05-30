@@ -192,7 +192,7 @@ export async function issueInvoiceAction(
 
   revalidatePath("/invoices");
   revalidatePath("/trips");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true, invoice_id, invoice_number };
 }
 
@@ -243,7 +243,7 @@ export async function markInvoicePaidAction(
 
   revalidatePath("/invoices");
   revalidatePath(`/invoices/${parsed.data.id}`);
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true, status: nextStatus };
 }
 

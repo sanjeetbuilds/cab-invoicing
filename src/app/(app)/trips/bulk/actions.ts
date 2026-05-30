@@ -174,7 +174,7 @@ export async function commitBulkRowsAction(
 
   revalidatePath("/trips");
   revalidatePath("/trips/bulk");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true, saved: ready.length, remaining };
 }
 
