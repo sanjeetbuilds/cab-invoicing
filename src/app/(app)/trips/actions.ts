@@ -5,7 +5,7 @@ import { z } from "zod";
 import { requireWriter } from "@/lib/auth";
 
 const CAR_TYPES = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"] as const;
-const MODES = ["local", "outstation"] as const;
+const MODES = ["local", "outstation", "transfer", "package"] as const;
 const BILLING_METHODS = ["per_km", "slab"] as const;
 
 const TripSchema = z
@@ -19,6 +19,7 @@ const TripSchema = z
     vehicle_id: z.string().uuid("Pick a vehicle."),
     car_type: z.enum(CAR_TYPES),
     mode: z.enum(MODES),
+    plan_name: z.string().optional().default(""),
     billing_method: z.enum(BILLING_METHODS).default("per_km"),
     total_kms: z.number().int().min(0),
     total_hours: z.number().min(0).default(0),
@@ -34,6 +35,13 @@ const TripSchema = z
   .refine(
     (d) => !d.end_date || d.end_date >= d.date,
     { message: "End date must be on or after the start date.", path: ["end_date"] },
+  )
+  .refine(
+    (d) =>
+      d.mode === "transfer" || d.mode === "package"
+        ? Boolean(d.plan_name && d.plan_name.trim())
+        : true,
+    { message: "Pick a plan for this trip.", path: ["plan_name"] },
   );
 
 export type ActionResult =
@@ -54,6 +62,7 @@ function parse(formData: FormData) {
     vehicle_id: formData.get("vehicle_id"),
     car_type: formData.get("car_type"),
     mode: formData.get("mode"),
+    plan_name: formData.get("plan_name") ?? "",
     billing_method: formData.get("billing_method") ?? "per_km",
     total_kms: num("total_kms"),
     total_hours: num("total_hours"),
@@ -70,8 +79,9 @@ function parse(formData: FormData) {
 
 function payload(d: z.infer<typeof TripSchema>) {
   const isLocal = d.mode === "local";
-  // Local trips are always slab; ignore whatever the form passed.
-  const billing_method = isLocal ? "slab" : d.billing_method;
+  const isFixed = d.mode === "transfer" || d.mode === "package";
+  // Local + fixed-price are always slab; outstation honors the form choice.
+  const billing_method = isLocal || isFixed ? "slab" : d.billing_method;
   return {
     client_id: d.client_id,
     vehicle_id: d.vehicle_id,
@@ -79,6 +89,7 @@ function payload(d: z.infer<typeof TripSchema>) {
     end_date: d.end_date || null,
     car_type: d.car_type,
     mode: d.mode,
+    plan_name: isFixed ? (d.plan_name?.trim() || null) : null,
     billing_method,
     total_kms: d.total_kms,
     total_hours: isLocal ? d.total_hours : 0,

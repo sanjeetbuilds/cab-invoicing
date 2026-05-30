@@ -67,6 +67,7 @@ function trip(o: Partial<Trip>): Trip {
     end_date: null,
     car_type: "Sonet",
     mode: "local",
+    plan_name: null,
     billing_method: "slab",
     total_kms: 0,
     total_hours: 0,
@@ -498,6 +499,82 @@ describe("buildInvoiceDraft", () => {
 
     expect(draft.net_amount).toBe(5800);
     expect(draft.amount_in_words).toBe("Five Thousand Eight Hundred Only.");
+  });
+
+  it("mixed-mode invoice: one Local + one Transfer duty in the same bill", () => {
+    // Both for the same Haryana client + Sonet vehicle.
+    const trips = [
+      trip({
+        id: "local-1",
+        client_id: haryanaClient.id,
+        date: "2026-05-10",
+        mode: "local",
+        total_kms: 149,
+        total_hours: 9.5,
+        night_count: 1,
+      }),
+      trip({
+        id: "transfer-1",
+        client_id: haryanaClient.id,
+        date: "2026-05-12",
+        mode: "transfer",
+        plan_name: "Airport T3 Drop",
+        total_kms: 0,
+        total_hours: 0,
+      }),
+    ];
+    const rateCards = [
+      rate({
+        client_id: haryanaClient.id,
+        car_type: "Sonet",
+        mode: "local",
+        base_rate: 1500,
+        base_kms: 80,
+        base_hours: 8,
+        extra_km: 15,
+        extra_hour: 100,
+        night: 300,
+      }),
+      rate({
+        id: "r-transfer",
+        client_id: haryanaClient.id,
+        car_type: "Sonet",
+        mode: "transfer",
+        plan_name: "Airport T3 Drop",
+        fixed_price: 1500,
+      }),
+    ];
+
+    const draft = buildInvoiceDraft({
+      trips,
+      rateCards,
+      vehicles: [vehicle],
+      client: haryanaClient,
+      company,
+    });
+
+    // Local: 1500 + 1035 (69 extra km @ 15) + 150 (1.5 extra hr @ 100) + 300 night = 2985
+    // Transfer: 1500 fixed
+    // Subtotal: 4485
+    expect(draft.unmatched_trip_ids).toEqual([]);
+    expect(draft.subtotal).toBe(4485);
+
+    // The transfer line on the invoice reads "Airport T3 Drop" — not
+    // the slab-style "80kms/8hrs" particulars.
+    const transferLines = draft.lines.filter((l) => l.trip_id === "transfer-1");
+    expect(transferLines).toHaveLength(1);
+    expect(transferLines[0].particulars).toBe("Airport T3 Drop");
+    expect(transferLines[0].amount).toBe(1500);
+
+    // Local lines look like a normal slab invoice.
+    const localLines = draft.lines.filter((l) => l.trip_id === "local-1");
+    expect(localLines.map((l) => l.particulars)).toEqual([
+      "Total 149kms",
+      "80kms/8hrs",
+      "Additional kms",
+      "Additional hrs",
+      "Night Charges",
+    ]);
   });
 
   it("car-type override: vehicle is a Sonet, trip is billed as a Dzire", () => {

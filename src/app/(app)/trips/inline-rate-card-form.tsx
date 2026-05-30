@@ -74,6 +74,14 @@ export function InlineRateCardForm({
     fd.set("night", state.night);
     fd.set("per_km", state.per_km);
     fd.set("driver_ta", state.driver_ta);
+    // Inline flow only supports local/outstation. Transfer/Package go
+    // through the full Rate Cards page form.
+    fd.set("plan_name", "");
+    fd.set("fixed_price", "");
+    fd.set("includes_toll", "false");
+    fd.set("includes_tax", "false");
+    fd.set("includes_parking", "false");
+    fd.set("notes", "");
 
     const result = await createRateCardAction(fd);
     if (!result.ok) {

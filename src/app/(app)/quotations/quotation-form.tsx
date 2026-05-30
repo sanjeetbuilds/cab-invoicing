@@ -161,9 +161,13 @@ export function QuotationForm({
       valid_until: validUntil,
       status,
       notes,
+      // Quotation form still emits only local/outstation lines. Transfer
+      // and Package widen the TripMode union but the quotation UI hasn't
+      // exposed them yet (follow-up PR). Cast keeps the action schema
+      // happy while that's still true.
       lines: lineStates.map((l) => ({
         car_type: l.car_type,
-        mode: l.mode,
+        mode: l.mode as "local" | "outstation",
         base_rate: l.mode === "local" ? n(l.base_rate) : null,
         base_kms: l.mode === "local" ? (n(l.base_kms) as number | null) : null,
         base_hours:

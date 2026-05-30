@@ -104,7 +104,15 @@ export function BulkAddClient({
 
   const rateByKey = useMemo(() => {
     const m = new Map<string, RateCard>();
-    for (const r of rateCards) m.set(`${r.client_id}|${r.car_type}|${r.mode}`, r);
+    // Bulk add only handles local + outstation (Transfer/Package require
+    // per-row plan selection — power-user UI, follow-up). Keep the key
+    // shape parallel to the rest of the app: (client, car, mode, plan).
+    for (const r of rateCards) {
+      m.set(
+        `${r.client_id}|${r.car_type}|${r.mode}|${r.plan_name ?? ""}`,
+        r,
+      );
+    }
     return m;
   }, [rateCards]);
 
@@ -122,7 +130,7 @@ export function BulkAddClient({
         r.mode === "local" ? "slab" : r.billing_method;
       const lookupMode: TripMode =
         effectiveMethod === "slab" ? "local" : "outstation";
-      const rate = rateByKey.get(`${r.client_id}|${r.car_type}|${lookupMode}`);
+      const rate = rateByKey.get(`${r.client_id}|${r.car_type}|${lookupMode}|`);
       if (!rate) return { amount: null, hasRate: false };
       const nightCount = Math.max(0, Math.floor(toNum(r.night_count)));
       const lines = tripToLines(

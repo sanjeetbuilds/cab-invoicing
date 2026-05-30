@@ -47,10 +47,19 @@ export interface BuildInvoiceInput {
   toll_override?: number | null;
 }
 
+function rateKey(
+  client_id: string,
+  car_type: string,
+  mode: string,
+  plan_name: string | null | undefined,
+): string {
+  return `${client_id}|${car_type}|${mode}|${plan_name ?? ""}`;
+}
+
 export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
   const rateByKey = new Map<string, RateCard>();
   for (const r of input.rateCards) {
-    rateByKey.set(`${r.client_id}|${r.car_type}|${r.mode}`, r);
+    rateByKey.set(rateKey(r.client_id, r.car_type, r.mode, r.plan_name), r);
   }
   const vehicleById = new Map(input.vehicles.map((v) => [v.id, v]));
 
@@ -58,17 +67,26 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
   const unmatched: string[] = [];
   let sort_order = 0;
 
-  // Local trips always use slab; outstation trips respect billing_method
-  // (default 'per_km' from DB, or 'slab' when the user toggles).
+  // Local trips always use slab; outstation respects billing_method
+  // (default per_km, slab when toggled). Transfer / Package are
+  // fixed-price modes — no slab/per_km dispatch.
   const effectiveMethod = (t: Trip): "slab" | "per_km" => {
     if (t.mode === "local") return "slab";
-    return t.billing_method === "slab" ? "slab" : "per_km";
+    if (t.mode === "outstation") {
+      return t.billing_method === "slab" ? "slab" : "per_km";
+    }
+    return "slab"; // unused for fixed-price modes but keeps the type happy
   };
 
-  // Slab → look up the LOCAL rate card; per_km → outstation rate card.
+  // For local/outstation, slab borrows the LOCAL rate card.
+  // For transfer/package, the lookup mode is the trip's mode AND plan_name
+  // — same (client, car) can have many Transfer plans (Airport / NDLS).
   const resolveRate = (t: Trip): RateCard | undefined => {
+    if (t.mode === "transfer" || t.mode === "package") {
+      return rateByKey.get(rateKey(t.client_id, t.car_type, t.mode, t.plan_name));
+    }
     const lookupMode = effectiveMethod(t) === "slab" ? "local" : "outstation";
-    return rateByKey.get(`${t.client_id}|${t.car_type}|${lookupMode}`);
+    return rateByKey.get(rateKey(t.client_id, t.car_type, lookupMode, null));
   };
 
   const computeTripLines = (t: Trip, rate: RateCard) =>

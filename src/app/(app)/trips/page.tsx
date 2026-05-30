@@ -17,6 +17,7 @@ import type {
   Client,
   RateCard,
   Trip,
+  TripMode,
   Vehicle,
 } from "@/lib/supabase/types";
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
@@ -42,7 +43,19 @@ function fmtDate(iso: string) {
 
 function effectiveBillingMethod(t: Trip): "slab" | "per_km" {
   if (t.mode === "local") return "slab";
-  return t.billing_method === "slab" ? "slab" : "per_km";
+  if (t.mode === "outstation") {
+    return t.billing_method === "slab" ? "slab" : "per_km";
+  }
+  return "slab"; // transfer / package — unused by trip-lines for fixed-price
+}
+
+function rateKeyFor(
+  client_id: string,
+  car_type: string,
+  mode: TripMode,
+  plan_name: string | null,
+): string {
+  return `${client_id}|${car_type}|${mode}|${plan_name ?? ""}`;
 }
 
 function computeAmount(trip: Trip, rate: RateCard | undefined): number | null {
@@ -132,7 +145,7 @@ export default async function TripsPage({
   const clientById = new Map(clientList.map((c) => [c.id, c]));
   const vehicleById = new Map(vehicleList.map((v) => [v.id, v]));
   const rateByKey = new Map(
-    rateList.map((r) => [`${r.client_id}|${r.car_type}|${r.mode}`, r]),
+    rateList.map((r) => [rateKeyFor(r.client_id, r.car_type, r.mode, r.plan_name), r]),
   );
 
   const noPrereqs = clientList.length === 0 || vehicleList.length === 0;
@@ -235,8 +248,15 @@ export default async function TripsPage({
                 {tripList.map((t) => {
                   const c = clientById.get(t.client_id);
                   const v = vehicleById.get(t.vehicle_id);
-                  const lookupMode = effectiveBillingMethod(t) === "slab" ? "local" : "outstation";
-                  const r = rateByKey.get(`${t.client_id}|${t.car_type}|${lookupMode}`);
+                  const lookupMode: TripMode =
+                    t.mode === "transfer" || t.mode === "package"
+                      ? t.mode
+                      : effectiveBillingMethod(t) === "slab"
+                        ? "local"
+                        : "outstation";
+                  const r = rateByKey.get(
+                    rateKeyFor(t.client_id, t.car_type, lookupMode, t.plan_name),
+                  );
                   const amount = computeAmount(t, r);
                   const needsRate = amount == null;
                   return (
@@ -323,7 +343,15 @@ export default async function TripsPage({
             {tripList.map((t) => {
               const c = clientById.get(t.client_id);
               const v = vehicleById.get(t.vehicle_id);
-              const r = rateByKey.get(`${t.client_id}|${t.car_type}|${t.mode}`);
+              const lookupMode: TripMode =
+                t.mode === "transfer" || t.mode === "package"
+                  ? t.mode
+                  : effectiveBillingMethod(t) === "slab"
+                    ? "local"
+                    : "outstation";
+              const r = rateByKey.get(
+                rateKeyFor(t.client_id, t.car_type, lookupMode, t.plan_name),
+              );
               const amount = computeAmount(t, r);
               const needsRate = amount == null;
               return (

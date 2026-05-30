@@ -49,9 +49,10 @@ const Schema = z
     client_id: z.string().min(1, "Pick a client."),
     vehicle_id: z.string().min(1, "Pick a vehicle."),
     car_type: z.enum(CAR_TYPES),
-    mode: z.enum(["local", "outstation"]),
+    mode: z.enum(["local", "outstation", "transfer", "package"]),
+    plan_name: z.string().optional(),
     billing_method: z.enum(["per_km", "slab"]),
-    total_kms: z.string().min(1, "Enter kms."),
+    total_kms: z.string().optional(),
     total_hours: z.string().optional(),
     night_count: z.string().optional(),
     driver_ta: z.string().optional(),
@@ -70,6 +71,20 @@ const Schema = z
   .refine(
     (d) => !d.end_date || d.end_date >= d.date,
     { message: "End date must be on or after the start date.", path: ["end_date"] },
+  )
+  .refine(
+    (d) =>
+      d.mode === "transfer" || d.mode === "package"
+        ? Boolean(d.plan_name && d.plan_name.trim())
+        : true,
+    { message: "Pick a plan.", path: ["plan_name"] },
+  )
+  .refine(
+    (d) =>
+      d.mode === "local" || d.mode === "outstation"
+        ? Boolean(d.total_kms && d.total_kms.trim())
+        : true,
+    { message: "Enter kms.", path: ["total_kms"] },
   );
 type FormValues = z.infer<typeof Schema>;
 
@@ -132,6 +147,7 @@ export function TripForm({
       vehicle_id: trip?.vehicle_id ?? recentDefaults?.vehicle_id ?? "",
       car_type: trip?.car_type ?? recentDefaults?.car_type ?? "Sonet",
       mode: trip?.mode ?? recentDefaults?.mode ?? "local",
+      plan_name: trip?.plan_name ?? "",
       billing_method:
         trip?.billing_method ??
         recentDefaults?.billing_method ??
@@ -158,9 +174,14 @@ export function TripForm({
   const vehicleId = watch("vehicle_id");
   const carType = watch("car_type");
   const mode = watch("mode") as TripMode;
+  const planName = watch("plan_name") ?? "";
   const formBillingMethod = watch("billing_method") as BillingMethod;
-  const effectiveMethod: BillingMethod =
-    mode === "local" ? "slab" : formBillingMethod;
+  const isFixed = mode === "transfer" || mode === "package";
+  const effectiveMethod: BillingMethod = isFixed
+    ? "slab"
+    : mode === "local"
+      ? "slab"
+      : formBillingMethod;
   const nightCountStr = watch("night_count");
   const totalKmsStr = watch("total_kms");
   const totalHoursStr = watch("total_hours");
@@ -180,20 +201,48 @@ export function TripForm({
     extraChargeAmount,
   );
 
-  const rateLookupMode: TripMode =
-    effectiveMethod === "slab" ? "local" : "outstation";
-  // Rate cards key by (client_id, car_type, mode) — not vehicle_id —
-  // so every Crysta for a given client shares one rate.
+  // For local/outstation, slab borrows the LOCAL rate card. For
+  // transfer/package, lookup uses the trip's mode + plan_name.
+  const rateLookupMode: TripMode = isFixed
+    ? mode
+    : effectiveMethod === "slab"
+      ? "local"
+      : "outstation";
+
   const activeRate = useMemo(
     () =>
-      localRateCards.find(
-        (r) =>
-          r.client_id === clientId &&
-          r.car_type === carType &&
-          r.mode === rateLookupMode,
-      ),
-    [localRateCards, clientId, carType, rateLookupMode],
+      localRateCards.find((r) => {
+        if (
+          r.client_id !== clientId ||
+          r.car_type !== carType ||
+          r.mode !== rateLookupMode
+        )
+          return false;
+        if (isFixed) return (r.plan_name ?? "") === planName;
+        return true;
+      }),
+    [localRateCards, clientId, carType, rateLookupMode, isFixed, planName],
   );
+
+  // All (mode, plan_name) combos available for the current (client, car).
+  // This is what the Mode dropdown actually shows — one entry per
+  // existing rate card. Picking it sets both mode and plan_name.
+  const availableRatePlans = useMemo(() => {
+    const rows = localRateCards.filter(
+      (r) => r.client_id === clientId && r.car_type === carType,
+    );
+    // Sort: local → outstation → transfer plans → package plans
+    const order: Record<TripMode, number> = {
+      local: 0,
+      outstation: 1,
+      transfer: 2,
+      package: 3,
+    };
+    return rows.slice().sort((a, b) => {
+      if (order[a.mode] !== order[b.mode]) return order[a.mode] - order[b.mode];
+      return (a.plan_name ?? "").localeCompare(b.plan_name ?? "");
+    });
+  }, [localRateCards, clientId, carType]);
 
   const preview = useMemo(() => {
     if (!activeRate) return null;
@@ -222,11 +271,12 @@ export function TripForm({
     fd.set("vehicle_id", values.vehicle_id);
     fd.set("car_type", values.car_type);
     fd.set("mode", values.mode);
+    fd.set("plan_name", values.plan_name ?? "");
     fd.set(
       "billing_method",
-      values.mode === "local" ? "slab" : values.billing_method,
+      values.mode === "local" || isFixed ? "slab" : values.billing_method,
     );
-    fd.set("total_kms", values.total_kms);
+    fd.set("total_kms", values.total_kms ?? "0");
     fd.set("total_hours", values.total_hours ?? "0");
     fd.set("night_count", values.night_count ?? "0");
     fd.set("driver_ta", values.driver_ta ?? "0");
@@ -341,28 +391,66 @@ export function TripForm({
           </div>
 
           <div className="sm:col-span-3 flex flex-col gap-2">
-            <Label htmlFor="mode">Mode *</Label>
-            <Select
-              value={mode}
-              onValueChange={(v) => {
-                if (v === "local" || v === "outstation") {
-                  setValue("mode", v, { shouldValidate: true });
-                  if (v === "outstation") {
+            <Label htmlFor="mode">Rate plan *</Label>
+            {availableRatePlans.length === 0 ? (
+              <div className="flex flex-col gap-2 rounded-md bg-warning-soft/60 p-3 text-sm">
+                <p className="text-foreground">
+                  No rate cards exist for{" "}
+                  <span className="font-medium">
+                    {clients.find((c) => c.id === clientId)?.name ??
+                      "this client"}
+                  </span>{" "}
+                  · <span className="font-medium">{carType}</span>.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Pick a client + car type first, then add a rate card below or
+                  on the Rate cards page.
+                </p>
+              </div>
+            ) : (
+              <Select
+                value={`${mode}|${planName}`}
+                onValueChange={(v) => {
+                  if (typeof v !== "string") return;
+                  const [pickedMode, pickedPlan] = v.split("|") as [
+                    TripMode,
+                    string,
+                  ];
+                  setValue("mode", pickedMode, { shouldValidate: true });
+                  setValue("plan_name", pickedPlan, { shouldValidate: true });
+                  if (pickedMode === "outstation") {
                     setValue("billing_method", "per_km");
                   } else {
                     setValue("billing_method", "slab");
                   }
-                }
-              }}
-            >
-              <SelectTrigger id="mode">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="local">Local (kms + hours)</SelectItem>
-                <SelectItem value="outstation">Outstation (per km)</SelectItem>
-              </SelectContent>
-            </Select>
+                }}
+              >
+                <SelectTrigger id="mode">
+                  <SelectValue placeholder="Pick a rate plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableRatePlans.map((r) => {
+                    const key = `${r.mode}|${r.plan_name ?? ""}`;
+                    const label =
+                      r.mode === "local"
+                        ? "Local"
+                        : r.mode === "outstation"
+                          ? "Outstation"
+                          : `${r.mode === "transfer" ? "Transfer" : "Package"} · ${r.plan_name ?? ""}`;
+                    return (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            )}
+            {errors.plan_name && (
+              <p className="text-xs text-destructive">
+                {errors.plan_name.message}
+              </p>
+            )}
           </div>
 
           {mode === "outstation" && (
@@ -405,21 +493,24 @@ export function TripForm({
         />
       )}
 
-      {/* Distances & hours & TA & night */}
+      {/* Distances & hours & TA & night — kms/hrs are required only for
+          slab/per_km modes. Fixed-price modes (transfer/package) skip them. */}
       <Card>
         <CardContent className="grid gap-5 sm:grid-cols-3">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="total_kms">Total kms *</Label>
-            <Input
-              id="total_kms"
-              type="number"
-              inputMode="numeric"
-              {...register("total_kms")}
-            />
-            {errors.total_kms && (
-              <p className="text-xs text-destructive">{errors.total_kms.message}</p>
-            )}
-          </div>
+          {!isFixed && (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="total_kms">Total kms *</Label>
+              <Input
+                id="total_kms"
+                type="number"
+                inputMode="numeric"
+                {...register("total_kms")}
+              />
+              {errors.total_kms && (
+                <p className="text-xs text-destructive">{errors.total_kms.message}</p>
+              )}
+            </div>
+          )}
           {mode === "local" && (
             <div className="flex flex-col gap-2">
               <Label htmlFor="total_hours">Total hrs</Label>
@@ -465,6 +556,26 @@ export function TripForm({
       {/* Toll / Tax / Parking */}
       <Card>
         <CardContent className="flex flex-col gap-4">
+          {mode === "package" &&
+            activeRate &&
+            (activeRate.includes_toll ||
+              activeRate.includes_tax ||
+              activeRate.includes_parking) && (
+              <div className="flex items-start gap-2 rounded-md bg-warning-soft/60 p-2 text-xs text-warning-foreground">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>
+                  This package includes{" "}
+                  {[
+                    activeRate.includes_toll && "toll",
+                    activeRate.includes_tax && "tax",
+                    activeRate.includes_parking && "parking",
+                  ]
+                    .filter(Boolean)
+                    .join(" / ")}
+                  . Charge extra only if outside the agreement.
+                </span>
+              </div>
+            )}
           <div className="flex flex-col gap-2">
             <Label htmlFor="extra_charge_amount">Toll / tax / parking amount</Label>
             <Input

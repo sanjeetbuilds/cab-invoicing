@@ -15,22 +15,37 @@ export default async function EditRateCardPage({
   const { supabase, membership } = await requireMembership();
   const { id } = await params;
 
-  const [{ data: rateCard }, { data: clients }] = await Promise.all([
-    supabase
-      .from("rate_cards")
-      .select("*")
-      .eq("id", id)
-      .eq("company_id", membership.company_id)
-      .maybeSingle<RateCard>(),
-    supabase
-      .from("clients")
-      .select("id, name")
-      .eq("company_id", membership.company_id)
-      .order("name", { ascending: true })
-      .returns<Pick<Client, "id" | "name">[]>(),
-  ]);
+  const [{ data: rateCard }, { data: clients }, { data: planRows }] =
+    await Promise.all([
+      supabase
+        .from("rate_cards")
+        .select("*")
+        .eq("id", id)
+        .eq("company_id", membership.company_id)
+        .maybeSingle<RateCard>(),
+      supabase
+        .from("clients")
+        .select("id, name")
+        .eq("company_id", membership.company_id)
+        .order("name", { ascending: true })
+        .returns<Pick<Client, "id" | "name">[]>(),
+      supabase
+        .from("rate_cards")
+        .select("plan_name")
+        .eq("company_id", membership.company_id)
+        .not("plan_name", "is", null)
+        .returns<{ plan_name: string | null }[]>(),
+    ]);
 
   if (!rateCard) notFound();
+
+  const planNameHistory = Array.from(
+    new Set(
+      (planRows ?? [])
+        .map((r) => r.plan_name?.trim())
+        .filter((v): v is string => Boolean(v)),
+    ),
+  ).sort();
 
   return (
     <div className="mx-auto w-full max-w-2xl flex flex-col gap-6">
@@ -45,7 +60,11 @@ export default async function EditRateCardPage({
         </p>
         <PageHeader title="Edit rate card" description="Update pricing." />
       </div>
-      <RateCardForm rateCard={rateCard} clients={clients ?? []} />
+      <RateCardForm
+        rateCard={rateCard}
+        clients={clients ?? []}
+        planNameHistory={planNameHistory}
+      />
     </div>
   );
 }

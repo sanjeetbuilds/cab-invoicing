@@ -4,11 +4,12 @@ import type { BillingMethod, RateCard, TripMode } from "@/lib/supabase/types";
  * The minimum trip shape required to compute lines.
  * Decoupled from the DB row so tests don't need full DB inserts.
  *
- * `billing_method` dispatches the line shape. `mode` is retained for the
- * caller's rate-card lookup convention but doesn't change the math:
- *   - billing_method='slab'   → base + additional kms + additional hrs + night
- *   - billing_method='per_km' → total_kms × per_km
- * Driver's TA is appended in both branches.
+ * The mode dispatches the line shape:
+ *   - local                         → slab: base + additional kms + hrs + night
+ *   - outstation w/ billing_method='per_km' → total_kms × per_km
+ *   - outstation w/ billing_method='slab'   → slab (borrows local rate)
+ *   - transfer / package            → fixed_price as a single line
+ * Driver's TA is appended in every branch.
  */
 export interface ComputableTrip {
   car_type: string;
@@ -40,6 +41,30 @@ export interface TripLine {
  */
 export function tripToLines(trip: ComputableTrip, rate: RateCard): TripLine[] {
   const lines: TripLine[] = [];
+
+  // Transfer + Package: single fixed-price line. Plan name lives on the
+  // rate card so the invoice particulars read "Airport T3 Drop" /
+  // "Manali 3D2N package" — the renderer pulls plan_name when present.
+  if (trip.mode === "transfer" || trip.mode === "package") {
+    const fixed = rate.fixed_price ?? 0;
+    const planLabel = rate.plan_name?.trim() || (trip.mode === "transfer" ? "Transfer" : "Package");
+    lines.push({
+      particulars: trip.mode === "package" ? `${planLabel} package` : planLabel,
+      qty: null,
+      rate: null,
+      amount: round2(fixed),
+    });
+    if (trip.driver_ta > 0) {
+      const driver_ta_rate = rate.driver_ta ?? 0;
+      lines.push({
+        particulars: "Driver's TA",
+        qty: trip.driver_ta,
+        rate: driver_ta_rate,
+        amount: round2(trip.driver_ta * driver_ta_rate),
+      });
+    }
+    return lines;
+  }
 
   if (trip.billing_method === "slab") {
     const base_rate  = rate.base_rate  ?? 0;

@@ -35,6 +35,12 @@ function rate(overrides: Partial<RateCard>): RateCard {
     night: null,
     per_km: null,
     driver_ta: null,
+    plan_name: null,
+    fixed_price: null,
+    includes_toll: false,
+    includes_tax: false,
+    includes_parking: false,
+    notes: null,
     source_quotation_id: null,
     active_from: "2026-01-01",
     created_at: "2026-01-01",
@@ -274,6 +280,75 @@ describe("tripToLines — edge cases", () => {
       qty: 3,
       rate: 300,
       amount: 900,
+    });
+  });
+
+  describe("transfer and package — fixed-price modes", () => {
+    it("transfer renders plan name + fixed price as one line", () => {
+      const r = rate({
+        mode: "transfer",
+        plan_name: "Airport T3 Drop",
+        fixed_price: 1500,
+        driver_ta: 300,
+      });
+      const lines = tripToLines(
+        ct({
+          car_type: "Crysta",
+          mode: "transfer",
+          total_kms: 0,
+          total_hours: 0,
+          night: false,
+          driver_ta: 0,
+        }),
+        r,
+      );
+      expect(lines).toEqual([
+        { particulars: "Airport T3 Drop", qty: null, rate: null, amount: 1500 },
+      ]);
+      expect(tripTotal(lines)).toBe(1500);
+    });
+
+    it("package appends 'package' to plan name and adds driver TA", () => {
+      const r = rate({
+        mode: "package",
+        plan_name: "Manali 3D2N",
+        fixed_price: 18000,
+        driver_ta: 500,
+      });
+      const lines = tripToLines(
+        ct({
+          car_type: "Innova",
+          mode: "package",
+          total_kms: 0,
+          total_hours: 0,
+          night: false,
+          driver_ta: 3,
+        }),
+        r,
+      );
+      expect(lines).toEqual([
+        { particulars: "Manali 3D2N package", qty: null, rate: null, amount: 18000 },
+        { particulars: "Driver's TA", qty: 3, rate: 500, amount: 1500 },
+      ]);
+      expect(tripTotal(lines)).toBe(19500);
+    });
+
+    it("transfer with null plan_name falls back to generic label", () => {
+      const r = rate({ mode: "transfer", plan_name: null, fixed_price: 800, driver_ta: 0 });
+      const lines = tripToLines(
+        ct({
+          car_type: "Dzire",
+          mode: "transfer",
+          total_kms: 0,
+          total_hours: 0,
+          night: false,
+          driver_ta: 0,
+        }),
+        r,
+      );
+      expect(lines).toEqual([
+        { particulars: "Transfer", qty: null, rate: null, amount: 800 },
+      ]);
     });
   });
 });
