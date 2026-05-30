@@ -126,7 +126,7 @@ export function TripForm({
   // can append new rows without re-rendering / losing the form.
   const [localVehicles, setLocalVehicles] = useState(vehicles);
   const [localRateCards, setLocalRateCards] = useState(rateCards);
-  const [addingVehicle, setAddingVehicle] = useState(false);
+  const [addingVehicle, setAddingVehicle] = useState<null | string>(null);
   const [addingRate, setAddingRate] = useState(false);
 
   const {
@@ -356,7 +356,7 @@ export function TripForm({
                   setValue("car_type", veh.type, { shouldValidate: true });
                 }
               }}
-              onAddNew={() => setAddingVehicle(true)}
+              onAddNew={(typed) => setAddingVehicle(typed)}
             />
             {errors.vehicle_id && (
               <p className="text-sm text-destructive">{errors.vehicle_id.message}</p>
@@ -479,16 +479,17 @@ export function TripForm({
         </CardContent>
       </Card>
 
-      {addingVehicle && (
+      {addingVehicle !== null && (
         <InlineVehicleForm
-          onCancel={() => setAddingVehicle(false)}
+          defaultNumber={addingVehicle}
+          onCancel={() => setAddingVehicle(null)}
           onCreated={(v) => {
             setLocalVehicles((prev) => [...prev, v]);
             setValue("vehicle_id", v.id, { shouldValidate: true });
             if (CAR_TYPES.includes(v.type)) {
               setValue("car_type", v.type, { shouldValidate: true });
             }
-            setAddingVehicle(false);
+            setAddingVehicle(null);
           }}
         />
       )}

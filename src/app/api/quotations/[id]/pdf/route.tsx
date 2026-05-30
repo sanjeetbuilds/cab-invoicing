@@ -3,6 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { QuotationPdf } from "@/lib/pdf/quotation-pdf";
+import { quotationFilename } from "@/lib/filename";
 import type {
   Client,
   Company,
@@ -81,7 +82,7 @@ export async function GET(
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="quotation-${q.number}.pdf"`,
+      "Content-Disposition": `inline; filename="${quotationFilename(q.number, clientName)}"`,
       "Cache-Control": "private, no-store",
     },
   });

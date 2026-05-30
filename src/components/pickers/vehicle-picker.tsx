@@ -13,8 +13,13 @@ export interface VehiclePickerProps {
   vehicles: VehiclePickerItem[];
   value: string | "";
   onValueChange: (id: string) => void;
-  /** When the user clicks "+ Add new vehicle" at the bottom of the list. */
-  onAddNew?: () => void;
+  /**
+   * Called when the user clicks "+ Add vehicle…". Receives whatever
+   * the user has typed into the search box so the inline form can
+   * pre-fill the number field (e.g. typing "1234" then clicking the
+   * add option opens the form with number = "1234").
+   */
+  onAddNew?: (typedNumber: string) => void;
   /** Optional id for accessibility. */
   id?: string;
   placeholder?: string;
@@ -100,7 +105,7 @@ export function VehiclePicker({
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (filtered.length === 0 && onAddNew) {
-        onAddNew();
+        onAddNew(query);
         setOpen(false);
       } else {
         selectAt(highlight);
@@ -200,13 +205,15 @@ export function VehiclePicker({
             <button
               type="button"
               onClick={() => {
-                onAddNew();
+                onAddNew(query);
                 setOpen(false);
               }}
               className="flex w-full items-center gap-2 border-t border-border bg-muted/30 px-3 py-2 text-sm font-medium text-primary hover:bg-muted/50"
             >
               <Plus className="h-4 w-4" />
-              Add new vehicle
+              {query.trim()
+                ? `Add vehicle: ${query.trim()}`
+                : "Add new vehicle"}
             </button>
           )}
         </div>

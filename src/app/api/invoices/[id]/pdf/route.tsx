@@ -3,6 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { InvoicePdf } from "@/lib/pdf/invoice-pdf";
+import { invoiceFilename } from "@/lib/filename";
 import type {
   Company,
   Invoice,
@@ -76,7 +77,8 @@ export async function GET(
 
   const cachePath = `${membership.company_id}/${invoice.id}.pdf`;
   const fullNumber = `${company.invoice_prefix ?? ""}${invoice.invoice_number}`;
-  const downloadName = `invoice-${fullNumber}.pdf`;
+  // Recipient-facing filename: "Invoice_2037_Bharti_Foundation.pdf".
+  const downloadName = invoiceFilename(fullNumber, invoice.client_name);
 
   // Try to serve from cache first.
   if (!fresh) {

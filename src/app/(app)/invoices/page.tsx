@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Zap } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -74,6 +74,13 @@ export default async function InvoicesPage() {
         title="Invoices"
         description="Issued invoices. Numbers are atomic — never reused."
       >
+        <Link
+          href="/invoices/quick"
+          className={buttonVariants({ variant: "outline" })}
+        >
+          <Zap className="h-4 w-4" />
+          Quick invoice
+        </Link>
         <Link href="/invoices/build" className={buttonVariants()}>
           <Plus className="h-4 w-4" />
           Build invoice

@@ -50,6 +50,7 @@ export interface Client {
   address: string | null;
   state: string;
   is_rcm: boolean;
+  is_quick_customer: boolean;
   default_booked_by: string | null;
   notes: string | null;
   created_at: string;

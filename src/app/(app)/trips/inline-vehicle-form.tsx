@@ -31,21 +31,25 @@ interface State {
   vendor_name: string;
 }
 
-const blank: State = {
-  number: "",
-  type: "Dzire",
-  ownership: "attached",
-  vendor_name: "",
-};
-
 export function InlineVehicleForm({
+  defaultNumber = "",
+  defaultOwnership = "attached",
   onCancel,
   onCreated,
 }: {
+  /** Pre-fill the number field — typed text from the picker. */
+  defaultNumber?: string;
+  /** Quick invoice flow wants "attached" by default (vendor cars). */
+  defaultOwnership?: "own" | "attached";
   onCancel: () => void;
   onCreated: (vehicle: Pick<Vehicle, "id" | "number" | "type" | "active">) => void;
 }) {
-  const [state, setState] = useState<State>(blank);
+  const [state, setState] = useState<State>({
+    number: normalizeVehicleNumber(defaultNumber),
+    type: "Dzire",
+    ownership: defaultOwnership,
+    vendor_name: "",
+  });
   const [pending, setPending] = useState(false);
 
   async function onSave(e: React.FormEvent) {
@@ -54,6 +58,14 @@ export function InlineVehicleForm({
     if (!number) {
       toast.error("Vehicle number is required.");
       return;
+    }
+    // Sometimes the user only has the last 4 digits (the visible part on
+    // the cab). Allow it but flag the missing structure — easier to
+    // amend later than block the trip-entry flow.
+    if (/^\d{1,4}$/.test(number.replace(/\s+/g, ""))) {
+      toast.warning(
+        "Vehicle number looks incomplete. Use full format HR 26 ED 9083 for cleaner records.",
+      );
     }
     setPending(true);
     const fd = new FormData();
