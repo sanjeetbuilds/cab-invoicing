@@ -24,7 +24,7 @@ export default async function AppLayout({
       <Sidebar companyName={companyName} />
       <div className="flex flex-1 flex-col min-w-0">
         <TopBar companyName={companyName} email={user.email ?? ""} />
-        <main className="flex-1 px-4 py-5 sm:px-6 sm:py-7 pb-20 lg:pb-7">
+        <main className="flex-1 px-4 py-4 sm:px-6 sm:py-7 pb-20 lg:pb-7">
           {children}
         </main>
       </div>

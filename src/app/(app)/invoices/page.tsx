@@ -82,12 +82,15 @@ export default async function InvoicesPage() {
 
       {!error && list.length === 0 ? (
         <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            No invoices yet.{" "}
-            <Link href="/invoices/build" className="font-medium text-primary hover:text-primary-hover">
-              Build your first invoice
+          <CardContent className="py-10 px-4 text-center flex flex-col items-center gap-3">
+            <h2 className="text-base font-semibold">No invoices yet</h2>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              Build your first invoice from any client&apos;s unbilled trips.
+            </p>
+            <Link href="/invoices/build" className={buttonVariants()}>
+              <Plus className="h-4 w-4" />
+              Build invoice
             </Link>
-            .
           </CardContent>
         </Card>
       ) : (

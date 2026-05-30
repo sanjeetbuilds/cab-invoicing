@@ -199,8 +199,16 @@ export default async function TripsPage({
 
       {!tripsError && tripList.length === 0 && (
         <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            No trips yet{status === "uninvoiced" ? " — all caught up." : "."}
+          <CardContent className="py-10 px-4 text-center flex flex-col items-center gap-3">
+            <h2 className="text-base font-semibold">
+              {status === "uninvoiced" ? "All caught up" : "No trips yet"}
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              {status === "uninvoiced"
+                ? "No uninvoiced trips. Log a duty to bill it on the next invoice."
+                : "Log a duty. Each trip becomes a line on a monthly invoice."}
+            </p>
+            {!noPrereqs && <AddTripButton disabled={false} />}
           </CardContent>
         </Card>
       )}
@@ -230,8 +238,15 @@ export default async function TripsPage({
                   const lookupMode = effectiveBillingMethod(t) === "slab" ? "local" : "outstation";
                   const r = rateByKey.get(`${t.client_id}|${t.car_type}|${lookupMode}`);
                   const amount = computeAmount(t, r);
+                  const needsRate = amount == null;
                   return (
-                    <TableRow key={t.id}>
+                    <TableRow
+                      key={t.id}
+                      className={cn(
+                        needsRate &&
+                          "bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-950/20 dark:hover:bg-amber-950/30",
+                      )}
+                    >
                       <TableCell className="font-mono">{fmtDate(t.date)}</TableCell>
                       <TableCell className="font-medium">{c?.name ?? "—"}</TableCell>
                       <TableCell>
@@ -273,14 +288,21 @@ export default async function TripsPage({
                         {t.driver_ta === 0 && !t.night && "—"}
                       </TableCell>
                       <TableCell className="text-right font-mono">
-                        {amount == null ? (
-                          <span className="text-destructive text-xs">no rate</span>
+                        {needsRate ? (
+                          <Link
+                            href={`/rate-cards/new?client_id=${t.client_id}&car_type=${t.car_type}&mode=${t.mode}`}
+                            className="text-xs font-medium text-primary hover:text-primary-hover"
+                          >
+                            + Add rate card
+                          </Link>
                         ) : (
                           formatINR(amount)
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        {t.invoiced ? (
+                        {needsRate ? (
+                          <Badge variant="warning">⚠ Needs rate</Badge>
+                        ) : t.invoiced ? (
                           <Badge>Invoiced</Badge>
                         ) : (
                           <Badge variant="outline">Open</Badge>
@@ -297,15 +319,22 @@ export default async function TripsPage({
           </div>
 
           {/* Mobile cards */}
-          <div className="md:hidden flex flex-col gap-3">
+          <div className="md:hidden flex flex-col gap-2">
             {tripList.map((t) => {
               const c = clientById.get(t.client_id);
               const v = vehicleById.get(t.vehicle_id);
               const r = rateByKey.get(`${t.client_id}|${t.car_type}|${t.mode}`);
               const amount = computeAmount(t, r);
+              const needsRate = amount == null;
               return (
-                <Card key={t.id}>
-                  <CardContent className="py-4 flex items-start justify-between gap-3">
+                <Card
+                  key={t.id}
+                  className={cn(
+                    needsRate &&
+                      "border-amber-300 bg-amber-50/80 dark:border-amber-700/60 dark:bg-amber-950/30",
+                  )}
+                >
+                  <CardContent className="py-2.5 flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{c?.name ?? "—"}</p>
                       <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
@@ -324,17 +353,27 @@ export default async function TripsPage({
                         {t.night ? " · night" : ""}
                       </p>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-sm">
-                          {amount == null ? (
-                            <span className="text-destructive">no rate</span>
-                          ) : (
-                            formatINR(amount)
-                          )}
-                        </span>
-                        {t.invoiced ? (
-                          <Badge>Invoiced</Badge>
+                        {needsRate ? (
+                          <>
+                            <Badge variant="warning">⚠ Needs rate card</Badge>
+                            <Link
+                              href={`/rate-cards/new?client_id=${t.client_id}&car_type=${t.car_type}&mode=${t.mode}`}
+                              className="text-xs font-medium text-primary hover:text-primary-hover"
+                            >
+                              + Add rate card
+                            </Link>
+                          </>
                         ) : (
-                          <Badge variant="outline">Open</Badge>
+                          <>
+                            <span className="font-mono text-sm">
+                              {formatINR(amount)}
+                            </span>
+                            {t.invoiced ? (
+                              <Badge>Invoiced</Badge>
+                            ) : (
+                              <Badge variant="outline">Open</Badge>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>

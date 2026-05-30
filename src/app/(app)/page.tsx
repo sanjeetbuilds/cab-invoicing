@@ -162,43 +162,12 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Unbilled trips"
-          value={String(unbilledCount)}
-          hint="trips not yet on an invoice"
-          href="/trips"
-        />
-        <StatCard
-          label="Outstanding"
-          value={outstanding > 0 ? formatINR(outstanding) : "—"}
-          hint={
-            unpaidInvoices && unpaidInvoices.length > 0
-              ? `${unpaidInvoices.length} unpaid invoice${
-                  unpaidInvoices.length === 1 ? "" : "s"
-                }`
-              : "no unpaid invoices"
-          }
-          href="/invoices"
-        />
-        <StatCard
-          label="Billed this month"
-          value={billedThisMonth > 0 ? formatINR(billedThisMonth) : "—"}
-          hint={`since ${fmtDate(monthStart)}`}
-          href="/invoices?status=all"
-        />
-        <StatCard
-          label="Clients · Vehicles"
-          value={`${clientCount ?? 0} · ${vehicleCount ?? 0}`}
-          hint="active companies you bill, your fleet"
-        />
-      </div>
-
+      {/* Primary action surfaces first — what does the user need to do next? */}
       <Card>
         <CardHeader>
           <div>
             <CardTitle>Unbilled trips by client</CardTitle>
-            <CardDescription>
+            <CardDescription className="hidden sm:block">
               Pick a client to build an invoice for them.
             </CardDescription>
           </div>
@@ -247,6 +216,38 @@ export default async function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard
+          label="Unbilled trips"
+          value={String(unbilledCount)}
+          hint="trips not yet on an invoice"
+          href="/trips"
+        />
+        <StatCard
+          label="Outstanding"
+          value={outstanding > 0 ? formatINR(outstanding) : "—"}
+          hint={
+            unpaidInvoices && unpaidInvoices.length > 0
+              ? `${unpaidInvoices.length} unpaid invoice${
+                  unpaidInvoices.length === 1 ? "" : "s"
+                }`
+              : "no unpaid invoices"
+          }
+          href="/invoices"
+        />
+        <StatCard
+          label="Billed this month"
+          value={billedThisMonth > 0 ? formatINR(billedThisMonth) : "—"}
+          hint={`since ${fmtDate(monthStart)}`}
+          href="/invoices?status=all"
+        />
+        <StatCard
+          label="Clients · Vehicles"
+          value={`${clientCount ?? 0} · ${vehicleCount ?? 0}`}
+          hint="active companies you bill, your fleet"
+        />
+      </div>
 
       {recentInvoices && recentInvoices.length > 0 && (
       <Card>

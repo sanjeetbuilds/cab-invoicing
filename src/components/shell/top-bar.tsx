@@ -1,4 +1,3 @@
-import { Menu } from "lucide-react";
 import { UserMenu } from "./user-menu";
 
 export function TopBar({
@@ -8,23 +7,18 @@ export function TopBar({
   companyName: string;
   email: string;
 }) {
+  // Mobile: thin strip — just the company name (the bottom nav covers
+  // navigation, so the hamburger here was redundant). Desktop: sidebar
+  // already shows the company, so the top bar collapses to just the
+  // user menu on the right.
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <button
-        type="button"
-        aria-label="Open menu"
-        className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground"
+    <header className="sticky top-0 z-30 flex h-11 sm:h-12 items-center gap-3 border-b border-border bg-card/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <p
+        className="lg:hidden text-sm font-medium text-foreground truncate max-w-[200px]"
+        title={companyName}
       >
-        <Menu className="h-5 w-5" />
-      </button>
-      <div className="lg:hidden">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground leading-tight">
-          Company
-        </p>
-        <p className="text-sm font-semibold truncate max-w-[180px]" title={companyName}>
-          {companyName}
-        </p>
-      </div>
+        {companyName}
+      </p>
       <div className="ml-auto">
         <UserMenu email={email} />
       </div>

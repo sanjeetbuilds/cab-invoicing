@@ -92,11 +92,16 @@ export function TripForm({
   clients,
   vehicles,
   rateCards,
+  recentDefaults,
 }: {
   trip?: Trip | null;
   clients: Pick<Client, "id" | "name">[];
   vehicles: Pick<Vehicle, "id" | "number" | "type" | "active">[];
   rateCards: RateCard[];
+  recentDefaults?: Pick<
+    Trip,
+    "client_id" | "vehicle_id" | "car_type" | "mode" | "billing_method"
+  > | null;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -120,13 +125,19 @@ export function TripForm({
     defaultValues: {
       date: trip?.date ?? todayIso(),
       end_date: trip?.end_date ?? "",
-      client_id: trip?.client_id ?? "",
-      vehicle_id: trip?.vehicle_id ?? "",
-      car_type: trip?.car_type ?? "Sonet",
-      mode: trip?.mode ?? "local",
+      // For NEW trips, seed client + vehicle from the user's most recent
+      // trip in the last week — most drivers log the same combo day after
+      // day. Editing an existing trip uses its own stored values.
+      client_id: trip?.client_id ?? recentDefaults?.client_id ?? "",
+      vehicle_id: trip?.vehicle_id ?? recentDefaults?.vehicle_id ?? "",
+      car_type: trip?.car_type ?? recentDefaults?.car_type ?? "Sonet",
+      mode: trip?.mode ?? recentDefaults?.mode ?? "local",
       billing_method:
         trip?.billing_method ??
-        (trip?.mode === "outstation" ? "per_km" : "slab"),
+        recentDefaults?.billing_method ??
+        ((trip?.mode ?? recentDefaults?.mode) === "outstation"
+          ? "per_km"
+          : "slab"),
       total_kms: trip ? String(trip.total_kms) : "",
       total_hours: trip ? String(trip.total_hours) : "",
       night_count: trip
@@ -253,13 +264,11 @@ export function TripForm({
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="end_date">
-              End date
-              <span className="text-xs text-muted-foreground font-normal">
-                {" "}— optional
-              </span>
-            </Label>
+            <Label htmlFor="end_date">End date</Label>
             <Input id="end_date" type="date" {...register("end_date")} />
+            <p className="text-xs text-muted-foreground">
+              Optional — only set for multi-day duties.
+            </p>
             {errors.end_date && (
               <p className="text-sm text-destructive">{errors.end_date.message}</p>
             )}
@@ -424,18 +433,19 @@ export function TripForm({
             </div>
           )}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="driver_ta">Driver TA (days)</Label>
+            <Label htmlFor="driver_ta">Driver TA</Label>
             <Input
               id="driver_ta"
               type="number"
               inputMode="numeric"
               {...register("driver_ta")}
             />
+            <p className="text-xs text-muted-foreground">Number of days.</p>
           </div>
 
           {mode === "local" && (
             <div className="flex flex-col gap-2">
-              <Label htmlFor="night_count">Night charges (nights)</Label>
+              <Label htmlFor="night_count">Night charges</Label>
               <Input
                 id="night_count"
                 type="number"
@@ -456,9 +466,7 @@ export function TripForm({
       <Card>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="extra_charge_amount">
-              Toll / Tax / Parking amount ₹
-            </Label>
+            <Label htmlFor="extra_charge_amount">Toll / tax / parking amount</Label>
             <Input
               id="extra_charge_amount"
               type="text"

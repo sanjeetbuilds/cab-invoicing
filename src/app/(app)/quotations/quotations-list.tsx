@@ -221,7 +221,7 @@ export function QuotationsList({
                       className={cn(
                         "rounded-full border px-3 py-1 text-xs font-medium transition-colors duration-150",
                         status === p.value
-                          ? "bg-foreground text-background border-foreground"
+                          ? "bg-accent-soft text-accent-foreground border-accent-soft"
                           : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
                       )}
                     >
@@ -390,8 +390,8 @@ export function QuotationsList({
             </Table>
           </div>
 
-          {/* Mobile: cards, tappable, no inline icons */}
-          <div className="md:hidden flex flex-col gap-2.5">
+          {/* Mobile: client name first; number / dates as muted meta. */}
+          <div className="md:hidden flex flex-col gap-2">
             {filtered.map((q) => {
               const name =
                 (q.client_id ? clientById.get(q.client_id) : q.client_name) ??
@@ -399,15 +399,16 @@ export function QuotationsList({
               return (
                 <Link key={q.id} href={`/quotations/${q.id}`}>
                   <Card className="active:bg-muted transition-colors">
-                    <CardContent className="py-3 px-3 flex flex-col gap-0.5">
+                    <CardContent className="py-2.5 px-3 flex flex-col gap-0.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono font-semibold tracking-tight">
-                          {q.number}
-                        </span>
+                        <p className="font-semibold text-foreground truncate">
+                          {name}
+                        </p>
                         <StatusBadge status={q.status} />
                       </div>
-                      <p className="text-sm text-foreground truncate">{name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground truncate">
+                        <span className="font-mono">{q.number}</span>
+                        {" · "}
                         {fmtDate(q.date)}
                         {q.valid_until
                           ? ` · Valid till ${fmtDate(q.valid_until)}`

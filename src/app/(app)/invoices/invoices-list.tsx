@@ -238,7 +238,7 @@ export function InvoicesList({
                       className={cn(
                         "rounded-full border px-3 py-1 text-xs font-medium transition-colors duration-150",
                         status === p.value
-                          ? "bg-foreground text-background border-foreground"
+                          ? "bg-accent-soft text-accent-foreground border-accent-soft"
                           : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
                       )}
                     >
@@ -421,35 +421,39 @@ export function InvoicesList({
             </Table>
           </div>
 
-          {/* Mobile: cards, whole card tappable, no inline action icons */}
-          <div className="md:hidden flex flex-col gap-2.5">
+          {/* Mobile: client name is the headline, number/period are muted,
+              amount sits prominent on the right. */}
+          <div className="md:hidden flex flex-col gap-2">
             {filtered.map((inv) => {
               const duties = dutiesByInvoice[inv.id] ?? 0;
               return (
                 <Link key={inv.id} href={`/invoices/${inv.id}`}>
                   <Card className="active:bg-muted transition-colors">
-                    <CardContent className="py-3 px-3 flex flex-col gap-0.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono font-semibold tracking-tight">
-                          {prefix}
-                          {inv.invoice_number}
-                        </span>
-                        <StatusBadge status={inv.status} />
+                    <CardContent className="py-2.5 px-3 flex items-start gap-3">
+                      <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-semibold text-foreground truncate">
+                            {inv.client_name ?? "—"}
+                          </p>
+                          <StatusBadge status={inv.status} />
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">
+                          <span className="font-mono">
+                            {prefix}
+                            {inv.invoice_number}
+                          </span>
+                          {inv.period_from && inv.period_to ? (
+                            <>
+                              {" · "}
+                              {fmtDate(inv.period_from)}–{fmtDate(inv.period_to)}
+                            </>
+                          ) : (
+                            <>{" · "}{fmtDate(inv.invoice_date)}</>
+                          )}
+                          {duties > 0 ? ` · Duties: ${duties}` : null}
+                        </p>
                       </div>
-                      <p className="text-sm text-foreground truncate">
-                        {inv.client_name ?? "—"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {fmtDate(inv.invoice_date)}
-                        {inv.period_from && inv.period_to ? (
-                          <>
-                            {" · "}
-                            {fmtDate(inv.period_from)}–{fmtDate(inv.period_to)}
-                          </>
-                        ) : null}
-                        {duties > 0 ? ` · Duties: ${duties}` : null}
-                      </p>
-                      <p className="font-mono text-base font-semibold tabular-nums mt-1">
+                      <p className="font-mono text-base font-semibold tabular-nums shrink-0 self-center">
                         {formatINR(inv.net_amount)}
                       </p>
                     </CardContent>

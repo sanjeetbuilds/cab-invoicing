@@ -118,28 +118,24 @@ export function CompanyForm({ company }: { company: Company }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="phone2">
-              Phone 2
-              <span className="text-xs text-muted-foreground font-normal"> — optional</span>
-            </Label>
+            <Label htmlFor="phone2">Phone 2</Label>
             <Input
               id="phone2"
-              placeholder="Second number on the invoice (optional)"
+              placeholder="Second number on the invoice"
               {...register("phone2")}
             />
+            <p className="text-xs text-muted-foreground">Optional.</p>
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">
-              Account email
-              <span className="text-xs text-muted-foreground font-normal"> — for sign-in</span>
-            </Label>
+            <Label htmlFor="email">Account email</Label>
             <Input
               id="email"
               type="email"
               placeholder="login@example.com"
               {...register("email")}
             />
+            <p className="text-xs text-muted-foreground">Used for sign-in.</p>
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
             )}

@@ -41,9 +41,13 @@ export default async function ClientsPage() {
 
       {clients && clients.length === 0 && (
         <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            No clients yet. Click <strong>Add client</strong> to get started — or
-            seed from your prototype data on the dashboard.
+          <CardContent className="py-10 px-4 text-center flex flex-col items-center gap-3">
+            <h2 className="text-base font-semibold">No clients yet</h2>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              Add the companies you bill. State drives intra/inter-state GST
+              on every invoice.
+            </p>
+            <AddClientButton />
           </CardContent>
         </Card>
       )}
