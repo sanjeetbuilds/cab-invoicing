@@ -197,7 +197,7 @@ export function QuotationForm({
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6">
       <Card>
-        <CardContent className="grid gap-5 sm:grid-cols-3">
+        <CardContent className="grid gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-2">
             <Label>Quotation #</Label>
             <div className="h-9 flex items-center rounded-lg border border-input bg-muted/40 px-3 text-sm text-foreground">
@@ -234,7 +234,7 @@ export function QuotationForm({
       </Card>
 
       <Card>
-        <CardContent className="flex flex-col gap-5">
+        <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label>Client</Label>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -349,7 +349,7 @@ export function QuotationForm({
           <Card key={i}>
             <CardContent className="flex flex-col gap-4">
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   <Label className="text-xs">Car type</Label>
                   <Select
                     value={l.car_type}
@@ -371,7 +371,7 @@ export function QuotationForm({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <div className="flex flex-col gap-2 sm:col-span-2">
                   <Label className="text-xs">Mode</Label>
                   <Select
                     value={l.mode}
@@ -459,7 +459,7 @@ export function QuotationForm({
       </div>
 
       <Card>
-        <CardContent className="grid gap-5 sm:grid-cols-2">
+        <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <Label htmlFor="q-status">Status</Label>
             <Select
@@ -520,7 +520,7 @@ function Field({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <Label className="text-xs">{label}</Label>
       <Input
         type="number"

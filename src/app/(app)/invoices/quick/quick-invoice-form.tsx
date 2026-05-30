@@ -355,7 +355,7 @@ export function QuickInvoiceForm({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-1 flex flex-col gap-1.5 relative">
+              <div className="md:col-span-1 flex flex-col gap-2 relative">
                 <Label htmlFor="q-name">Name *</Label>
                 <Input
                   id="q-name"
@@ -389,7 +389,7 @@ export function QuickInvoiceForm({
                   </div>
                 )}
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="q-phone">Phone</Label>
                 <Input
                   id="q-phone"
@@ -398,7 +398,7 @@ export function QuickInvoiceForm({
                   placeholder="+91 …"
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="q-email">Email</Label>
                 <Input
                   id="q-email"
@@ -410,7 +410,7 @@ export function QuickInvoiceForm({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="q-gstin">GSTIN</Label>
                 <Input
                   id="q-gstin"
@@ -419,7 +419,7 @@ export function QuickInvoiceForm({
                   className="font-mono"
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="q-state">State *</Label>
                 <Select
                   value={state}
@@ -437,7 +437,7 @@ export function QuickInvoiceForm({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <Label className="text-xs">RCM (reverse charge)</Label>
                 <div className="flex h-9 items-center">
                   <Switch checked={isRcm} onCheckedChange={setIsRcm} />
@@ -448,7 +448,7 @@ export function QuickInvoiceForm({
               </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="q-address">Address</Label>
               <Textarea
                 id="q-address"
@@ -469,7 +469,7 @@ export function QuickInvoiceForm({
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="q-date">Date *</Label>
                 <Input
                   id="q-date"
@@ -478,7 +478,7 @@ export function QuickInvoiceForm({
                   onChange={(e) => setDate(e.target.value)}
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="q-end">End date</Label>
                 <Input
                   id="q-end"
@@ -487,7 +487,7 @@ export function QuickInvoiceForm({
                   onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="q-car">Car type *</Label>
                 <Select
                   value={carType}
@@ -507,7 +507,7 @@ export function QuickInvoiceForm({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="q-mode">Mode *</Label>
                 <Select
                   value={mode}
@@ -529,7 +529,7 @@ export function QuickInvoiceForm({
               </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="q-vehicle">Vehicle *</Label>
               <VehiclePicker
                 id="q-vehicle"
@@ -655,7 +655,7 @@ export function QuickInvoiceForm({
             {isFixed && (
               <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-2">
                     <Label htmlFor="q-plan" className="text-xs">Plan name *</Label>
                     <Input
                       id="q-plan"
@@ -703,7 +703,7 @@ export function QuickInvoiceForm({
                     </div>
                   </div>
                 )}
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="q-notes" className="text-xs">Notes</Label>
                   <Textarea
                     id="q-notes"
@@ -751,7 +751,7 @@ export function QuickInvoiceForm({
               !chargeTax &&
               !chargeParking && (
                 <div className="flex items-start gap-2 rounded-md bg-warning-soft/60 p-2 text-xs text-warning-foreground">
-                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <AlertTriangle className="h-4 w-4 mt-1 shrink-0" />
                   <span>
                     Tick a label box — invoice will default to &ldquo;Toll &amp; Parking&rdquo;.
                   </span>
@@ -790,7 +790,7 @@ export function QuickInvoiceForm({
                   </div>
                 ))}
               </div>
-              <div className="border-t border-border pt-2 flex flex-col gap-0.5 text-sm">
+              <div className="border-t border-border pt-2 flex flex-col gap-1 text-sm">
                 <Row label="Subtotal" value={formatINR(preview.subtotal)} />
                 {preview.gst.mode === "RCM" && (
                   <>
@@ -853,7 +853,7 @@ function Num({
   set: (v: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <Label className="text-xs">{label}</Label>
       <Input
         type="number"
@@ -890,7 +890,7 @@ function EditableCountRateRow({
   const rateN = toNum(rate);
   const amount = countN > 0 && rateN > 0 ? Math.round(countN * rateN * 100) / 100 : 0;
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <Label className="text-xs">{label}</Label>
       <div className="flex items-center gap-2 flex-wrap">
         <Input
@@ -950,7 +950,7 @@ function AutoCountRateRow({
   const rateN = toNum(rate);
   const amount = qty > 0 && rateN > 0 ? Math.round(qty * rateN * 100) / 100 : 0;
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <Label className="text-xs">{label}</Label>
       <div className="flex items-center gap-2 flex-wrap">
         {countInput ? (

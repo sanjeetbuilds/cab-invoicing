@@ -69,7 +69,7 @@ export default async function BuildInvoicePage({
 
         {clients.length === 0 ? (
           <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            <CardContent className="py-12 text-center text-sm text-muted-foreground">
               No uninvoiced trips. Log some on the{" "}
               <Link href="/trips" className="underline">Trips</Link> page first.
             </CardContent>
@@ -138,7 +138,7 @@ export default async function BuildInvoicePage({
   if (!client || !company) {
     return (
       <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
+        <CardContent className="py-12 text-center text-sm text-muted-foreground">
           Client not found. <Link href="/invoices/build" className="underline">Pick again</Link>.
         </CardContent>
       </Card>

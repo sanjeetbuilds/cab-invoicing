@@ -105,7 +105,7 @@ export function InlineVehicleForm({
           </button>
         </div>
         <form onSubmit={onSave} className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2 flex flex-col gap-1.5">
+          <div className="sm:col-span-2 flex flex-col gap-2">
             <Label htmlFor="iv-number">Vehicle number *</Label>
             <Input
               id="iv-number"
@@ -127,7 +127,7 @@ export function InlineVehicleForm({
               }
             />
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="iv-type">Type *</Label>
             <Select
               value={state.type}
@@ -148,7 +148,7 @@ export function InlineVehicleForm({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="iv-ownership">Ownership *</Label>
             <Select
               value={state.ownership}
@@ -167,7 +167,7 @@ export function InlineVehicleForm({
             </Select>
           </div>
           {state.ownership === "attached" && (
-            <div className="sm:col-span-2 flex flex-col gap-1.5">
+            <div className="sm:col-span-2 flex flex-col gap-2">
               <Label htmlFor="iv-vendor">Vendor name</Label>
               <Input
                 id="iv-vendor"

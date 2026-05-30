@@ -87,7 +87,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <Card>
-        <CardContent className="flex flex-col gap-5">
+        <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="number">Vehicle number *</Label>
             <Input
@@ -177,7 +177,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
               <Label htmlFor="active" className="font-medium">
                 Active
               </Label>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-1">
                 Inactive vehicles are hidden from trip logging.
               </p>
             </div>

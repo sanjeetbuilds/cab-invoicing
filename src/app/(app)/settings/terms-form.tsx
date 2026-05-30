@@ -62,10 +62,10 @@ export function TermsForm({ company }: { company: Company }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <Card>
-        <CardContent className="flex flex-col gap-5">
+        <CardContent className="flex flex-col gap-4">
           <div>
             <Label htmlFor="terms_invoice">Invoice terms</Label>
-            <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+            <p className="text-xs text-muted-foreground mt-1 mb-2">
               One per line. The first appears after &ldquo;TERMS &amp; CONDITIONS :&rdquo;
               on every invoice; the rest follow on their own lines.
             </p>
@@ -83,7 +83,7 @@ export function TermsForm({ company }: { company: Company }) {
           </div>
           <div>
             <Label htmlFor="terms_quotation">Quotation terms</Label>
-            <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+            <p className="text-xs text-muted-foreground mt-1 mb-2">
               Same format — one per line.
             </p>
             <Textarea id="terms_quotation" rows={6} {...register("terms_quotation")} />

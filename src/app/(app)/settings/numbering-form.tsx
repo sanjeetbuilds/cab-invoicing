@@ -61,10 +61,10 @@ export function NumberingForm({ company }: { company: Company }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <Card>
-        <CardContent className="flex flex-col gap-5">
+        <CardContent className="flex flex-col gap-4">
           <div>
             <p className="text-sm font-semibold text-foreground">Invoices</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-1">
               The next invoice you issue will be <span className="font-mono">
                 {/* live preview not needed — just hint */}
                 {company.invoice_prefix ?? ""}
@@ -100,10 +100,10 @@ export function NumberingForm({ company }: { company: Company }) {
       </Card>
 
       <Card>
-        <CardContent className="flex flex-col gap-5">
+        <CardContent className="flex flex-col gap-4">
           <div>
             <p className="text-sm font-semibold text-foreground">Quotations</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-1">
               The next quotation you create will be <span className="font-mono">
                 {company.quotation_prefix ?? ""}
                 {company.next_quotation_number}

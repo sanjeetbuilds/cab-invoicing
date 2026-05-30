@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
   [
-    "inline-flex shrink-0 items-center justify-center gap-1.5",
+    "inline-flex shrink-0 items-center justify-center gap-2",
     "rounded-lg border text-sm font-medium whitespace-nowrap",
     // Hover applies on pointer devices; active:scale gives touch users
     // a visible "pressed" cue (hover never fires on a tap).
@@ -52,8 +52,8 @@ const buttonVariants = cva(
       size: {
         default: "h-9 px-4 py-2",
         xs: "h-7 px-2 text-xs gap-1 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 px-3 text-[0.8125rem] gap-1.5",
-        lg: "h-10 px-5 text-[0.9375rem]",
+        sm: "h-8 px-3 text-[0.8125rem] gap-2",
+        lg: "h-10 px-6 text-[0.9375rem]",
         icon: "h-9 w-9 px-0",
         "icon-xs": "h-6 w-6 px-0 [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "h-8 w-8 px-0",

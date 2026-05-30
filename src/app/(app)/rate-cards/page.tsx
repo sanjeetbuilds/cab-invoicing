@@ -73,7 +73,7 @@ export default async function RateCardsPage() {
 
       {clientList.length === 0 && (
         <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+          <CardContent className="py-12 text-center text-sm text-muted-foreground">
             Add{" "}
             <Link href="/clients" className="underline">
               clients
@@ -144,7 +144,7 @@ export default async function RateCardsPage() {
                             </TableCell>
                             <TableCell className="text-right text-xs">
                               {r.mode === "local" && (
-                                <div className="flex flex-col items-end gap-0.5">
+                                <div className="flex flex-col items-end gap-1">
                                   <span className="font-mono">
                                     Base {fmt(r.base_rate)} · {r.base_kms ?? "—"}km/
                                     {r.base_hours ?? "—"}hr
@@ -159,7 +159,7 @@ export default async function RateCardsPage() {
                                 <span className="font-mono">{fmt(r.per_km)} / km</span>
                               )}
                               {(r.mode === "transfer" || r.mode === "package") && (
-                                <div className="flex flex-col items-end gap-0.5">
+                                <div className="flex flex-col items-end gap-1">
                                   <span className="font-mono font-medium">
                                     {fmt(r.fixed_price)} fixed
                                   </span>
@@ -207,11 +207,11 @@ export default async function RateCardsPage() {
                             </Badge>
                           </p>
                           {r.plan_name && (
-                            <p className="text-xs font-medium text-foreground/80 mt-0.5">
+                            <p className="text-xs font-medium text-foreground/80 mt-1">
                               {r.plan_name}
                             </p>
                           )}
-                          <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
+                          <div className="mt-1 text-xs text-muted-foreground space-y-1">
                             {r.mode === "local" && (
                               <>
                                 <p>

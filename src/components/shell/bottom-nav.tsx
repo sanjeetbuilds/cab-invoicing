@@ -32,7 +32,7 @@ export function BottomNav() {
               <Link
                 href={item.href}
                 className={cn(
-                  "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px]",
+                  "flex flex-1 flex-col items-center justify-center gap-1 text-[11px]",
                   active ? "text-foreground" : "text-muted-foreground",
                 )}
               >
@@ -46,7 +46,7 @@ export function BottomNav() {
           <Link
             href="/more"
             className={cn(
-              "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px]",
+              "flex flex-1 flex-col items-center justify-center gap-1 text-[11px]",
               onSecondary || pathname.startsWith("/more")
                 ? "text-foreground"
                 : "text-muted-foreground",

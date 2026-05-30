@@ -496,7 +496,7 @@ export function BulkAddClient({
                     />
                   </td>
                   <td>
-                    <div className="flex justify-center gap-0.5">
+                    <div className="flex justify-center gap-1">
                       <ChargeFlag
                         checked={r.charge_toll}
                         onChange={(v) => patchRow(i, { charge_toll: v })}
@@ -537,7 +537,7 @@ export function BulkAddClient({
                     )}
                   </td>
                   <td>
-                    <div className="flex gap-0.5">
+                    <div className="flex gap-1">
                       <Button
                         type="button"
                         size="icon-xs"

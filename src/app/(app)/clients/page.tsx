@@ -87,7 +87,7 @@ export default async function ClientsPage({
                 key={t.value}
                 href={href}
                 className={cn(
-                  "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150",
+                  "rounded-full border px-3 py-2 text-sm font-medium transition-colors duration-150",
                   active
                     ? "bg-accent-soft text-accent-foreground border-accent-soft"
                     : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
@@ -95,7 +95,7 @@ export default async function ClientsPage({
               >
                 {t.label}
                 {typeof t.count === "number" && t.count > 0 && (
-                  <span className="ml-1.5 text-xs opacity-70">
+                  <span className="ml-2 text-xs opacity-70">
                     ({t.count})
                   </span>
                 )}
@@ -111,7 +111,7 @@ export default async function ClientsPage({
 
       {clients && clients.length === 0 && (
         <Card>
-          <CardContent className="py-10 px-4 text-center flex flex-col items-center gap-3">
+          <CardContent className="py-12 px-4 text-center flex flex-col items-center gap-3">
             <h2 className="text-base font-semibold">No clients yet</h2>
             <p className="text-sm text-muted-foreground max-w-sm">
               Add the companies you bill. State drives intra/inter-state GST

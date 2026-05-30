@@ -347,7 +347,7 @@ export function TripForm({
           inside the form's natural width (no negative margins) and given
           symmetric vertical padding for clean alignment. */}
       {activeRate && preview && (
-        <div className="sticky top-12 sm:top-14 z-20 rounded-lg border border-border bg-card shadow-md px-4 py-3 flex items-center justify-between gap-3">
+        <div className="sticky top-12 sm:top-14 z-20 rounded-lg border border-border bg-card shadow-card px-4 py-3 flex items-center justify-between gap-3">
           <span className="text-[11px] uppercase tracking-wider text-muted-foreground leading-none">
             Trip total
           </span>
@@ -528,7 +528,7 @@ export function TripForm({
                 <Label htmlFor="billing_method" className="font-medium">
                   Bill as slab (use local rate card)
                 </Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-xs text-muted-foreground mt-1">
                   Default for outstation is per-km. Toggle on to bill this trip
                   with the client&apos;s local rate card for{" "}
                   <span className="font-medium">{carType}</span>: base + extras.
@@ -628,7 +628,7 @@ export function TripForm({
               activeRate.includes_tax ||
               activeRate.includes_parking) && (
               <div className="flex items-start gap-2 rounded-md bg-warning-soft/60 p-2 text-xs text-warning-foreground">
-                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                <AlertTriangle className="h-4 w-4 mt-1 shrink-0" />
                 <span>
                   This package includes{" "}
                   {[
@@ -698,7 +698,7 @@ export function TripForm({
           )}
           {showChargeWarning && (
             <div className="flex items-start gap-2 rounded-md bg-warning-soft p-2 text-xs text-warning-foreground">
-              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+              <AlertTriangle className="h-4 w-4 mt-1 shrink-0" />
               <span>
                 You entered an amount but didn&apos;t tick a box. The invoice
                 will default to{" "}
@@ -862,7 +862,7 @@ function CountRateAmountRow({
 }) {
   const amount = rate != null && count > 0 ? Math.round(count * rate * 100) / 100 : 0;
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <Label className="text-xs">{label}</Label>
       <div className="flex items-center gap-2 flex-wrap">
         <Input
@@ -946,10 +946,10 @@ function CarTypeOverrideNote({
   if (!vehicle || vehicle.type === carType) return null;
   return (
     <div
-      className="flex items-start gap-2 rounded-md border border-amber-300/70 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200"
+      className="flex items-start gap-2 rounded-md border border-amber-300/70 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200"
       role="note"
     >
-      <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+      <AlertTriangle className="h-3.5 w-3.5 mt-1 shrink-0" />
       <span>
         Override: billed as <strong>{carType}</strong> (vehicle is actually{" "}
         <strong>{vehicle.type}</strong>).

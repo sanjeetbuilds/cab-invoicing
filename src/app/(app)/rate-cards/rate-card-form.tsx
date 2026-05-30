@@ -315,7 +315,7 @@ export function RateCardForm({
               {mode === "transfer" ? "Transfer plan" : "Package plan"}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="plan_name" className="text-xs">Plan name *</Label>
                 <Input
                   id="plan_name"
@@ -377,7 +377,7 @@ export function RateCardForm({
               </div>
             )}
 
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="notes" className="text-xs">
                 Notes
               </Label>
@@ -425,7 +425,7 @@ function Field({
   register: UseFormRegisterReturn;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <Label htmlFor={id} className="text-xs">
         {label}
       </Label>

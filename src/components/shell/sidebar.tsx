@@ -19,18 +19,18 @@ export function Sidebar({ companyName }: { companyName: string }) {
 
   return (
     <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-border bg-sidebar">
-      <div className="px-5 py-4 border-b border-border">
+      <div className="px-6 py-4 border-b border-border">
         <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
           Company
         </p>
         <p
-          className="font-semibold text-foreground truncate mt-0.5"
+          className="font-semibold text-foreground truncate mt-1"
           title={companyName}
         >
           {companyName}
         </p>
       </div>
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {MOBILE_PRIMARY.map((item) => {
           const Icon = item.icon;
           const active =
@@ -42,7 +42,7 @@ export function Sidebar({ companyName }: { companyName: string }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
                 active
                   ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -61,7 +61,7 @@ export function Sidebar({ companyName }: { companyName: string }) {
         <Link
           href="/more"
           className={cn(
-            "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
+            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
             onSecondary
               ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
               : "text-muted-foreground hover:bg-muted hover:text-foreground",

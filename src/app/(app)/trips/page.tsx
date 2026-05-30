@@ -193,7 +193,7 @@ export default async function TripsPage({
                 key={f.value}
                 href={f.value === "uninvoiced" ? "/trips" : `/trips?status=${f.value}`}
                 className={cn(
-                  "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150",
+                  "rounded-full border px-3 py-2 text-sm font-medium transition-colors duration-150",
                   active
                     ? "bg-accent-soft text-accent-foreground border-accent-soft"
                     : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
@@ -212,7 +212,7 @@ export default async function TripsPage({
 
       {!tripsError && tripList.length === 0 && (
         <Card>
-          <CardContent className="py-10 px-4 text-center flex flex-col items-center gap-3">
+          <CardContent className="py-12 px-4 text-center flex flex-col items-center gap-3">
             <h2 className="text-base font-semibold">
               {status === "uninvoiced" ? "All caught up" : "No trips yet"}
             </h2>
@@ -272,7 +272,7 @@ export default async function TripsPage({
                       <TableCell>
                         {v ? (
                           <span
-                            className="font-mono text-xs inline-flex items-center gap-1.5"
+                            className="font-mono text-xs inline-flex items-center gap-2"
                             title={
                               v.type !== t.car_type
                                 ? `Override: billed as ${t.car_type} (vehicle is actually ${v.type}).`
@@ -281,7 +281,7 @@ export default async function TripsPage({
                           >
                             {v.number} · {t.car_type}
                             {v.type !== t.car_type && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-[10px] font-medium text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
                                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                                 billed as
                               </span>
@@ -362,10 +362,10 @@ export default async function TripsPage({
                       "border-amber-300 bg-amber-50/80 dark:border-amber-700/60 dark:bg-amber-950/30",
                   )}
                 >
-                  <CardContent className="py-2.5 flex items-start justify-between gap-3">
+                  <CardContent className="py-3 flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{c?.name ?? "—"}</p>
-                      <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                      <p className="text-xs text-muted-foreground inline-flex items-center gap-2">
                         {fmtDate(t.date)} · {v?.number ?? "—"} · {t.car_type}
                         {v && v.type !== t.car_type && (
                           <span

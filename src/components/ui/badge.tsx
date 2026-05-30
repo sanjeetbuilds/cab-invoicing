@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 const badgeVariants = cva(
   [
     "inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1",
-    "rounded-full border border-transparent px-2 py-0.5",
+    "rounded-full border border-transparent px-2 py-1",
     "text-[11px] font-medium leading-none whitespace-nowrap",
     "[&>svg]:pointer-events-none [&>svg]:size-3",
   ].join(" "),

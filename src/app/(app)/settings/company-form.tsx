@@ -90,7 +90,7 @@ export function CompanyForm({ company }: { company: Company }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <Card>
-        <CardContent className="grid gap-5 sm:grid-cols-2">
+        <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2 flex flex-col gap-2">
             <Label htmlFor="name">Company name *</Label>
             <Input id="name" {...register("name")} />

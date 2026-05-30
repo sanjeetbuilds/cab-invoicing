@@ -133,12 +133,12 @@ export function TeamSection({
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       {canManage && (
         <Card>
           <CardContent>
             <p className="text-sm font-semibold text-foreground">Invite teammate</p>
-            <p className="text-xs text-muted-foreground mt-0.5 mb-4">
+            <p className="text-xs text-muted-foreground mt-1 mb-4">
               Creates a user account with a temp password. Copy it and share
               it with them — they sign in at <span className="font-mono">/sign-in</span> and
               can reset their password from there.
@@ -147,7 +147,7 @@ export function TeamSection({
               onSubmit={onInvite}
               className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end"
             >
-              <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+              <div className="flex flex-col gap-2 flex-1 min-w-0">
                 <Label htmlFor="invite-email" className="text-xs">
                   Email
                 </Label>
@@ -160,7 +160,7 @@ export function TeamSection({
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-              <div className="flex flex-col gap-1.5 sm:w-40">
+              <div className="flex flex-col gap-2 sm:w-40">
                 <Label htmlFor="invite-role" className="text-xs">
                   Role
                 </Label>

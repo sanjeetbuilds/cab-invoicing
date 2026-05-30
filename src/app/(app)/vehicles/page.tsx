@@ -41,7 +41,7 @@ export default async function VehiclesPage() {
 
       {vehicles && vehicles.length === 0 && (
         <Card>
-          <CardContent className="py-10 px-4 text-center flex flex-col items-center gap-3">
+          <CardContent className="py-12 px-4 text-center flex flex-col items-center gap-3">
             <h2 className="text-base font-semibold">No vehicles yet</h2>
             <p className="text-sm text-muted-foreground max-w-sm">
               Add your fleet — own cars and attached vehicles. Each trip is

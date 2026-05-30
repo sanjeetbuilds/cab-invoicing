@@ -122,7 +122,7 @@ export function VehiclePicker({
         id={id}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "flex h-9 w-full items-center justify-between gap-1.5 rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground",
+          "flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground",
           "transition-colors duration-150 outline-none",
           "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20",
           "hover:bg-muted/40",
@@ -179,7 +179,7 @@ export function VehiclePicker({
                     onMouseEnter={() => setHighlight(i)}
                     onClick={() => selectAt(i)}
                     className={cn(
-                      "flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm",
+                      "flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm",
                       isHighlighted ? "bg-accent-soft/60" : "",
                       !v.active && "text-muted-foreground",
                     )}

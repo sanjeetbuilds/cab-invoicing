@@ -165,7 +165,7 @@ export function InlineRateCardForm({
             </p>
             {/* Locked context: this rate card is for THIS client/car/mode
                 only. User must cancel out and reopen to change scope. */}
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-1">
               <span className="font-medium">{clientName}</span> ·{" "}
               <span className="font-medium">{carType}</span> ·{" "}
               <span className="font-medium">{modeLabel}</span>
@@ -229,7 +229,7 @@ export function InlineRateCardForm({
           {isFixed && (
             <div className="flex flex-col gap-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   <Label className="text-xs">Plan name *</Label>
                   <Input
                     value={state.plan_name}
@@ -269,7 +269,7 @@ export function InlineRateCardForm({
                   </div>
                 </div>
               )}
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <Label className="text-xs">Notes</Label>
                 <Textarea
                   rows={2}
@@ -315,7 +315,7 @@ function Field({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <Label className="text-xs">{label}</Label>
       <Input
         type="number"

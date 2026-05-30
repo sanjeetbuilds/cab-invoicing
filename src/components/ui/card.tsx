@@ -5,18 +5,27 @@ import { cn } from "@/lib/utils"
 function Card({
   className,
   size = "default",
+  elevated = false,
   ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
-  // Padding is ~20% tighter on mobile (p-4/p-3) and grows on sm+ to the
-  // previous values (p-6/p-4). Cards feel calm at desktop widths and
-  // dense on phones where vertical space is at a premium.
+}: React.ComponentProps<"div"> & {
+  size?: "default" | "sm"
+  /**
+   * Opt-in subtle shadow. Default is flat (border-only) per the
+   * Phase 5 design system: every card flat by default, shadow only
+   * for surfaces that genuinely need to feel elevated (the dashboard
+   * "What's next" hero, install banners, the sticky trip-total chip).
+   */
+  elevated?: boolean
+}) {
+  // Padding is ~20% tighter on mobile (p-4) and grows on sm+ (p-6) per
+  // the design-system scale. Same gap rule for the inner CardContent.
   return (
     <div
       data-slot="card"
       data-size={size}
       className={cn(
         "group/card flex flex-col gap-3 sm:gap-4 rounded-lg border border-border bg-card text-sm text-card-foreground",
-        "shadow-card",
+        elevated && "shadow-card",
         "data-[size=default]:p-4 sm:data-[size=default]:p-6 data-[size=sm]:p-3 sm:data-[size=sm]:p-4 data-[size=sm]:gap-2 sm:data-[size=sm]:gap-3",
         className
       )}

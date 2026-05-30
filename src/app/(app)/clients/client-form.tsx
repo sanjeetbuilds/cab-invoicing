@@ -91,7 +91,7 @@ export function ClientForm({ client }: { client?: Client | null }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <Card>
-        <CardContent className="grid gap-5 sm:grid-cols-2">
+        <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2 flex flex-col gap-2">
             <Label htmlFor="name">Name *</Label>
             <Input id="name" autoFocus {...register("name")} />
@@ -150,7 +150,7 @@ export function ClientForm({ client }: { client?: Client | null }) {
               <Label htmlFor="is_rcm" className="font-medium">
                 Reverse charge (RCM)
               </Label>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-1">
                 When ON, invoices for this client show no GST line.
               </p>
             </div>

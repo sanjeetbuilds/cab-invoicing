@@ -228,7 +228,7 @@ export function InvoicesList({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search invoice number or client…"
-                    className="pl-9"
+                    className="pl-8"
                   />
                 </div>
               )}
@@ -237,7 +237,7 @@ export function InvoicesList({
                   type="button"
                   onClick={() => setShowFilters((v) => !v)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg border px-3 h-10 text-sm font-medium shrink-0",
+                    "inline-flex items-center gap-2 rounded-lg border px-3 h-10 text-sm font-medium shrink-0",
                     !showSearch && "ml-auto",
                     showFilters || activeFilterCount > 0
                       ? "bg-accent-soft text-accent-foreground border-accent-soft"
@@ -247,7 +247,7 @@ export function InvoicesList({
                   <Filter className="h-4 w-4" />
                   <span className="hidden sm:inline">Filters</span>
                   {activeFilterCount > 0 && (
-                    <span className="ml-0.5 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
+                    <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
                       {activeFilterCount}
                     </span>
                   )}
@@ -259,7 +259,7 @@ export function InvoicesList({
           {(statusPills.length > 0 || showSort) && (
             <div className="flex items-center gap-2 flex-wrap">
               {statusPills.length > 0 && (
-                <div className="flex gap-1.5 flex-wrap">
+                <div className="flex gap-2 flex-wrap">
                   {statusPills.map((p) => (
                     <button
                       key={p.value}
@@ -307,7 +307,7 @@ export function InvoicesList({
           {showFilters && showFiltersButton && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               {showClientFilter && (
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="f-client" className="text-xs">
                     Client
                   </Label>
@@ -332,7 +332,7 @@ export function InvoicesList({
                 </div>
               )}
               {showPeriodFilter && (
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="f-period" className="text-xs">
                     Period
                   </Label>
@@ -359,7 +359,7 @@ export function InvoicesList({
                 <button
                   type="button"
                   onClick={clearAll}
-                  className="sm:col-span-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground self-start"
+                  className="sm:col-span-2 inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground self-start"
                 >
                   <X className="h-3 w-3" />
                   Clear all filters
@@ -372,7 +372,7 @@ export function InvoicesList({
 
       {filtered.length === 0 ? (
         <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground flex flex-col items-center gap-3">
+          <CardContent className="py-12 text-center text-sm text-muted-foreground flex flex-col items-center gap-3">
             <p>No invoices match these filters.</p>
             <button
               type="button"
@@ -691,7 +691,7 @@ function MobileInvoiceCard({
           <button
             type="button"
             onClick={openPdf}
-            className="text-left flex flex-col gap-2.5 -m-1 p-1 rounded-md hover:bg-muted/40 active:bg-muted transition-colors"
+            className="text-left flex flex-col gap-3 -m-1 p-1 rounded-md hover:bg-muted/40 active:bg-muted transition-colors"
           >
             <div className="flex items-center justify-between gap-2">
               <StatusBadge status={invoice.status} />
@@ -737,7 +737,7 @@ function MobileInvoiceCard({
             <button
               type="button"
               onClick={shareInvoicePdf}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-hover"
+              className="flex-1 inline-flex items-center justify-center gap-2 h-10 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-hover"
             >
               <Share2 className="h-4 w-4" />
               Share PDF

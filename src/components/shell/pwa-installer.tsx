@@ -142,7 +142,7 @@ export function PwaInstaller() {
   if (eligible && deferred && !isIos()) {
     return (
       <div className="fixed bottom-16 inset-x-3 z-30 lg:bottom-3 lg:left-auto lg:right-3 lg:max-w-sm">
-        <div className="rounded-lg border border-border bg-card shadow-md px-3 py-2.5 flex items-center gap-3">
+        <div className="rounded-lg border border-border bg-card shadow-card px-3 py-3 flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium leading-tight">
               Install EasyBills
@@ -178,13 +178,13 @@ export function PwaInstaller() {
   if (eligible && showIosHint) {
     return (
       <div className="fixed bottom-16 inset-x-3 z-30">
-        <div className="rounded-lg border border-border bg-card shadow-md px-3 py-2.5 flex items-start gap-3">
-          <Share2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+        <div className="rounded-lg border border-border bg-card shadow-card px-3 py-3 flex items-start gap-3">
+          <Share2 className="h-5 w-5 text-primary shrink-0 mt-1" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium leading-tight">
               Install EasyBills
             </p>
-            <p className="text-xs text-muted-foreground leading-snug mt-0.5">
+            <p className="text-xs text-muted-foreground leading-snug mt-1">
               Tap the <span className="font-medium">Share</span> button in
               Safari, then{" "}
               <span className="font-medium">Add to Home Screen</span>.
