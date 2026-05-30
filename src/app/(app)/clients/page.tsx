@@ -8,7 +8,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { IndianRupee } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
@@ -59,6 +61,13 @@ export default async function ClientsPage({
         title="Clients"
         description="Companies you bill. State drives intra/inter-state GST."
       >
+        <Link
+          href="/rate-cards"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          <IndianRupee className="h-4 w-4" />
+          Bulk edit rates
+        </Link>
         <AddClientButton />
       </PageHeader>
 
