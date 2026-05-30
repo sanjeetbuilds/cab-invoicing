@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -108,6 +108,7 @@ export function TripForm({
   vehicles,
   rateCards,
   recentDefaults,
+  recentTrips,
 }: {
   trip?: Trip | null;
   clients: Pick<Client, "id" | "name">[];
@@ -117,6 +118,12 @@ export function TripForm({
     Trip,
     "client_id" | "vehicle_id" | "car_type" | "mode" | "billing_method"
   > | null;
+  /** Trips from the last 30 days — used to pre-select Mode when the
+   *  user changes the (client, car) combo. Most recent wins. */
+  recentTrips?: Pick<
+    Trip,
+    "client_id" | "car_type" | "mode" | "plan_name" | "billing_method" | "created_at"
+  >[];
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -127,7 +134,9 @@ export function TripForm({
   const [localVehicles, setLocalVehicles] = useState(vehicles);
   const [localRateCards, setLocalRateCards] = useState(rateCards);
   const [addingVehicle, setAddingVehicle] = useState<null | string>(null);
-  const [addingRate, setAddingRate] = useState(false);
+  // null = panel closed; "create" = adding a new rate; "edit" = editing
+  // the currently-active rate. The same InlineRateCardForm handles both.
+  const [rateEditor, setRateEditor] = useState<null | "create" | "edit">(null);
 
   const {
     register,
@@ -174,6 +183,36 @@ export function TripForm({
   const vehicleId = watch("vehicle_id");
   const carType = watch("car_type");
   const mode = watch("mode") as TripMode;
+
+  // Smart mode default: when (client, car) changes, pick the most
+  // recent mode the user used for that exact combo within the last
+  // 30 days. Only runs when the user changes the combo AFTER mount —
+  // initial mount uses recentDefaults (handled in defaultValues above).
+  // Only updates mode if the user hasn't manually touched it for this
+  // form session (dirtyFields.mode === false).
+  const modeBootstrapped = useRef(false);
+  useEffect(() => {
+    if (!modeBootstrapped.current) {
+      modeBootstrapped.current = true;
+      return;
+    }
+    if (!clientId || !carType || !recentTrips || recentTrips.length === 0) {
+      return;
+    }
+    if (editing) return; // never override an existing trip's stored mode
+    const match = recentTrips.find(
+      (t) => t.client_id === clientId && t.car_type === carType,
+    );
+    if (!match) return;
+    setValue("mode", match.mode, { shouldValidate: false });
+    if (match.plan_name) {
+      setValue("plan_name", match.plan_name, { shouldValidate: false });
+    }
+    if (match.mode === "outstation") {
+      setValue("billing_method", match.billing_method, { shouldValidate: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId, carType]);
   const planName = watch("plan_name") ?? "";
   const formBillingMethod = watch("billing_method") as BillingMethod;
   const isFixed = mode === "transfer" || mode === "package";
@@ -471,7 +510,14 @@ export function TripForm({
                 <span className="font-medium text-foreground/80">
                   Active rate card:
                 </span>{" "}
-                {rateCardSummary(activeRate)}
+                {rateCardSummary(activeRate)}{" "}
+                <button
+                  type="button"
+                  onClick={() => setRateEditor("edit")}
+                  className="text-primary hover:text-primary-hover font-medium underline-offset-2 hover:underline"
+                >
+                  Edit
+                </button>
               </p>
             )}
           </div>
@@ -704,13 +750,13 @@ export function TripForm({
                   for this car type or switch this trip back to per-km.
                 </p>
               )}
-              {!addingRate && (
+              {rateEditor !== "create" && (
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
                   className="self-start"
-                  onClick={() => setAddingRate(true)}
+                  onClick={() => setRateEditor("create")}
                 >
                   + Add rate card
                 </Button>
@@ -746,7 +792,7 @@ export function TripForm({
         </CardContent>
       </Card>
 
-      {addingRate && clientId && carType && (
+      {rateEditor !== null && clientId && carType && (
         <InlineRateCardForm
           clientId={clientId}
           clientName={
@@ -754,21 +800,24 @@ export function TripForm({
           }
           carType={carType}
           mode={rateLookupMode}
-          onCancel={() => setAddingRate(false)}
+          existing={rateEditor === "edit" ? activeRate : null}
+          onCancel={() => setRateEditor(null)}
           onCreated={(rc) => {
             setLocalRateCards((prev) => {
-              // Replace any existing rate card with the same natural key.
+              // Replace any existing rate card with the same natural key
+              // — covers both create-new and edit-existing.
               const filtered = prev.filter(
                 (r) =>
                   !(
                     r.client_id === rc.client_id &&
                     r.car_type === rc.car_type &&
-                    r.mode === rc.mode
+                    r.mode === rc.mode &&
+                    (r.plan_name ?? "") === (rc.plan_name ?? "")
                   ),
               );
               return [...filtered, rc];
             });
-            setAddingRate(false);
+            setRateEditor(null);
           }}
         />
       )}

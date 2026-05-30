@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type { CarType, RateCard, TripMode } from "@/lib/supabase/types";
 import {
   createRateCardAction,
   fetchRateCardAction,
+  updateRateCardAction,
 } from "../rate-cards/actions";
 
 interface RateCardFormState {
@@ -23,24 +25,45 @@ interface RateCardFormState {
   night: string;
   per_km: string;
   driver_ta: string;
+  plan_name: string;
+  fixed_price: string;
+  includes_toll: boolean;
+  includes_tax: boolean;
+  includes_parking: boolean;
+  notes: string;
 }
 
-const defaults: RateCardFormState = {
-  base_rate: "1500",
-  base_kms: "80",
-  base_hours: "8",
-  extra_km: "15",
-  extra_hour: "100",
-  night: "300",
-  per_km: "",
-  driver_ta: "300",
-};
+function initialState(existing: RateCard | null, mode: TripMode): RateCardFormState {
+  const isFixed = mode === "transfer" || mode === "package";
+  return {
+    base_rate: existing?.base_rate != null ? String(existing.base_rate) : (mode === "local" ? "1500" : ""),
+    base_kms: existing?.base_kms != null ? String(existing.base_kms) : "80",
+    base_hours: existing?.base_hours != null ? String(existing.base_hours) : "8",
+    extra_km: existing?.extra_km != null ? String(existing.extra_km) : (mode === "local" ? "15" : ""),
+    extra_hour: existing?.extra_hour != null ? String(existing.extra_hour) : (mode === "local" ? "100" : ""),
+    night: existing?.night != null ? String(existing.night) : (mode === "local" ? "300" : ""),
+    per_km: existing?.per_km != null ? String(existing.per_km) : "",
+    driver_ta:
+      existing?.driver_ta != null
+        ? String(existing.driver_ta)
+        : isFixed
+          ? "0"
+          : "300",
+    plan_name: existing?.plan_name ?? "",
+    fixed_price: existing?.fixed_price != null ? String(existing.fixed_price) : "",
+    includes_toll: existing?.includes_toll ?? false,
+    includes_tax: existing?.includes_tax ?? false,
+    includes_parking: existing?.includes_parking ?? false,
+    notes: existing?.notes ?? "",
+  };
+}
 
 export function InlineRateCardForm({
   clientId,
   clientName,
   carType,
   mode,
+  existing,
   onCancel,
   onCreated,
 }: {
@@ -48,19 +71,36 @@ export function InlineRateCardForm({
   clientName: string;
   carType: CarType;
   mode: TripMode;
+  /** When provided, the panel acts as Edit: pre-fills + uses update RPC. */
+  existing?: RateCard | null;
   onCancel: () => void;
   onCreated: (rateCard: RateCard) => void;
 }) {
-  const [state, setState] = useState<RateCardFormState>(defaults);
+  const [state, setState] = useState<RateCardFormState>(() =>
+    initialState(existing ?? null, mode),
+  );
   const [pending, setPending] = useState(false);
-  const isLocal = mode === "local";
+  const isFixed = mode === "transfer" || mode === "package";
+  const isEditing = !!existing;
 
-  function patch(key: keyof RateCardFormState, value: string) {
+  function patch<K extends keyof RateCardFormState>(
+    key: K,
+    value: RateCardFormState[K],
+  ) {
     setState((s) => ({ ...s, [key]: value }));
   }
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
+    if (isFixed && !state.plan_name.trim()) {
+      toast.error("Plan name is required.");
+      return;
+    }
+    if (isFixed && !state.fixed_price.trim()) {
+      toast.error("Fixed price is required.");
+      return;
+    }
+
     setPending(true);
     const fd = new FormData();
     fd.set("client_id", clientId);
@@ -74,16 +114,16 @@ export function InlineRateCardForm({
     fd.set("night", state.night);
     fd.set("per_km", state.per_km);
     fd.set("driver_ta", state.driver_ta);
-    // Inline flow only supports local/outstation. Transfer/Package go
-    // through the full Rate Cards page form.
-    fd.set("plan_name", "");
-    fd.set("fixed_price", "");
-    fd.set("includes_toll", "false");
-    fd.set("includes_tax", "false");
-    fd.set("includes_parking", "false");
-    fd.set("notes", "");
+    fd.set("plan_name", state.plan_name);
+    fd.set("fixed_price", state.fixed_price);
+    fd.set("includes_toll", state.includes_toll ? "true" : "false");
+    fd.set("includes_tax", state.includes_tax ? "true" : "false");
+    fd.set("includes_parking", state.includes_parking ? "true" : "false");
+    fd.set("notes", state.notes);
 
-    const result = await createRateCardAction(fd);
+    const result = isEditing
+      ? await updateRateCardAction(existing!.id, fd)
+      : await createRateCardAction(fd);
     if (!result.ok) {
       toast.error(result.error);
       setPending(false);
@@ -93,6 +133,7 @@ export function InlineRateCardForm({
       client_id: clientId,
       car_type: carType,
       mode,
+      plan_name: isFixed ? state.plan_name.trim() : null,
     });
     setPending(false);
     if (!lookup.ok) {
@@ -100,10 +141,19 @@ export function InlineRateCardForm({
       return;
     }
     toast.success(
-      `Rate card saved for ${clientName} · ${carType} · ${mode}.`,
+      `Rate saved for ${clientName} · ${carType} · ${mode}.`,
     );
     onCreated(lookup.rateCard);
   }
+
+  const modeLabel =
+    mode === "local"
+      ? "Local"
+      : mode === "outstation"
+        ? "Outstation"
+        : mode === "transfer"
+          ? "Transfer"
+          : "Package";
 
   return (
     <Card className="border-dashed border-accent-foreground/40 bg-accent-soft/30">
@@ -111,11 +161,14 @@ export function InlineRateCardForm({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-foreground">
-              Add rate card
+              {isEditing ? "Edit rate card" : "Add rate card"}
             </p>
+            {/* Locked context: this rate card is for THIS client/car/mode
+                only. User must cancel out and reopen to change scope. */}
             <p className="text-xs text-muted-foreground mt-0.5">
-              {clientName} · {carType} ·{" "}
-              <span className="font-medium">{mode}</span>
+              <span className="font-medium">{clientName}</span> ·{" "}
+              <span className="font-medium">{carType}</span> ·{" "}
+              <span className="font-medium">{modeLabel}</span>
             </p>
           </div>
           <button
@@ -128,7 +181,7 @@ export function InlineRateCardForm({
         </div>
 
         <form onSubmit={onSave} className="flex flex-col gap-4">
-          {isLocal ? (
+          {mode === "local" && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <Field
                 label="Base rate ₹"
@@ -161,7 +214,9 @@ export function InlineRateCardForm({
                 onChange={(v) => patch("night", v)}
               />
             </div>
-          ) : (
+          )}
+
+          {mode === "outstation" && (
             <div className="grid grid-cols-2 gap-3">
               <Field
                 label="Per km ₹"
@@ -170,6 +225,66 @@ export function InlineRateCardForm({
               />
             </div>
           )}
+
+          {isFixed && (
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs">Plan name *</Label>
+                  <Input
+                    value={state.plan_name}
+                    onChange={(e) => patch("plan_name", e.target.value)}
+                    placeholder={
+                      mode === "transfer"
+                        ? "e.g. Airport T3 Drop"
+                        : "e.g. Manali 3D2N"
+                    }
+                  />
+                </div>
+                <Field
+                  label="Fixed price ₹ *"
+                  value={state.fixed_price}
+                  onChange={(v) => patch("fixed_price", v)}
+                />
+              </div>
+              {mode === "package" && (
+                <div className="flex flex-col gap-2">
+                  <Label className="text-xs">Price includes</Label>
+                  <div className="flex flex-wrap gap-3">
+                    <Toggle
+                      checked={state.includes_toll}
+                      onChange={(v) => patch("includes_toll", v)}
+                      label="Toll"
+                    />
+                    <Toggle
+                      checked={state.includes_tax}
+                      onChange={(v) => patch("includes_tax", v)}
+                      label="Tax"
+                    />
+                    <Toggle
+                      checked={state.includes_parking}
+                      onChange={(v) => patch("includes_parking", v)}
+                      label="Parking"
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs">Notes</Label>
+                <Textarea
+                  rows={2}
+                  value={state.notes}
+                  onChange={(e) => patch("notes", e.target.value)}
+                  placeholder={
+                    mode === "package"
+                      ? "Conditions, e.g. Up to 250km/day, extra km @ ₹15"
+                      : "Conditions, e.g. one-way only"
+                  }
+                />
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <Field
               label="Driver TA ₹ / day"
@@ -180,12 +295,8 @@ export function InlineRateCardForm({
 
           <div className="flex justify-end">
             <Button type="submit" disabled={pending}>
-              {pending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Plus className="h-4 w-4" />
-              )}
-              Save &amp; apply
+              {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isEditing ? "Save changes" : "Save rate & continue"}
             </Button>
           </div>
         </form>
@@ -214,5 +325,27 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
       />
     </div>
+  );
+}
+
+function Toggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 accent-primary"
+      />
+      <span className="text-sm">{label}</span>
+    </label>
   );
 }

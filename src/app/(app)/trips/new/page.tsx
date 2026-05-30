@@ -9,10 +9,14 @@ export const metadata = { title: "Log trip" };
 export default async function NewTripPage() {
   const { supabase, membership } = await requireMembership();
 
-  // The trip created most recently in the last 7 days seeds the client +
-  // vehicle defaults on the form. Most users log the same client/vehicle
-  // day after day; this turns the form into one tap to confirm + submit.
+  // Last 7 days → seeds the form's client + vehicle defaults.
+  // Last 30 days → mode-by-(client, car) heuristic: when the user
+  //                changes the client/car combo, the form prefills mode
+  //                from the most recent trip for THAT combo.
   const sevenDaysAgoIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  const thirtyDaysAgoIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     .toISOString()
     .slice(0, 10);
 
@@ -21,6 +25,7 @@ export default async function NewTripPage() {
     { data: vehicles },
     { data: rateCards },
     { data: lastTrip },
+    { data: recentTrips },
   ] = await Promise.all([
     supabase
       .from("clients")
@@ -49,6 +54,24 @@ export default async function NewTripPage() {
       .maybeSingle<
         Pick<Trip, "client_id" | "vehicle_id" | "car_type" | "mode" | "billing_method">
       >(),
+    supabase
+      .from("trips")
+      .select("client_id, car_type, mode, plan_name, billing_method, created_at")
+      .eq("company_id", membership.company_id)
+      .gte("date", thirtyDaysAgoIso)
+      .order("created_at", { ascending: false })
+      .limit(100)
+      .returns<
+        Pick<
+          Trip,
+          | "client_id"
+          | "car_type"
+          | "mode"
+          | "plan_name"
+          | "billing_method"
+          | "created_at"
+        >[]
+      >(),
   ]);
 
   return (
@@ -72,6 +95,7 @@ export default async function NewTripPage() {
         vehicles={vehicles ?? []}
         rateCards={rateCards ?? []}
         recentDefaults={lastTrip ?? null}
+        recentTrips={recentTrips ?? []}
       />
     </div>
   );
