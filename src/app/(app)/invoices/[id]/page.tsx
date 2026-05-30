@@ -22,7 +22,11 @@ export default async function InvoiceViewPage({
   const { supabase, membership } = await requireMembership();
   const { id } = await params;
 
-  const [{ data: invoice }, { data: company }] = await Promise.all([
+  const [
+    { data: invoice },
+    { data: company },
+    { count: lineCount },
+  ] = await Promise.all([
     supabase
       .from("invoices")
       .select("*")
@@ -34,6 +38,10 @@ export default async function InvoiceViewPage({
       .select("*")
       .eq("id", membership.company_id)
       .maybeSingle<Company>(),
+    supabase
+      .from("invoice_lines")
+      .select("id", { count: "exact", head: true })
+      .eq("invoice_id", id),
   ]);
 
   if (!invoice || !company) notFound();
@@ -67,7 +75,11 @@ export default async function InvoiceViewPage({
         <InvoiceActions invoice={invoice} />
       </div>
 
-      <InvoicePreview invoiceId={invoice.id} />
+      <InvoicePreview
+        invoice={invoice}
+        company={company}
+        lineCount={lineCount ?? 0}
+      />
     </div>
   );
 }
