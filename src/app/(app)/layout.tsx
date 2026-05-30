@@ -2,6 +2,7 @@ import { requireMembership } from "@/lib/auth";
 import { Sidebar } from "@/components/shell/sidebar";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { TopBar } from "@/components/shell/top-bar";
+import { PwaInstaller } from "@/components/shell/pwa-installer";
 import type { Company } from "@/lib/supabase/types";
 
 export default async function AppLayout({
@@ -33,6 +34,7 @@ export default async function AppLayout({
         </main>
       </div>
       <BottomNav />
+      <PwaInstaller />
     </div>
   );
 }

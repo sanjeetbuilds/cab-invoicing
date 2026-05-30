@@ -20,7 +20,27 @@ export const metadata: Metadata = {
     default: "EasyBills",
     template: "%s — EasyBills",
   },
-  description: "EasyBills — invoicing for cab service businesses.",
+  description: "Cab invoicing for small fleet operators.",
+  applicationName: "EasyBills",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  // iOS Safari PWA tags. Next.js folds these into <head>.
+  appleWebApp: {
+    capable: true,
+    title: "EasyBills",
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 // viewport-fit=cover is what tells iOS Safari to extend the page under
@@ -32,6 +52,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#4f46e5",
 };
 
 export default function RootLayout({
