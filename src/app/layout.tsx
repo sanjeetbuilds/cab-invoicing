@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -21,6 +21,17 @@ export const metadata: Metadata = {
     template: "%s — EasyBills",
   },
   description: "EasyBills — invoicing for cab service businesses.",
+};
+
+// viewport-fit=cover is what tells iOS Safari to extend the page under
+// the notch and home indicator. With that on, our env(safe-area-inset-*)
+// padding rules in the top bar / bottom nav actually receive non-zero
+// values on notched devices, so chrome elements sit clear of the
+// hardware. Without it, iOS pillarboxes the page and the insets are 0.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

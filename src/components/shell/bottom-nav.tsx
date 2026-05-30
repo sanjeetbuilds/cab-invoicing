@@ -13,7 +13,13 @@ export function BottomNav() {
   const onSecondary = !MOBILE_PRIMARY_HREFS.has(pathname);
 
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    // `pb-[env(safe-area-inset-bottom)]` lifts the 56px tab row above
+    // the iPhone home indicator so the tabs stay tappable on devices
+    // with on-screen gesture bars.
+    <nav
+      className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
       <ul className="grid grid-cols-5 h-14">
         {MOBILE_PRIMARY.map((item) => {
           const Icon = item.icon;

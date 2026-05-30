@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { hapticDestructive } from "@/lib/haptics";
 import type { Client } from "@/lib/supabase/types";
 import { deleteClientAction } from "./actions";
 
@@ -29,6 +30,7 @@ export function ClientRowActions({ client }: { client: Client }) {
     setDeleting(true);
     const result = await deleteClientAction(client.id);
     if (result.ok) {
+      hapticDestructive();
       toast.success(`${client.name} deleted.`);
       setConfirmDelete(false);
       router.refresh();

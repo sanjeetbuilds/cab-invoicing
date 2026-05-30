@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { hapticDestructive } from "@/lib/haptics";
 import type { Trip } from "@/lib/supabase/types";
 import { deleteTripAction } from "./actions";
 
@@ -32,6 +33,7 @@ export function TripRowActions({ trip }: { trip: Trip }) {
     setDeleting(true);
     const result = await deleteTripAction(trip.id);
     if (result.ok) {
+      hapticDestructive();
       toast.success("Trip deleted.");
       setConfirmDelete(false);
       router.refresh();

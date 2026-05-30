@@ -24,7 +24,11 @@ export default async function AppLayout({
       <Sidebar companyName={companyName} />
       <div className="flex flex-1 flex-col min-w-0">
         <TopBar companyName={companyName} email={user.email ?? ""} />
-        <main className="flex-1 px-4 py-4 sm:px-6 sm:py-7 pb-20 lg:pb-7">
+        {/* Mobile: bottom padding clears the fixed 56px nav PLUS the
+            iPhone home-indicator inset so the last form / list row is
+            never hidden under the gesture bar. lg+ has a sidebar (no
+            bottom nav) so just a normal py-7 / pb-7. */}
+        <main className="flex-1 px-4 py-4 sm:px-6 sm:py-7 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-7">
           {children}
         </main>
       </div>

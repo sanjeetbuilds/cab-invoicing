@@ -54,6 +54,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/format";
 import { invoiceFilename } from "@/lib/filename";
+import { hapticDestructive, hapticSuccess } from "@/lib/haptics";
 import { sharePdf } from "@/lib/share-pdf";
 import {
   shouldShowFilter,
@@ -486,6 +487,7 @@ function DesktopInvoiceRow({
     });
     setPending(false);
     if (result.ok) {
+      hapticSuccess();
       toast.success(target ? "Marked paid." : "Marked unpaid.");
       setConfirmPaid(null);
       router.refresh();
@@ -499,6 +501,7 @@ function DesktopInvoiceRow({
     const result = await reverseInvoiceAction({ id: invoice.id });
     setPending(false);
     if (result.ok) {
+      hapticDestructive();
       toast.success(`${fullNumber} reversed.`);
       setConfirmReverse(false);
       router.refresh();
@@ -650,6 +653,7 @@ function MobileInvoiceCard({
     });
     setPending(false);
     if (result.ok) {
+      hapticSuccess();
       toast.success(target ? "Marked paid." : "Marked unpaid.");
       setConfirmPaid(null);
       router.refresh();
@@ -663,6 +667,7 @@ function MobileInvoiceCard({
     const result = await reverseInvoiceAction({ id: invoice.id });
     setPending(false);
     if (result.ok) {
+      hapticDestructive();
       toast.success(`${fullNumber} reversed.`);
       setConfirmReverse(false);
       router.refresh();

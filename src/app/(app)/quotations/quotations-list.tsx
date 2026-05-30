@@ -54,6 +54,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { quotationFilename } from "@/lib/filename";
+import { hapticDestructive, hapticSuccess } from "@/lib/haptics";
 import { sharePdf } from "@/lib/share-pdf";
 import {
   shouldShowFilter,
@@ -456,6 +457,7 @@ function DesktopQuotationRow({
     const result = await acceptQuotationAction(quotation.id);
     setPending(false);
     if (result.ok) {
+      hapticSuccess();
       toast.success(`${quotation.number} accepted — rate cards upserted.`);
       setConfirmAccept(false);
       router.refresh();
@@ -469,6 +471,7 @@ function DesktopQuotationRow({
     const result = await deleteQuotationAction(quotation.id);
     setPending(false);
     if (result.ok) {
+      hapticDestructive();
       toast.success(`${quotation.number} deleted.`);
       setConfirmDelete(false);
       router.refresh();
@@ -602,6 +605,7 @@ function MobileQuotationCard({
     const result = await acceptQuotationAction(quotation.id);
     setPending(false);
     if (result.ok) {
+      hapticSuccess();
       toast.success(`${quotation.number} accepted — rate cards upserted.`);
       setConfirmAccept(false);
       router.refresh();
@@ -615,6 +619,7 @@ function MobileQuotationCard({
     const result = await deleteQuotationAction(quotation.id);
     setPending(false);
     if (result.ok) {
+      hapticDestructive();
       toast.success(`${quotation.number} deleted.`);
       setConfirmDelete(false);
       router.refresh();

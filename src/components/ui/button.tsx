@@ -7,7 +7,10 @@ const buttonVariants = cva(
   [
     "inline-flex shrink-0 items-center justify-center gap-1.5",
     "rounded-lg border text-sm font-medium whitespace-nowrap",
-    "transition-colors duration-150 outline-none select-none",
+    // Hover applies on pointer devices; active:scale gives touch users
+    // a visible "pressed" cue (hover never fires on a tap).
+    "transition-[colors,transform] duration-150 outline-none select-none",
+    "active:scale-[0.97]",
     "focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
