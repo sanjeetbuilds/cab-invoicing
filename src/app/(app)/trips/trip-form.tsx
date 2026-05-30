@@ -303,14 +303,16 @@ export function TripForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      {/* Sticky running total — visible while scrolling the form so the
-          user always sees what they're about to commit. */}
+      {/* Sticky running total — chip pinned just under the top strip so
+          the user always sees the number while filling fields. Kept
+          inside the form's natural width (no negative margins) and given
+          symmetric vertical padding for clean alignment. */}
       {activeRate && preview && (
-        <div className="sticky top-11 sm:top-12 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-card border-b border-border shadow-sm flex items-center justify-between gap-3">
-          <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+        <div className="sticky top-12 sm:top-14 z-20 rounded-lg border border-border bg-card shadow-md px-4 py-3 flex items-center justify-between gap-3">
+          <span className="text-[11px] uppercase tracking-wider text-muted-foreground leading-none">
             Trip total
           </span>
-          <span className="font-mono text-lg font-semibold tabular-nums">
+          <span className="font-mono text-lg font-semibold tabular-nums leading-none">
             {formatINR(preview.total)}
           </span>
         </div>

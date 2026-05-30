@@ -560,46 +560,101 @@ export function QuickInvoiceForm({
               />
             )}
 
-            {/* Mode-specific rate fields. Hidden on fixed-price modes; shown
-                inline for local / outstation. */}
-            {mode === "local" && (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Num label="Total kms *" value={totalKms} set={setTotalKms} />
-                  <Num label="Total hrs" value={totalHours} set={setTotalHours} />
-                  <Num label="Driver TA days" value={driverTaDays} set={setDriverTaDays} />
-                  <Num label="Night charges (count)" value={nightCount} set={setNightCount} />
+            {/* Mode-specific RATE inputs. Quick Invoice has no rate card to
+                pull from — the user types the rates inline. The
+                count × rate = amount layout makes the math visible
+                while keeping every value editable. */}
+            <p className="text-xs text-muted-foreground italic -mt-1">
+              Enter rates for this one-time customer. They are not saved to
+              any rate card.
+            </p>
+
+            {mode === "local" && (() => {
+              const totalKmsN = toNum(totalKms);
+              const totalHoursN = toNum(totalHours);
+              const baseKmsN = toNum(baseKms);
+              const baseHoursN = toNum(baseHours);
+              const addlKms = Math.max(0, totalKmsN - baseKmsN);
+              const addlHrs = Math.max(0, totalHoursN - baseHoursN);
+              return (
+                <div className="flex flex-col gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+                    <Num label="Total kms *" value={totalKms} set={setTotalKms} />
+                    <Num label="Total hrs" value={totalHours} set={setTotalHours} />
+                  </div>
+                  {/* Base — the slab line on the invoice. All three
+                      values are editable parameters for this one trip. */}
+                  <div className="rounded-md border border-border bg-muted/30 px-3 py-2 flex flex-col gap-2">
+                    <Label className="text-xs">Base (slab)</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      <Num label="Base rate ₹" value={baseRate} set={setBaseRate} />
+                      <Num label="Base kms" value={baseKms} set={setBaseKms} />
+                      <Num label="Base hours" value={baseHours} set={setBaseHours} />
+                    </div>
+                  </div>
+                  <AutoCountRateRow
+                    label="Additional kms"
+                    unit="km"
+                    qty={addlKms}
+                    qtyFormatter={(n) => `${n} km`}
+                    rate={extraKm}
+                    setRate={setExtraKm}
+                  />
+                  <AutoCountRateRow
+                    label="Additional hrs"
+                    unit="hr"
+                    qty={addlHrs}
+                    qtyFormatter={(n) => `${n} hr`}
+                    rate={extraHour}
+                    setRate={setExtraHour}
+                  />
+                  <EditableCountRateRow
+                    label="Night charges"
+                    unit="night"
+                    count={nightCount}
+                    setCount={setNightCount}
+                    rate={night}
+                    setRate={setNight}
+                  />
+                  <EditableCountRateRow
+                    label="Driver TA"
+                    unit="day"
+                    count={driverTaDays}
+                    setCount={setDriverTaDays}
+                    rate={driverTaRate}
+                    setRate={setDriverTaRate}
+                  />
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <Num label="Base rate ₹" value={baseRate} set={setBaseRate} />
-                  <Num label="Base kms" value={baseKms} set={setBaseKms} />
-                  <Num label="Base hours" value={baseHours} set={setBaseHours} />
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Num label="Extra km ₹" value={extraKm} set={setExtraKm} />
-                  <Num label="Extra hour ₹" value={extraHour} set={setExtraHour} />
-                  <Num label="Night ₹" value={night} set={setNight} />
-                  <Num label="Driver TA ₹ / day" value={driverTaRate} set={setDriverTaRate} />
-                </div>
-              </>
-            )}
+              );
+            })()}
 
             {mode === "outstation" && (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <Num label="Total kms *" value={totalKms} set={setTotalKms} />
-                  <Num label="Driver TA days" value={driverTaDays} set={setDriverTaDays} />
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <Num label="Per km ₹ *" value={perKm} set={setPerKm} />
-                  <Num label="Driver TA ₹ / day" value={driverTaRate} set={setDriverTaRate} />
-                </div>
-              </>
+              <div className="flex flex-col gap-4">
+                <AutoCountRateRow
+                  label="Total kms"
+                  unit="km"
+                  qty={toNum(totalKms)}
+                  qtyFormatter={() => ""}
+                  rate={perKm}
+                  setRate={setPerKm}
+                  countInput={
+                    <Num label="Total kms *" value={totalKms} set={setTotalKms} />
+                  }
+                />
+                <EditableCountRateRow
+                  label="Driver TA"
+                  unit="day"
+                  count={driverTaDays}
+                  setCount={setDriverTaDays}
+                  rate={driverTaRate}
+                  setRate={setDriverTaRate}
+                />
+              </div>
             )}
 
             {isFixed && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="q-plan" className="text-xs">Plan name *</Label>
                     <Input
@@ -614,11 +669,15 @@ export function QuickInvoiceForm({
                     />
                   </div>
                   <Num label="Fixed price ₹ *" value={fixedPrice} set={setFixedPrice} />
-                  <Num label="Driver TA days" value={driverTaDays} set={setDriverTaDays} />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Num label="Driver TA ₹ / day" value={driverTaRate} set={setDriverTaRate} />
-                </div>
+                <EditableCountRateRow
+                  label="Driver TA"
+                  unit="day"
+                  count={driverTaDays}
+                  setCount={setDriverTaDays}
+                  rate={driverTaRate}
+                  setRate={setDriverTaRate}
+                />
                 {mode === "package" && (
                   <div className="flex flex-col gap-2 border-t border-border pt-3">
                     <Label className="text-xs">Price includes</Label>
@@ -653,7 +712,7 @@ export function QuickInvoiceForm({
                     rows={2}
                   />
                 </div>
-              </>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -803,6 +862,122 @@ function Num({
         value={value}
         onChange={(e) => set(e.target.value)}
       />
+    </div>
+  );
+}
+
+/**
+ * Inline [count input] × ₹[rate input]/unit = ₹amount. Both the count
+ * and the rate are editable — Quick Invoice has no rate-card metadata
+ * to inherit from.
+ */
+function EditableCountRateRow({
+  label,
+  unit,
+  count,
+  setCount,
+  rate,
+  setRate,
+}: {
+  label: string;
+  unit: string;
+  count: string;
+  setCount: (v: string) => void;
+  rate: string;
+  setRate: (v: string) => void;
+}) {
+  const countN = toNum(count);
+  const rateN = toNum(rate);
+  const amount = countN > 0 && rateN > 0 ? Math.round(countN * rateN * 100) / 100 : 0;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-xs">{label}</Label>
+      <div className="flex items-center gap-2 flex-wrap">
+        <Input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          className="w-20 shrink-0"
+          value={count}
+          onChange={(e) => setCount(e.target.value)}
+          aria-label={`${label} count`}
+        />
+        <span className="text-xs text-muted-foreground">×</span>
+        <span className="text-xs text-muted-foreground">₹</span>
+        <Input
+          type="number"
+          inputMode="decimal"
+          step="any"
+          min={0}
+          className="w-28 shrink-0"
+          value={rate}
+          onChange={(e) => setRate(e.target.value)}
+          aria-label={`${label} rate`}
+        />
+        <span className="text-xs text-muted-foreground">/ {unit}</span>
+        <span className="text-xs text-muted-foreground">=</span>
+        <span className="font-mono font-semibold tabular-nums text-sm">
+          {formatINR(amount)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Inline (auto count) × ₹[rate input]/unit = ₹amount. The count is
+ * computed elsewhere (e.g. total kms − base kms) and shown read-only;
+ * the rate is editable. Optional countInput lets callers supply their
+ * own input (e.g. outstation where the count IS the editable Total kms).
+ */
+function AutoCountRateRow({
+  label,
+  unit,
+  qty,
+  qtyFormatter,
+  rate,
+  setRate,
+  countInput,
+}: {
+  label: string;
+  unit: string;
+  qty: number;
+  qtyFormatter: (n: number) => string;
+  rate: string;
+  setRate: (v: string) => void;
+  countInput?: React.ReactNode;
+}) {
+  const rateN = toNum(rate);
+  const amount = qty > 0 && rateN > 0 ? Math.round(qty * rateN * 100) / 100 : 0;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-xs">{label}</Label>
+      <div className="flex items-center gap-2 flex-wrap">
+        {countInput ? (
+          countInput
+        ) : (
+          <span className="font-mono text-sm tabular-nums min-w-12 text-foreground/80">
+            {qtyFormatter(qty)}
+          </span>
+        )}
+        <span className="text-xs text-muted-foreground">×</span>
+        <span className="text-xs text-muted-foreground">₹</span>
+        <Input
+          type="number"
+          inputMode="decimal"
+          step="any"
+          min={0}
+          className="w-28 shrink-0"
+          value={rate}
+          onChange={(e) => setRate(e.target.value)}
+          aria-label={`${label} rate`}
+        />
+        <span className="text-xs text-muted-foreground">/ {unit}</span>
+        <span className="text-xs text-muted-foreground">=</span>
+        <span className="font-mono font-semibold tabular-nums text-sm">
+          {formatINR(amount)}
+        </span>
+      </div>
     </div>
   );
 }
