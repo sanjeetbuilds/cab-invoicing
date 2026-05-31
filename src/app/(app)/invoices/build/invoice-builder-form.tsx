@@ -142,7 +142,9 @@ export function InvoiceBuilderForm({
 
     if (result.ok) {
       toast.success(`Invoice #${result.invoice_number} issued.`);
-      router.push("/invoices");
+      // Land on the in-shell PDF viewer so the user can preview /
+      // share without leaving the app.
+      router.push(`/invoices/${result.invoice_id}`);
     } else {
       toast.error(result.error);
     }

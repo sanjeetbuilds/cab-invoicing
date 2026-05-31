@@ -322,8 +322,10 @@ export function QuickInvoiceForm({
     });
     if (result.ok) {
       toast.success(`Invoice #${result.invoice_number} issued.`);
-      window.open(`/api/invoices/${result.invoice_id}/pdf`, "_blank", "noopener");
-      router.push("/invoices");
+      // Land on the in-shell PDF viewer so the user can preview / share
+      // without leaving the app (and without spawning a new tab that
+      // gets trapped inside an installed PWA).
+      router.push(`/invoices/${result.invoice_id}`);
     } else {
       toast.error(result.error);
       setPending(false);

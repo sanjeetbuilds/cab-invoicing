@@ -415,12 +415,16 @@ function DesktopInvoiceRow({
 
   const fullNumber = `${prefix}${invoice.invoice_number}`;
   const pdfUrl = `/api/invoices/${invoice.id}/pdf`;
+  const viewUrl = `/invoices/${invoice.id}`;
   const downloadName = invoiceFilename(fullNumber, invoice.client_name);
   const reversed = invoice.status === "reversed";
   const paid = invoice.status === "paid";
 
   function openPdf() {
-    window.open(pdfUrl, "_blank", "noopener,noreferrer");
+    // Same-tab navigation to the in-shell PDF viewer keeps the user
+    // inside the app — critical on installed PWAs where a new tab
+    // strands them in the system browser with no way back.
+    router.push(viewUrl);
   }
 
   // WhatsApp / email / Drive share — hands the file blob to the OS
@@ -587,12 +591,14 @@ function MobileInvoiceCard({
 
   const fullNumber = `${prefix}${invoice.invoice_number}`;
   const pdfUrl = `/api/invoices/${invoice.id}/pdf`;
+  const viewUrl = `/invoices/${invoice.id}`;
   const downloadName = invoiceFilename(fullNumber, invoice.client_name);
   const reversed = invoice.status === "reversed";
   const paid = invoice.status === "paid";
 
   function openPdf() {
-    window.open(pdfUrl, "_blank", "noopener,noreferrer");
+    // Same-tab navigation — see DesktopInvoiceRow above.
+    router.push(viewUrl);
   }
 
   async function shareInvoicePdf() {

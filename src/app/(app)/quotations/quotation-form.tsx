@@ -186,7 +186,9 @@ export function QuotationForm({
 
     if (result.ok) {
       toast.success(editing ? "Quotation saved." : "Quotation created.");
-      router.push("/quotations");
+      // Land on the in-shell PDF viewer (no new-tab strand). Both
+      // create + update return the row id under `id`.
+      router.push(`/quotations/${result.id}`);
       router.refresh();
     } else {
       toast.error(result.error);

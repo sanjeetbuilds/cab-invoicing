@@ -1,14 +1,44 @@
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { requireMembership } from "@/lib/auth";
+import { PdfViewerShell } from "@/components/ui/pdf-viewer-shell";
+import { invoiceFilename } from "@/lib/filename";
+import type { Company, Invoice } from "@/lib/supabase/types";
 
-// The invoice listing IS the detail view now — mobile cards show every
-// piece of context the old summary page used to, and the laptop table
-// row click opens the PDF directly. This route stays only as a thin
-// redirect to the PDF so old bookmarks land on something useful.
-export default async function InvoiceLegacyDetailPage({
+export const dynamic = "force-dynamic";
+
+export default async function InvoiceViewerPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { supabase, membership } = await requireMembership();
   const { id } = await params;
-  redirect(`/api/invoices/${id}/pdf`);
+
+  const [{ data: invoice }, { data: company }] = await Promise.all([
+    supabase
+      .from("invoices")
+      .select("invoice_number, client_name")
+      .eq("id", id)
+      .eq("company_id", membership.company_id)
+      .maybeSingle<Pick<Invoice, "invoice_number" | "client_name">>(),
+    supabase
+      .from("companies")
+      .select("invoice_prefix")
+      .eq("id", membership.company_id)
+      .maybeSingle<Pick<Company, "invoice_prefix">>(),
+  ]);
+
+  if (!invoice) notFound();
+
+  const fullNumber = `${company?.invoice_prefix ?? ""}${invoice.invoice_number}`;
+  const filename = invoiceFilename(fullNumber, invoice.client_name);
+
+  return (
+    <PdfViewerShell
+      pdfUrl={`/api/invoices/${id}/pdf`}
+      filename={filename}
+      title={`Invoice ${fullNumber}`}
+      fallbackBackHref="/invoices"
+    />
+  );
 }

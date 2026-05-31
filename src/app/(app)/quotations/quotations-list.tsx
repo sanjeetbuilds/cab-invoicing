@@ -427,12 +427,15 @@ function DesktopQuotationRow({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const pdfUrl = `/api/quotations/${quotation.id}/pdf`;
+  const viewUrl = `/quotations/${quotation.id}`;
   const downloadName = quotationFilename(quotation.number, clientName);
   const editUrl = `/quotations/${quotation.id}/edit`;
   const accepted = quotation.status === "accepted";
 
   function openPdf() {
-    window.open(pdfUrl, "_blank", "noopener,noreferrer");
+    // Same-tab navigation to the in-shell viewer — keeps installed
+    // PWA users from getting stranded in the system browser.
+    router.push(viewUrl);
   }
 
   async function shareQuotationPdf() {
@@ -575,12 +578,14 @@ function MobileQuotationCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const pdfUrl = `/api/quotations/${quotation.id}/pdf`;
+  const viewUrl = `/quotations/${quotation.id}`;
   const downloadName = quotationFilename(quotation.number, clientName);
   const editUrl = `/quotations/${quotation.id}/edit`;
   const accepted = quotation.status === "accepted";
 
   function openPdf() {
-    window.open(pdfUrl, "_blank", "noopener,noreferrer");
+    // Same-tab navigation — see DesktopQuotationRow above.
+    router.push(viewUrl);
   }
 
   async function shareQuotationPdf() {
