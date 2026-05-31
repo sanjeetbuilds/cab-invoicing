@@ -3,15 +3,19 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
+// latin-ext is the subset that carries ₹ (U+20B9). Without it the
+// browser falls back to a system font for the rupee glyph, which
+// renders at a different size and baseline — Inter and JetBrains
+// Mono both include ₹ once latin-ext is loaded.
 const inter = Inter({
   variable: "--font-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   display: "swap",
 });
 
 const mono = JetBrains_Mono({
   variable: "--font-mono",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   display: "swap",
 });
 

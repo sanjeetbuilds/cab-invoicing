@@ -115,8 +115,10 @@ export default async function DashboardPage() {
 
       {isFresh && <SeedBanner />}
 
-      {/* 4 stat tiles — 2-up on mobile, 4-up at lg+. */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      {/* 4 stat tiles — 2-up on mobile, 4-up at lg+. auto-rows-fr +
+          h-full on the tiles equalises height across rows so a tile
+          with a one-line hint doesn't sit shorter than its neighbour. */}
+      <div className="grid grid-cols-2 auto-rows-fr gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           label="Unbilled trips"
           value={String(unbilledCount)}
@@ -232,20 +234,22 @@ function StatCard({
   hint: string;
   href?: string;
 }) {
-  // FitText keeps a long ₹X,XX,XXX.00 amount on one line — it
-  // measures the rendered width on mount and shrinks the font from
-  // 24px down to 16px before letting the number wrap.
-  const body = (
+  // Card fills the grid cell (h-full) and distributes its three
+  // children top/middle/bottom (justify-between) so all four tiles
+  // share an identical 140-px-or-more frame. FitText keeps the
+  // number on one line by shrinking ₹X,XX,XXX.00 from 24 px down
+  // to 16 px before it would otherwise wrap.
+  const card = (
     <Card
       className={cn(
-        "gap-0",
+        "h-full min-h-[140px] gap-0 flex flex-col justify-between",
         href && "hover:shadow-card-hover transition-shadow",
       )}
     >
       <p className="text-[11px] uppercase tracking-[0.05em] text-muted-foreground font-medium">
         {label}
       </p>
-      <p className="mt-3 overflow-hidden">
+      <p className="overflow-hidden">
         <FitText
           text={value}
           maxPx={24}
@@ -253,15 +257,15 @@ function StatCard({
           className="font-mono font-semibold tabular-nums text-foreground"
         />
       </p>
-      <p className="mt-2 text-xs text-muted-foreground">{hint}</p>
+      <p className="text-xs text-muted-foreground">{hint}</p>
     </Card>
   );
   return href ? (
-    <Link href={href} className="block">
-      {body}
+    <Link href={href} className="block h-full">
+      {card}
     </Link>
   ) : (
-    body
+    card
   );
 }
 
