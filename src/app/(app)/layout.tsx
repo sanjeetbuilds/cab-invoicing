@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/shell/bottom-nav";
 import { TopBar } from "@/components/shell/top-bar";
 import { PwaInstaller } from "@/components/shell/pwa-installer";
 import { AppShellProvider } from "@/components/shell/app-shell-context";
+import { TourLauncher } from "@/components/shell/tour-launcher";
 import type { BrandMode, Company } from "@/lib/supabase/types";
 
 export default async function AppLayout({
@@ -54,6 +55,7 @@ export default async function AppLayout({
         </div>
         <BottomNav />
         <PwaInstaller />
+        <TourLauncher />
       </div>
     </AppShellProvider>
   );

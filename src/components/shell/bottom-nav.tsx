@@ -33,10 +33,18 @@ export function BottomNav() {
           const Icon = item.icon;
           const active =
             pathname === item.href || pathname.startsWith(item.href + "/");
+          // data-tour anchor: matches sidebar tagging so the first-run
+          // tour can point at the right bottom-tab on mobile.
+          const tourKey = item.href.startsWith("/clients")
+            ? "nav-clients"
+            : item.href.startsWith("/invoices")
+              ? "nav-invoices"
+              : undefined;
           return (
             <li key={item.href} className="flex">
               <Link
                 href={item.href}
+                data-tour={tourKey}
                 className="flex flex-1 flex-col items-center justify-center"
               >
                 <span
@@ -57,6 +65,7 @@ export function BottomNav() {
         <li className="flex">
           <Link
             href="/more"
+            data-tour="nav-bulk-import"
             className="flex flex-1 flex-col items-center justify-center"
             aria-label="More"
           >

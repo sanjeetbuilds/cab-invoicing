@@ -48,10 +48,20 @@ export function Sidebar({
           const Icon = item.icon;
           const active =
             pathname === item.href || pathname.startsWith(item.href + "/");
+          // data-tour anchor: the first-run tour points at Clients,
+          // Bulk import, and Invoices in the sidebar.
+          const tourKey = item.href.startsWith("/clients")
+            ? "nav-clients"
+            : item.href.startsWith("/bulk-import")
+              ? "nav-bulk-import"
+              : item.href.startsWith("/invoices")
+                ? "nav-invoices"
+                : undefined;
           return (
             <Link
               key={item.href}
               href={item.href}
+              data-tour={tourKey}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
                 active

@@ -7,6 +7,7 @@ import { BrandingForm } from "./branding-form";
 import { NumberingForm } from "./numbering-form";
 import { TermsForm } from "./terms-form";
 import { TeamSection } from "./team-section";
+import { ReplayTourSection } from "./replay-tour";
 import type { TeamMemberRow } from "./page";
 
 export function SettingsTabs({
@@ -30,6 +31,7 @@ export function SettingsTabs({
       <TabsContent value="company" className="pt-4 flex flex-col gap-6">
         <CompanyForm company={company} />
         <BrandingForm company={company} />
+        <ReplayTourSection />
       </TabsContent>
       <TabsContent value="numbering" className="pt-4">
         <NumberingForm company={company} />

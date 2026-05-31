@@ -139,7 +139,7 @@ export function SetupChecklist({ status }: { status: SetupStatus }) {
   }
 
   return (
-    <Card>
+    <Card data-tour="setup-checklist">
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
