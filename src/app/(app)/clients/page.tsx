@@ -14,6 +14,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { SamplePreview } from "@/components/ui/sample-preview";
+import { ClientsSampleRows } from "@/components/ui/sample-rows";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/lib/supabase/types";
 import { AddClientButton } from "./add-client-button";
@@ -118,14 +120,17 @@ export default async function ClientsPage({
       )}
 
       {clients && clients.length === 0 && (
-        <EmptyState
+        <SamplePreview
+          pageKey="clients"
           icon={Users}
-          title="No clients yet."
-          body="Add the companies you bill. State drives intra-state and inter-state GST on every invoice."
-          primary={{ label: "Add client", href: "/clients/new" }}
+          title="This is where your clients live."
+          body="Add the companies you bill. State drives intra-state and inter-state GST."
+          primary={{ label: "Add your first client", href: "/clients/new" }}
           importHref="/bulk-import?scope=clients"
           setupHint={{ step: 2, total: 6 }}
-        />
+        >
+          <ClientsSampleRows />
+        </SamplePreview>
       )}
 
       {clients && clients.length > 0 && (

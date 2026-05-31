@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Truck, Upload } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SamplePreview } from "@/components/ui/sample-preview";
+import { VehiclesSampleRows } from "@/components/ui/sample-rows";
 import { requireMembership } from "@/lib/auth";
 import {
   Table,
@@ -51,14 +53,17 @@ export default async function VehiclesPage() {
       )}
 
       {vehicles && vehicles.length === 0 && (
-        <EmptyState
+        <SamplePreview
+          pageKey="vehicles"
           icon={Truck}
-          title="No vehicles yet."
+          title="This is where your fleet lives."
           body="Add the cars you use for trips. Every trip is linked to one vehicle."
-          primary={{ label: "Add vehicle", href: "/vehicles/new" }}
+          primary={{ label: "Add your first vehicle", href: "/vehicles/new" }}
           importHref="/bulk-import?scope=vehicles"
           setupHint={{ step: 3, total: 6 }}
-        />
+        >
+          <VehiclesSampleRows />
+        </SamplePreview>
       )}
 
       {vehicles && vehicles.length > 0 && (

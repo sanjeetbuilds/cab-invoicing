@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { Upload } from "lucide-react";
+import { IndianRupee, Upload } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
+import { SamplePreview } from "@/components/ui/sample-preview";
+import { RateCardsSampleRows } from "@/components/ui/sample-rows";
 import {
   Table,
   TableBody,
@@ -95,7 +97,21 @@ export default async function RateCardsPage() {
         </Card>
       )}
 
-      {clientList.map((c) => {
+      {clientList.length > 0 && cardList.length === 0 && (
+        <SamplePreview
+          pageKey="rate-cards"
+          icon={IndianRupee}
+          title="This is where your rates live."
+          body="Set Local and Outstation rates per client. Each invoice uses the right rate automatically."
+          primary={{ label: "Add your first rate card", href: "/rate-cards/new" }}
+          importHref="/bulk-import?scope=rate_cards"
+          setupHint={{ step: 4, total: 6 }}
+        >
+          <RateCardsSampleRows />
+        </SamplePreview>
+      )}
+
+      {cardList.length > 0 && clientList.map((c) => {
         const unsorted = byClient.get(c.id) ?? [];
         // Group cards by mode in fixed order so Local → Outstation →
         // Transfer → Package render top to bottom; within Transfer /

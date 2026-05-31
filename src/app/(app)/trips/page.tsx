@@ -12,6 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { SamplePreview } from "@/components/ui/sample-preview";
+import { TripsSampleRows } from "@/components/ui/sample-rows";
+import { Car } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   Client,
@@ -211,20 +214,32 @@ export default async function TripsPage({
         <p className="text-sm text-destructive">Failed to load: {tripsError.message}</p>
       )}
 
-      {!tripsError && tripList.length === 0 && (
+      {!tripsError && tripList.length === 0 && noPrereqs && (
         <Card>
           <CardContent className="py-12 px-4 text-center flex flex-col items-center gap-3">
-            <h2 className="text-base font-semibold">
-              {status === "uninvoiced" ? "All caught up." : "No trips yet."}
-            </h2>
+            <h2 className="text-base font-semibold">No trips yet.</h2>
             <p className="text-sm text-muted-foreground max-w-sm">
-              {status === "uninvoiced"
-                ? "No trips waiting to be billed."
-                : "Add your first trip to put it on the next invoice."}
+              Add a client and a vehicle above first.
             </p>
-            {!noPrereqs && <AddTripButton disabled={false} />}
           </CardContent>
         </Card>
+      )}
+
+      {!tripsError && tripList.length === 0 && !noPrereqs && (
+        <SamplePreview
+          pageKey="trips"
+          icon={Car}
+          title="This is where your trips live."
+          body={
+            status === "uninvoiced"
+              ? "Log each duty here. Trips become lines on the next invoice."
+              : "Log each duty here. Filtered view, nothing matches yet."
+          }
+          primary={{ label: "Add your first trip", href: "/trips/new" }}
+          setupHint={{ step: 5, total: 6 }}
+        >
+          <TripsSampleRows />
+        </SamplePreview>
       )}
 
       {tripList.length > 0 && (

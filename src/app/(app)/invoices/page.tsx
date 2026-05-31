@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Plus, Zap } from "lucide-react";
+import { Plus, Receipt, Zap } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
+import { SamplePreview } from "@/components/ui/sample-preview";
+import { InvoicesSampleRows } from "@/components/ui/sample-rows";
 import type { Client, Invoice } from "@/lib/supabase/types";
 import { InvoicesList } from "./invoices-list";
 
@@ -93,18 +95,16 @@ export default async function InvoicesPage() {
       )}
 
       {!error && list.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 px-4 text-center flex flex-col items-center gap-3">
-            <h2 className="text-base font-semibold">No invoices yet.</h2>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              Make your first invoice.
-            </p>
-            <Link href="/invoices/build" className={buttonVariants()}>
-              <Plus className="h-4 w-4" />
-              Make first invoice
-            </Link>
-          </CardContent>
-        </Card>
+        <SamplePreview
+          pageKey="invoices"
+          icon={Receipt}
+          title="This is where your invoices live."
+          body="Pick a client's unbilled trips and turn them into one bill."
+          primary={{ label: "Make your first invoice", href: "/invoices/build" }}
+          setupHint={{ step: 6, total: 6 }}
+        >
+          <InvoicesSampleRows />
+        </SamplePreview>
       ) : (
         <InvoicesList
           invoices={list}
