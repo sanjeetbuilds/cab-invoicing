@@ -9,7 +9,7 @@ import { BrandDisplay } from "./brand-display";
 import type { BrandMode } from "@/lib/supabase/types";
 
 /**
- * Desktop sidebar — shows every navigation item directly. Vertical
+ * Desktop sidebar, shows every navigation item directly. Vertical
  * space is plentiful at lg+, so hiding items behind a "More" grouping
  * just adds clicks. The mobile bottom nav still uses the 5-tab + More
  * pattern because that's the only thing that fits a thumb-reach row.

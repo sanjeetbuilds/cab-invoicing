@@ -34,7 +34,7 @@ import { RateCardRowActions } from "./rate-card-row-actions";
 export const metadata = { title: "Rate cards" };
 
 function fmt(n: number | null) {
-  return n == null ? "—" : formatINR(n);
+  return n == null ? "-" : formatINR(n);
 }
 
 export default async function RateCardsPage() {
@@ -158,8 +158,8 @@ export default async function RateCardsPage() {
                               {r.mode === "local" && (
                                 <div className="flex flex-col items-end gap-1">
                                   <span className="font-mono">
-                                    Base {fmt(r.base_rate)} · {r.base_kms ?? "—"}km/
-                                    {r.base_hours ?? "—"}hr
+                                    Base {fmt(r.base_rate)} · {r.base_kms ?? "-"}km/
+                                    {r.base_hours ?? "-"}hr
                                   </span>
                                   <span className="font-mono text-muted-foreground">
                                     +{fmt(r.extra_km)}/km · +{fmt(r.extra_hour)}/hr ·

@@ -46,7 +46,7 @@ function effectiveBillingMethod(t: Trip): "slab" | "per_km" {
   if (t.mode === "outstation") {
     return t.billing_method === "slab" ? "slab" : "per_km";
   }
-  return "slab"; // transfer / package — unused by trip-lines for fixed-price
+  return "slab"; // transfer / package, unused by trip-lines for fixed-price
 }
 
 function rateKeyFor(
@@ -150,7 +150,7 @@ export default async function TripsPage({
 
   const noPrereqs = clientList.length === 0 || vehicleList.length === 0;
   // Status pills earn their space only when there's at least one of each
-  // — otherwise switching tabs can't change what's shown.
+  //, otherwise switching tabs can't change what's shown.
   const showStatusPills =
     (invoicedCount ?? 0) > 0 && (uninvoicedCount ?? 0) > 0;
 
@@ -269,7 +269,7 @@ export default async function TripsPage({
                       )}
                     >
                       <TableCell className="font-mono">{fmtDate(t.date)}</TableCell>
-                      <TableCell className="font-medium">{c?.name ?? "—"}</TableCell>
+                      <TableCell className="font-medium">{c?.name ?? "-"}</TableCell>
                       <TableCell>
                         {v ? (
                           <span
@@ -289,7 +289,7 @@ export default async function TripsPage({
                             )}
                           </span>
                         ) : (
-                          "—"
+                          "-"
                         )}
                       </TableCell>
                       <TableCell>
@@ -306,7 +306,7 @@ export default async function TripsPage({
                       <TableCell className="text-center text-xs">
                         {t.driver_ta > 0 && <span>TA×{t.driver_ta} </span>}
                         {t.night && <span>· night</span>}
-                        {t.driver_ta === 0 && !t.night && "—"}
+                        {t.driver_ta === 0 && !t.night && "-"}
                       </TableCell>
                       <TableCell className="text-right font-mono">
                         {needsRate ? (
@@ -365,9 +365,9 @@ export default async function TripsPage({
                 >
                   <CardContent className="py-3 flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{c?.name ?? "—"}</p>
+                      <p className="font-medium truncate">{c?.name ?? "-"}</p>
                       <p className="text-xs text-muted-foreground inline-flex items-center gap-2">
-                        {fmtDate(t.date)} · {v?.number ?? "—"} · {t.car_type}
+                        {fmtDate(t.date)} · {v?.number ?? "-"} · {t.car_type}
                         {v && v.type !== t.car_type && (
                           <span
                             title={`Override: billed as ${t.car_type} (vehicle is actually ${v.type}).`}

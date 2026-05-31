@@ -50,7 +50,7 @@ export function Tour({
 
   const step = steps[index];
   // Sidebar steps default to "right" but the same data-tour key
-  // matches a bottom-nav tab on mobile — flip to "top" there so the
+  // matches a bottom-nav tab on mobile, flip to "top" there so the
   // bubble sits above the tab instead of off-screen to the side.
   const isNarrow = viewport.w < 768;
   let placement = step?.placement ?? "bottom";

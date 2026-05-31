@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Standard page header. Mobile: smaller title, hidden subtitle, action
- * button sits inline with the title — the goal is to keep the first
+ * button sits inline with the title, the goal is to keep the first
  * content row of the page above the fold on a typical phone. Desktop:
  * larger title with subtitle for context.
  */

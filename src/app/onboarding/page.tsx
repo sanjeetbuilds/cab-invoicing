@@ -22,7 +22,7 @@ export default async function OnboardingPage() {
   if (!user) redirect("/sign-in");
 
   // First: claim any pending team invite on this email. If we claim one,
-  // they're now a member of someone else's company — skip onboarding.
+  // they're now a member of someone else's company, skip onboarding.
   if (user.email) {
     await claimPendingInvites(user.id, user.email);
   }

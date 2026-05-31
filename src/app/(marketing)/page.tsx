@@ -7,12 +7,12 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
-  title: "EasyBills — Invoicing for cab operators",
+  title: "EasyBills, Invoicing for cab operators",
   description:
-    "EasyBills helps small fleet operators generate GST-ready invoices, manage rate cards, and bill corporate clients — all in one place.",
+    "EasyBills helps small fleet operators generate GST-ready invoices, manage rate cards, and bill corporate clients, all in one place.",
 };
 
-// Marketing page — server-rendered, no auth required. Signed-in users
+// Marketing page, server-rendered, no auth required. Signed-in users
 // bounce straight to their dashboard; signed-out users see the pitch.
 export default async function LandingPage() {
   const supabase = await createClient();
@@ -43,7 +43,7 @@ function Hero() {
           </h1>
           <p className="text-base sm:text-lg text-foreground/70 leading-relaxed max-w-xl">
             EasyBills helps small fleet operators generate GST-ready invoices,
-            manage rate cards, and bill corporate clients — all in one place.
+            manage rate cards, and bill corporate clients, all in one place.
             No Excel templates, no rate-card confusion, no month-end panic.
           </p>
           <div className="flex flex-col gap-3 mt-2">
@@ -81,7 +81,7 @@ function Hero() {
 }
 
 /**
- * Inline visual mockup of the EasyBills invoice — uses the same column
+ * Inline visual mockup of the EasyBills invoice, uses the same column
  * structure and monospace numerics as the real PDF so the screenshot
  * feels truthful. All data is anonymized: "Sample Client Pvt Ltd",
  * "Your Company", placeholder GSTIN.
@@ -148,12 +148,12 @@ function InvoiceMockup() {
           </div>
 
           {[
-            { d: "12/5", p: "80kms/8hrs", q: "—", r: "1,500", a: "1,500" },
+            { d: "12/5", p: "80kms/8hrs", q: "-", r: "1,500", a: "1,500" },
             { d: "", p: "Additional kms", q: "69", r: "15", a: "1,035" },
             { d: "", p: "Additional hrs", q: "1.5", r: "100", a: "150" },
             { d: "", p: "Night Charges", q: "1", r: "300", a: "300" },
             { d: "18/5", p: "Airport T3 Drop", q: "1", r: "1,500", a: "1,500" },
-            { d: "22/5", p: "80kms/8hrs", q: "—", r: "1,500", a: "1,500" },
+            { d: "22/5", p: "80kms/8hrs", q: "-", r: "1,500", a: "1,500" },
             { d: "", p: "Additional kms", q: "45", r: "15", a: "675" },
           ].map((row, i) => (
             <div
@@ -178,11 +178,11 @@ function InvoiceMockup() {
             </div>
             <div className="flex justify-between text-[10px] text-muted-foreground">
               <span>CGST @ 2.5% Under RCM</span>
-              <span>—</span>
+              <span>-</span>
             </div>
             <div className="flex justify-between text-[10px] text-muted-foreground">
               <span>SGST @ 2.5% Under RCM</span>
-              <span>—</span>
+              <span>-</span>
             </div>
             <div className="flex justify-between text-[11px] font-bold border-t border-foreground mt-1 pt-1">
               <span>Net Amount</span>
@@ -206,7 +206,7 @@ function Problems() {
     {
       icon: Receipt,
       title: "GST and RCM confusion",
-      body: "CGST, SGST, IGST, RCM — and your corporate clients want it formatted just right.",
+      body: "CGST, SGST, IGST, RCM, and your corporate clients want it formatted just right.",
       fix: "EasyBills handles GST automatically based on the client's state. Every time.",
     },
     {

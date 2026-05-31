@@ -66,7 +66,7 @@ const invoice: Invoice = {
 // Lines mirror what invoice-builder actually emits for: one Local FHPL
 // duty (149 km, 9.5 hr, 1 night) + one Transfer (Airport T3 Drop, fixed).
 const lines: InvoiceLine[] = [
-  // Local — "Total 149kms" header row (over base kms), then slab line
+  // Local, "Total 149kms" header row (over base kms), then slab line
   { id: "l1a", invoice_id: invoice.id, trip_id: "trip-local", date: "10/5/26",
     vehicle_label: "9083 Sonet", hsn_code: "996601",
     particulars: "Total 149kms", qty: null, rate: null,
@@ -88,7 +88,7 @@ const lines: InvoiceLine[] = [
     particulars: "Night Charges", qty: 1, rate: 300,
     amount: 300, sort_order: 4 },
 
-  // Transfer — fixed-price duty: qty=1, rate=fixed_price
+  // Transfer, fixed-price duty: qty=1, rate=fixed_price
   { id: "l5", invoice_id: invoice.id, trip_id: "trip-transfer", date: "15/5/26",
     vehicle_label: "9083 Sonet", hsn_code: "996601",
     particulars: "Airport T3 Drop", qty: 1, rate: 1500,

@@ -1,5 +1,5 @@
 /**
- * Pure @react-pdf JSX for the invoice. Does NOT register fonts —
+ * Pure @react-pdf JSX for the invoice. Does NOT register fonts -
  * the caller (server route or client PDFViewer wrapper) registers
  * "NotoSansMono" with the appropriate font src first.
  *
@@ -37,7 +37,7 @@ export interface InvoicePdfProps {
   >;
   invoice: Invoice;
   lines: InvoiceLine[];
-  /** Optional — defaults to text_only when omitted. */
+  /** Optional, defaults to text_only when omitted. */
   brand?: PdfBrand;
 }
 
@@ -55,7 +55,7 @@ const PT = (mm: number) => (mm / 25.4) * 72;
 // so the fixed bottom footer + totals + carry row on the last page don't
 // overlap. Reserve ~4 rows on every non-last page for the
 // Page subtotal / Carried forward block so it lands on the same page as
-// the trips it summarises — otherwise wrap={false} pushes it to a fresh
+// the trips it summarises, otherwise wrap={false} pushes it to a fresh
 // page, leaving an empty page in the middle of the invoice.
 const FIRST_PAGE_BUDGET = 26; // header + parties band + carry row
 const NEXT_PAGE_BUDGET = 40;  // brought-fwd row + carry row
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.ruleSoft,
   },
   // NotoSansMono is registered without an italic face, so do NOT set
-  // fontStyle: "italic" here — @react-pdf throws "Could not resolve font"
+  // fontStyle: "italic" here, @react-pdf throws "Could not resolve font"
   // on multi-page invoices (which are the only ones that render carry rows).
   carryRowBox: {
     flexDirection: "row",
@@ -270,7 +270,7 @@ function groupLines(lines: InvoiceLine[]): LineGroup[] {
  * Parse the display date string ("17/4/26" or "15/4/26\nto\n16/4/26")
  * into a YYYYMMDD integer for chronological sorting. Multi-day trips
  * sort by their START date. Returns 0 for null/unparseable so those
- * groups land at the top — unusual but stable.
+ * groups land at the top, unusual but stable.
  */
 function dateSortKey(s: string | null | undefined): number {
   if (!s) return 0;
@@ -396,7 +396,7 @@ function CarryForwardRow({
   // Without it @react-pdf was splitting them across pages: the subtotal
   // line landed at the bottom of page 1, "Carried forward" got pushed to
   // a fresh page on its own, and the next logical page started on page 3
-  // — yielding a near-empty page 2 in multi-page invoices.
+  //, yielding a near-empty page 2 in multi-page invoices.
   return (
     <View wrap={false} style={styles.carryRow}>
       <View style={{ width: 260 }}>
@@ -435,7 +435,7 @@ function TotalsBlock({ invoice }: { invoice: Invoice }) {
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>{cgstLabel}</Text>
               <Text style={isRcm ? styles.totalsValueMuted : {}}>
-                {isRcm ? "—" : formatINRBlank(invoice.cgst)}
+                {isRcm ? "-" : formatINRBlank(invoice.cgst)}
               </Text>
             </View>
           )}
@@ -443,7 +443,7 @@ function TotalsBlock({ invoice }: { invoice: Invoice }) {
             <View style={styles.totalsRow}>
               <Text style={styles.totalsLabel}>{sgstLabel}</Text>
               <Text style={isRcm ? styles.totalsValueMuted : {}}>
-                {isRcm ? "—" : formatINRBlank(invoice.sgst)}
+                {isRcm ? "-" : formatINRBlank(invoice.sgst)}
               </Text>
             </View>
           )}
@@ -507,7 +507,7 @@ function HeaderBand({
 
   return (
     <>
-      {/* Top band — brand left, TAX INVOICE / Original for Recipient right. */}
+      {/* Top band, brand left, TAX INVOICE / Original for Recipient right. */}
       <View style={styles.topBand}>
         <PdfBrandHeading
           brand={brand}
@@ -520,7 +520,7 @@ function HeaderBand({
         </View>
       </View>
 
-      {/* 3-column parties band — BILLED BY · BILLED TO · INVOICE. */}
+      {/* 3-column parties band, BILLED BY · BILLED TO · INVOICE. */}
       <View style={styles.parties}>
         <View style={styles.partyCol3}>
           <Text style={styles.partyLabel}>BILLED BY</Text>

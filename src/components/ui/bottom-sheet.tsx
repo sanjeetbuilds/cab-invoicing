@@ -7,12 +7,12 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Mobile bottom-sheet pattern — slides up from the bottom edge of the
+ * Mobile bottom-sheet pattern, slides up from the bottom edge of the
  * viewport, dim backdrop, tap-outside or X to close. Wraps base-ui's
  * Dialog so focus trapping + escape-to-close + scroll lock are free.
  *
  * On desktop (md+) the parent should typically render its content
- * inline instead of using this sheet — so this component is meant to
+ * inline instead of using this sheet, so this component is meant to
  * be conditionally rendered (e.g. only shown on small viewports).
  */
 export function BottomSheet({

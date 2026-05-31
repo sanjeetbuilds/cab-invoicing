@@ -36,7 +36,7 @@ const MODE_OPTIONS: { value: BrandMode; label: string; hint: string }[] = [
 
 /** Browse-friendly resize: max 800px on the longest side. PNG preserves
  *  transparency; we always normalize to PNG when we resize, but keep the
- *  original blob if it's already small enough — JPG-of-a-photo stays JPG. */
+ *  original blob if it's already small enough, JPG-of-a-photo stays JPG. */
 async function processLogoFile(
   file: File,
 ): Promise<{ blob: Blob; ext: "png" | "jpg"; aspectRatio: number }> {
@@ -133,7 +133,7 @@ export function BrandingForm({ company }: { company: Company }) {
       const { blob, ext, aspectRatio: ar } = await processLogoFile(file);
       const base64 = await blobToBase64(blob);
       // Auto-promote text_only → logo_with_text on first upload so the
-      // user sees their logo immediately — they'll never upload a logo
+      // user sees their logo immediately, they'll never upload a logo
       // and then expect it to stay hidden.
       const nextMode: BrandMode | undefined =
         mode === "text_only" ? "logo_with_text" : undefined;
@@ -188,7 +188,7 @@ export function BrandingForm({ company }: { company: Company }) {
           </p>
         </div>
 
-        {/* Mode toggle — three cards, each with a live preview. */}
+        {/* Mode toggle, three cards, each with a live preview. */}
         <div className="grid gap-3 sm:grid-cols-3">
           {MODE_OPTIONS.map((opt) => {
             const active = mode === opt.value;

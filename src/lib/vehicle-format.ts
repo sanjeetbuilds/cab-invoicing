@@ -29,7 +29,7 @@ export function normalizeVehicleNumber(raw: string): string {
   return cleaned;
 }
 
-/** Looser match for the purposes of search — strips spaces from both sides. */
+/** Looser match for the purposes of search, strips spaces from both sides. */
 export function vehicleSearchKey(value: string): string {
   return (value ?? "").toUpperCase().replace(/\s+/g, "");
 }

@@ -1,8 +1,8 @@
 -- 0009_company_branding.sql
 --
 -- Per-tenant branding: companies pick how their identity appears in the
--- app shell and on PDFs. Three modes — plain text (default), logo only,
--- or logo + text — plus a stored aspect ratio so the renderer can size
+-- app shell and on PDFs. Three modes, plain text (default), logo only,
+-- or logo + text, plus a stored aspect ratio so the renderer can size
 -- the image without an extra HEAD request.
 
 alter table public.companies

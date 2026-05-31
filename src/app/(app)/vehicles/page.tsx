@@ -34,7 +34,7 @@ export default async function VehiclesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Vehicles"
-        description="Your fleet — own and attached cars."
+        description="Your fleet, own and attached cars."
       >
         <Link
           href="/bulk-import?scope=vehicles"
@@ -91,7 +91,7 @@ export default async function VehiclesPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {v.vendor_name || "—"}
+                      {v.vendor_name || "-"}
                     </TableCell>
                     <TableCell className="text-center">
                       {v.active ? (
@@ -122,7 +122,7 @@ export default async function VehiclesPage() {
                         <Badge variant="accent">Own</Badge>
                       ) : (
                         <Badge variant="default">
-                          Attached{v.vendor_name ? ` — ${v.vendor_name}` : ""}
+                          Attached{v.vendor_name ? `, ${v.vendor_name}` : ""}
                         </Badge>
                       )}
                       {!v.active && <Badge variant="ghost">Inactive</Badge>}

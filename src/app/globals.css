@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* =====================================================================
-   Design tokens — EasyBills SaaS palette
+   Design tokens, EasyBills SaaS palette
    bg #fafafa, surface #ffffff, border #e5e7eb, text #111827,
    muted #6b7280, accent indigo #4f46e5, success/warning/danger as below
    ===================================================================== */
@@ -28,7 +28,7 @@
   --radius-3xl: calc(var(--radius) * 2.5);
   --radius-4xl: calc(var(--radius) * 3);
 
-  /* Custom shadow tokens — soft elevation. Cards no longer use a 1px
+  /* Custom shadow tokens, soft elevation. Cards no longer use a 1px
      border; this dual-layer shadow stands in for it without the hard
      edge that borders give. */
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
@@ -36,7 +36,7 @@
   /* Subtle lift on the primary CTA. */
   --shadow-primary: 0 1px 2px rgba(79, 70, 229, 0.15);
 
-  /* Color tokens — map shadcn names to the EasyBills palette */
+  /* Color tokens, map shadcn names to the EasyBills palette */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
@@ -95,12 +95,12 @@
   --popover: #ffffff;
   --popover-foreground: #111827;
 
-  /* Brand — indigo */
+  /* Brand, indigo */
   --primary: #4f46e5;
   --primary-foreground: #ffffff;
   --primary-hover: #4338ca;
 
-  /* Secondary — white with grey border (used for outline buttons) */
+  /* Secondary, white with grey border (used for outline buttons) */
   --secondary: #ffffff;
   --secondary-foreground: #111827;
 
@@ -108,7 +108,7 @@
   --muted: #f3f4f6;
   --muted-foreground: #6b7280;
 
-  /* Accent — indigo tint for hover backgrounds */
+  /* Accent, indigo tint for hover backgrounds */
   --accent: #eef2ff;
   --accent-foreground: #4f46e5;
   --accent-soft: #eef2ff;
@@ -190,7 +190,7 @@
   }
   body {
     @apply text-foreground font-sans;
-    /* Very subtle indigo wash at the top fading to standard grey —
+    /* Very subtle indigo wash at the top fading to standard grey -
        depth, not paint. Light theme only; the .dark override below
        restores the solid dark surface. */
     background:
@@ -212,7 +212,7 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans font-semibold tracking-tight;
   }
-  /* Strip number input spinners — UI uses our own input variants */
+  /* Strip number input spinners, UI uses our own input variants */
   input[type="number"]::-webkit-outer-spin-button,
   input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;

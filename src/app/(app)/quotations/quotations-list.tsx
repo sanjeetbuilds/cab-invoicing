@@ -86,7 +86,7 @@ const STATUS_PILLS: { value: StatusFilter; label: string }[] = [
 ];
 
 function fmtDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const [y, m, d] = iso.split("-");
   if (!y || !m || !d) return iso;
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
@@ -258,7 +258,7 @@ export function QuotationsList({
             </div>
           )}
 
-          {/* Desktop (md+): inline panel below the toolbar — mirrors the
+          {/* Desktop (md+): inline panel below the toolbar, mirrors the
               mobile bottom-sheet content. */}
           {showFilters && showFiltersButton && !isMobile && (
             <div className="hidden md:flex flex-col gap-4 pt-1">
@@ -301,7 +301,7 @@ export function QuotationsList({
         </div>
       )}
 
-      {/* Mobile bottom sheet — inline radio sections, no nested
+      {/* Mobile bottom sheet, inline radio sections, no nested
           dropdowns. Apply commits and closes; Clear resets to default. */}
       <BottomSheet
         open={isMobile && showFilters && showFiltersButton}
@@ -433,7 +433,7 @@ function DesktopQuotationRow({
   const accepted = quotation.status === "accepted";
 
   function openPdf() {
-    // Same-tab navigation to the in-shell viewer — keeps installed
+    // Same-tab navigation to the in-shell viewer, keeps installed
     // PWA users from getting stranded in the system browser.
     router.push(viewUrl);
   }
@@ -461,7 +461,7 @@ function DesktopQuotationRow({
     setPending(false);
     if (result.ok) {
       hapticSuccess();
-      toast.success(`${quotation.number} accepted — rate cards upserted.`);
+      toast.success(`${quotation.number} accepted, rate cards upserted.`);
       setConfirmAccept(false);
       router.refresh();
     } else {
@@ -497,7 +497,7 @@ function DesktopQuotationRow({
         onClick={openPdf}
       >
         <TableCell className="font-mono font-medium">{quotation.number}</TableCell>
-        <TableCell>{clientName ?? "—"}</TableCell>
+        <TableCell>{clientName ?? "-"}</TableCell>
         <TableCell className="font-mono">{fmtDate(quotation.date)}</TableCell>
         <TableCell className="font-mono text-xs text-muted-foreground">
           {fmtDate(quotation.valid_until)}
@@ -584,7 +584,7 @@ function MobileQuotationCard({
   const accepted = quotation.status === "accepted";
 
   function openPdf() {
-    // Same-tab navigation — see DesktopQuotationRow above.
+    // Same-tab navigation, see DesktopQuotationRow above.
     router.push(viewUrl);
   }
 
@@ -611,7 +611,7 @@ function MobileQuotationCard({
     setPending(false);
     if (result.ok) {
       hapticSuccess();
-      toast.success(`${quotation.number} accepted — rate cards upserted.`);
+      toast.success(`${quotation.number} accepted, rate cards upserted.`);
       setConfirmAccept(false);
       router.refresh();
     } else {
@@ -661,7 +661,7 @@ function MobileQuotationCard({
                 For
               </p>
               <p className="font-semibold text-foreground leading-tight">
-                {clientName ?? "—"}
+                {clientName ?? "-"}
               </p>
             </div>
 

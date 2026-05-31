@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { chargeLabel, unionChargeFlags } from "./charges";
 
-describe("chargeLabel — single ticked box", () => {
+describe("chargeLabel, single ticked box", () => {
   it("just Toll → 'Toll'", () => {
     expect(chargeLabel({ toll: true, tax: false, parking: false })).toBe("Toll");
   });
@@ -13,7 +13,7 @@ describe("chargeLabel — single ticked box", () => {
   });
 });
 
-describe("chargeLabel — two ticked boxes", () => {
+describe("chargeLabel, two ticked boxes", () => {
   it("Toll + Parking → 'Toll & Parking'", () => {
     expect(chargeLabel({ toll: true, tax: false, parking: true })).toBe(
       "Toll & Parking",
@@ -31,7 +31,7 @@ describe("chargeLabel — two ticked boxes", () => {
   });
 });
 
-describe("chargeLabel — all three ticked", () => {
+describe("chargeLabel, all three ticked", () => {
   it("Toll + Tax + Parking → 'Toll, Tax & Parking'", () => {
     expect(chargeLabel({ toll: true, tax: true, parking: true })).toBe(
       "Toll, Tax & Parking",
@@ -39,7 +39,7 @@ describe("chargeLabel — all three ticked", () => {
   });
 });
 
-describe("chargeLabel — order is fixed Toll → Tax → Parking", () => {
+describe("chargeLabel, order is fixed Toll → Tax → Parking", () => {
   it("regardless of which boxes are ticked, order stays the same", () => {
     expect(chargeLabel({ toll: false, tax: true, parking: true })).toBe(
       "Tax & Parking",
@@ -50,7 +50,7 @@ describe("chargeLabel — order is fixed Toll → Tax → Parking", () => {
   });
 });
 
-describe("chargeLabel — empty fallback", () => {
+describe("chargeLabel, empty fallback", () => {
   it("no boxes ticked, amount > 0 → fallback 'Toll & Parking'", () => {
     expect(
       chargeLabel({ toll: false, tax: false, parking: false }, 500),

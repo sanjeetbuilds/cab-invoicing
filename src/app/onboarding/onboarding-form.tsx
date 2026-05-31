@@ -69,7 +69,7 @@ export function OnboardingForm({ defaultEmail }: { defaultEmail?: string }) {
     const result = await createCompany(fd);
     if (result.ok) {
       toast.success("Company created. Welcome!");
-      // Hard navigation forces a fresh request — sidesteps any RSC cache
+      // Hard navigation forces a fresh request, sidesteps any RSC cache
       // that might still think this user has no membership.
       window.location.href = "/";
     } else {

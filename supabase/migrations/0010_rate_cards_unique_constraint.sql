@@ -2,7 +2,7 @@
 --
 -- Migration 0007 replaced the 4-tuple unique constraint on rate_cards
 -- with a unique INDEX on (company_id, client_id, car_type, mode,
--- coalesce(plan_name, '')) — i.e. an expression index. Postgres
+-- coalesce(plan_name, '')), i.e. an expression index. Postgres
 -- requires ON CONFLICT (cols) to match a constraint or index whose
 -- column list is exactly those plain columns, so any upsert using
 -- on_conflict("company_id,client_id,car_type,mode,plan_name") raises

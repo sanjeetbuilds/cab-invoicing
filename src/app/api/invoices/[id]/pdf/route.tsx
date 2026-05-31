@@ -12,7 +12,7 @@ import type {
   Membership,
 } from "@/lib/supabase/types";
 
-// Force dynamic — auth + DB lookup per request.
+// Force dynamic, auth + DB lookup per request.
 export const dynamic = "force-dynamic";
 
 const STORAGE_BUCKET = "invoices";
@@ -109,7 +109,7 @@ export async function GET(
     />,
   );
 
-  // Cache to storage — best-effort. Don't fail the request if the bucket
+  // Cache to storage, best-effort. Don't fail the request if the bucket
   // is missing or storage is misconfigured.
   const { error: uploadErr } = await admin.storage
     .from(STORAGE_BUCKET)

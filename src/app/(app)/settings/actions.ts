@@ -216,7 +216,7 @@ export async function inviteMemberAction(
     ok: true,
     email,
     tempPassword: found
-      ? "(existing user — they sign in with their current password)"
+      ? "(existing user, they sign in with their current password)"
       : tempPassword,
   };
 }

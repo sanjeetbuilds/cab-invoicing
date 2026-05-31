@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { normalizeVehicleNumber, vehicleSearchKey } from "./vehicle-format";
 
-describe("normalizeVehicleNumber — Indian format XX 00 XX 0000", () => {
+describe("normalizeVehicleNumber, Indian format XX 00 XX 0000", () => {
   it("clean lowercase no-space → fully formatted uppercase", () => {
     expect(normalizeVehicleNumber("hr27v1234")).toBe("HR 27 V 1234");
   });
@@ -37,7 +37,7 @@ describe("vehicleSearchKey", () => {
     expect(vehicleSearchKey("HR 26 ED 9083")).toBe("HR26ED9083");
     expect(vehicleSearchKey("hr26ed9083")).toBe("HR26ED9083");
   });
-  it("preserves digits — last 4 search works", () => {
+  it("preserves digits, last 4 search works", () => {
     expect(vehicleSearchKey("HR 26 ED 9083")).toContain("9083");
   });
 });

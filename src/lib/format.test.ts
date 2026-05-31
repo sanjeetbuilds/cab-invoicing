@@ -10,17 +10,17 @@ import {
 // followed by the value without a space.
 const RUPEE = "₹";
 
-describe("formatINR — always renders", () => {
+describe("formatINR, always renders", () => {
   it("zero", () => {
     expect(formatINR(0)).toBe(`${RUPEE}0.00`);
   });
   it("small number, no grouping needed", () => {
     expect(formatINR(150)).toBe(`${RUPEE}150.00`);
   });
-  it("thousands — Indian grouping with one comma", () => {
+  it("thousands, Indian grouping with one comma", () => {
     expect(formatINR(1500)).toBe(`${RUPEE}1,500.00`);
   });
-  it("lakh — comma after the first two digits", () => {
+  it("lakh, comma after the first two digits", () => {
     expect(formatINR(123456)).toBe(`${RUPEE}1,23,456.00`);
   });
   it("crore", () => {
@@ -35,7 +35,7 @@ describe("formatINR — always renders", () => {
   });
 });
 
-describe("formatINRBlank — blank when empty-ish", () => {
+describe("formatINRBlank, blank when empty-ish", () => {
   it("zero → ''", () => {
     expect(formatINRBlank(0)).toBe("");
   });
@@ -48,7 +48,7 @@ describe("formatINRBlank — blank when empty-ish", () => {
   });
 });
 
-describe("formatQty — no currency symbol", () => {
+describe("formatQty, no currency symbol", () => {
   it("integer qty stays 2dp", () => {
     expect(formatQty(707)).toBe("707.00");
   });
@@ -60,7 +60,7 @@ describe("formatQty — no currency symbol", () => {
   });
 });
 
-describe("formatINRPlain — no symbol, with grouping + 2dp", () => {
+describe("formatINRPlain, no symbol, with grouping + 2dp", () => {
   it("matches the value column on real invoices", () => {
     expect(formatINRPlain(10605)).toBe("10,605.00");
     expect(formatINRPlain(123456)).toBe("1,23,456.00");

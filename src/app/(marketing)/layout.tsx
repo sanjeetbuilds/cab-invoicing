@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 /**
- * Marketing surface — no sidebar, no bottom nav, no auth wrapping. The
+ * Marketing surface, no sidebar, no bottom nav, no auth wrapping. The
  * thin top bar shows just the wordmark and a Sign in link. The wider
  * page padding gives the landing room to breathe.
  *

@@ -14,7 +14,7 @@ export const metadata = { title: "Set new password" };
 export default async function ResetPasswordPage() {
   // The /auth/callback exchanged the code in the email for a session, then
   // redirected here. If there's no session, the link expired or was opened
-  // on a different device — kick them back to start.
+  // on a different device, kick them back to start.
   const supabase = await createClient();
   const {
     data: { user },

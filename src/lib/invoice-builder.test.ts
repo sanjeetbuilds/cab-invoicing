@@ -412,7 +412,7 @@ describe("buildInvoiceDraft", () => {
       }),
     ];
     const rateCards = [
-      // Local rate card for the same car_type — slab logic reads from here.
+      // Local rate card for the same car_type, slab logic reads from here.
       rate({
         client_id: rcmClient.id,
         mode: "local",
@@ -423,7 +423,7 @@ describe("buildInvoiceDraft", () => {
         extra_hour: 100,
         night: 300,
       }),
-      // An outstation rate card also exists — it must be ignored when slab.
+      // An outstation rate card also exists, it must be ignored when slab.
       rate({
         client_id: rcmClient.id,
         mode: "outstation",
@@ -559,7 +559,7 @@ describe("buildInvoiceDraft", () => {
     expect(draft.unmatched_trip_ids).toEqual([]);
     expect(draft.subtotal).toBe(4485);
 
-    // The transfer line on the invoice reads "Airport T3 Drop" — not
+    // The transfer line on the invoice reads "Airport T3 Drop", not
     // the slab-style "80kms/8hrs" particulars.
     const transferLines = draft.lines.filter((l) => l.trip_id === "transfer-1");
     expect(transferLines).toHaveLength(1);
@@ -579,7 +579,7 @@ describe("buildInvoiceDraft", () => {
 
   it("car-type override: vehicle is a Sonet, trip is billed as a Dzire", () => {
     // Vehicle 9083 is master-typed as Sonet, but this trip's car_type is
-    // Dzire — we look up the Dzire rate AND the invoice label reads
+    // Dzire, we look up the Dzire rate AND the invoice label reads
     // "9083 Dzire" (not "9083 Sonet").
     const sonetVehicle: Pick<Vehicle, "id" | "number" | "type"> = {
       id: "v-sonet",

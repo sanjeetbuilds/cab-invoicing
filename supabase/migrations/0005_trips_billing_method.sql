@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Outstation trips can opt into "slab" billing (base + additional kms + hrs +
 -- night) by borrowing the LOCAL rate card for the same client + car_type.
--- Local trips are always slab — the field is ignored for them.
+-- Local trips are always slab, the field is ignored for them.
 -- =============================================================================
 
 alter table public.trips

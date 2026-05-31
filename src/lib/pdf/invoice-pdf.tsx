@@ -15,7 +15,7 @@ import {
   type InvoicePdfProps,
 } from "./invoice-pdf-doc";
 
-// Single variable Noto Sans Mono TTF (1.6 MB), registered twice — once
+// Single variable Noto Sans Mono TTF (1.6 MB), registered twice, once
 // for regular weight (400) and once for bold (700). fontkit navigates
 // the wght axis so the same file produces both cuts.
 const fontFile = path.join(process.cwd(), "public", "fonts", "NotoSansMono.ttf");

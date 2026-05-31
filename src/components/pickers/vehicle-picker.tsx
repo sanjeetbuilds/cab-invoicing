@@ -28,7 +28,7 @@ export interface VehiclePickerProps {
 
 /**
  * Searchable, keyboard-navigable dropdown that ALWAYS shows the human
- * label ("HR 26 ED 9083 (Dzire)") in the trigger — never the raw UUID.
+ * label ("HR 26 ED 9083 (Dzire)") in the trigger, never the raw UUID.
  *
  * Search matches any substring of the spaced or unspaced number, the
  * car type, and the combined display. Typing "9083" finds
@@ -137,7 +137,7 @@ export function VehiclePicker({
           )}
         >
           {selected
-            ? `${selected.number} (${selected.type})${selected.active ? "" : " — inactive"}`
+            ? `${selected.number} (${selected.type})${selected.active ? "" : ", inactive"}`
             : placeholder}
         </span>
         <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />

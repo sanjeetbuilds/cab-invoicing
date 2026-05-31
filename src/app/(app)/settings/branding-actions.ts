@@ -9,13 +9,13 @@ import type { BrandMode } from "@/lib/supabase/types";
 const BRAND_MODES: BrandMode[] = ["text_only", "logo_only", "logo_with_text"];
 const BUCKET = "company-logos";
 const INVOICE_CACHE_BUCKET = "invoices";
-const MAX_BYTES = 2 * 1024 * 1024; // 2 MB — matches the client-side hint
+const MAX_BYTES = 2 * 1024 * 1024; // 2 MB, matches the client-side hint
 const ALLOWED_EXT = new Set(["png", "jpg", "jpeg"]);
 
 /**
  * Drop every cached invoice PDF for a company. Called when the brand
  * changes so the next download regenerates with the new mode/logo.
- * Best-effort — failures here don't fail the user-facing action, and the
+ * Best-effort, failures here don't fail the user-facing action, and the
  * `?fresh=1` query param remains an escape hatch.
  */
 async function bustInvoicePdfCache(
@@ -41,7 +41,7 @@ const UploadSchema = z.object({
   fileBase64: z.string().min(1, "Missing file."),
   ext: z.string().min(1),
   aspectRatio: z.number().positive().finite(),
-  /** Optional — if the user picked a mode in the same step, set it too. */
+  /** Optional, if the user picked a mode in the same step, set it too. */
   mode: z.enum(BRAND_MODES).optional(),
 });
 

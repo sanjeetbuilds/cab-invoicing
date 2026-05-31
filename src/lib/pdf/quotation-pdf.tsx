@@ -1,5 +1,5 @@
 /**
- * Quotation PDF — same visual style as the invoice PDF (monospace Noto
+ * Quotation PDF, same visual style as the invoice PDF (monospace Noto
  * Sans Mono, FROM/BILL TO header, minimal rules, selective bold) but
  * with a rate-card table instead of duty lines.
  */
@@ -47,7 +47,7 @@ export interface QuotationPdfProps {
   quotation: Quotation;
   lines: QuotationLine[];
   clientName: string | null;
-  /** Optional — defaults to text_only when omitted. */
+  /** Optional, defaults to text_only when omitted. */
   brand?: PdfBrand;
 }
 

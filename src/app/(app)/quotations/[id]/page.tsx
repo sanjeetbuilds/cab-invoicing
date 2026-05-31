@@ -23,7 +23,7 @@ export default async function QuotationViewerPage({
 
   if (!q) notFound();
 
-  // Prefer the linked client's current name over the snapshot — clients
+  // Prefer the linked client's current name over the snapshot, clients
   // can be renamed after a quotation is issued and we want the latest.
   let clientName = q.client_name;
   if (q.client_id) {

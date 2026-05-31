@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { BrandMode } from "@/lib/supabase/types";
 
 /** Shape of the brand block handed to the PDF doc. `logo` is null when
- *  the mode is text_only or we couldn't fetch the bytes — the doc treats
+ *  the mode is text_only or we couldn't fetch the bytes, the doc treats
  *  both cases the same and renders text. */
 export interface PdfBrand {
   mode: BrandMode;
@@ -29,7 +29,7 @@ function logoPathFromUrl(url: string): string | null {
 }
 
 /** Best-effort: returns text_only brand if logo bytes can't be loaded.
- *  Never throws — a missing logo should not break PDF rendering. */
+ *  Never throws, a missing logo should not break PDF rendering. */
 export async function loadPdfBrand(
   admin: SupabaseClient,
   brandMode: BrandMode,

@@ -69,7 +69,7 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
 
   // Local trips always use slab; outstation respects billing_method
   // (default per_km, slab when toggled). Transfer / Package are
-  // fixed-price modes — no slab/per_km dispatch.
+  // fixed-price modes, no slab/per_km dispatch.
   const effectiveMethod = (t: Trip): "slab" | "per_km" => {
     if (t.mode === "local") return "slab";
     if (t.mode === "outstation") {
@@ -80,7 +80,7 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
 
   // For local/outstation, slab borrows the LOCAL rate card.
   // For transfer/package, the lookup mode is the trip's mode AND plan_name
-  // — same (client, car) can have many Transfer plans (Airport / NDLS).
+  //, same (client, car) can have many Transfer plans (Airport / NDLS).
   const resolveRate = (t: Trip): RateCard | undefined => {
     if (t.mode === "transfer" || t.mode === "package") {
       return rateByKey.get(rateKey(t.client_id, t.car_type, t.mode, t.plan_name));
@@ -104,7 +104,7 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
       rate,
     );
 
-  // Invoice listing must be chronological — start date ascending.
+  // Invoice listing must be chronological, start date ascending.
   // Trips arrive from the caller in creation/edit order, which is not
   // necessarily date-sorted.
   const tripsByDate = [...input.trips].sort((a, b) =>
@@ -120,7 +120,7 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
     const v = vehicleById.get(trip.vehicle_id);
     // Show the BILLED-AS type (trip.car_type), not the vehicle's master
     // type. This is correct for the override case: e.g. vehicle 9083 is
-    // a Sonet but a particular trip is billed as a Dzire — the invoice
+    // a Sonet but a particular trip is billed as a Dzire, the invoice
     // line must read "9083 Dzire".
     const vehicle_label = v
       ? `${lastSegment(v.number)} ${trip.car_type}`
@@ -156,7 +156,7 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
 
   const gst = gstFor(input.client, subtotal, input.company);
 
-  // Charges (toll / tax / parking) — single amount per trip, dynamic label.
+  // Charges (toll / tax / parking), single amount per trip, dynamic label.
   // Prefer the new extra_charge_amount; fall back to the legacy `toll`
   // column so trips logged before the schema change still total correctly.
   const tripChargeAmount = (t: Trip): number => {

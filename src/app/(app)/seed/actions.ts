@@ -35,7 +35,7 @@ export async function seedFromPrototype(force = false): Promise<SeedResult> {
     }
   }
 
-  // 1. Clients — capture new UUIDs keyed by seed id.
+  // 1. Clients, capture new UUIDs keyed by seed id.
   const { data: insertedClients, error: cErr } = await admin
     .from("clients")
     .insert(
@@ -71,7 +71,7 @@ export async function seedFromPrototype(force = false): Promise<SeedResult> {
   );
   if (vErr) return { ok: false, error: `vehicles: ${vErr.message}` };
 
-  // 3. Rate cards — map seed client_seed_id → real client uuid.
+  // 3. Rate cards, map seed client_seed_id → real client uuid.
   const cardRows = PROTOTYPE_RATE_CARDS.map((r) => {
     const clientId = clientIdMap.get(r.client_seed_id);
     if (!clientId) return null;

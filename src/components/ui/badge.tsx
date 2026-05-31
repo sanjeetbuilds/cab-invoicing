@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 /**
- * Status pill — tinted by intent. All variants share the same shape so
+ * Status pill, tinted by intent. All variants share the same shape so
  * they line up visually wherever they appear (status column, row badges,
  * inline tags). Use Badge for boolean states, semantic categories, etc.
  */
@@ -19,7 +19,7 @@ const badgeVariants = cva(
   {
     variants: {
       // Faint tinted backgrounds (~8% opacity) with the saturated
-      // accent colour as text — so the pill reads as a label, not a
+      // accent colour as text, so the pill reads as a label, not a
       // loud sticker. Reversed/inactive uses grey-100 so it visibly
       // recedes.
       variant: {

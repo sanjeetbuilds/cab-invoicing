@@ -106,7 +106,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
                   const cursor = e.target.selectionStart;
                   const cleaned = normalizeVehicleNumber(e.target.value);
                   e.target.value = cleaned;
-                  // Re-place cursor at end — works fine for short numbers.
+                  // Re-place cursor at end, works fine for short numbers.
                   if (cursor != null) {
                     e.target.setSelectionRange(cleaned.length, cleaned.length);
                   }

@@ -47,7 +47,7 @@ const QuickInvoiceSchema = z
       total_hours: z.number().min(0).default(0),
       night_count: z.number().int().min(0).default(0),
       driver_ta: z.number().int().min(0).default(0),
-      // Rate fields — typed directly, no rate-card lookup.
+      // Rate fields, typed directly, no rate-card lookup.
       base_rate: z.number().nullable().optional(),
       base_kms: z.number().nullable().optional(),
       base_hours: z.number().nullable().optional(),
@@ -57,7 +57,7 @@ const QuickInvoiceSchema = z
       per_km: z.number().nullable().optional(),
       fixed_price: z.number().nullable().optional(),
       driver_ta_rate: z.number().nullable().optional(),
-      // Package inclusion flags — purely informational at this stage.
+      // Package inclusion flags, purely informational at this stage.
       includes_toll: z.boolean().default(false),
       includes_tax: z.boolean().default(false),
       includes_parking: z.boolean().default(false),
@@ -90,7 +90,7 @@ function round2(n: number): number {
 
 /**
  * Build a synthetic RateCard-shaped object from the rates the user typed.
- * tripToLines doesn't care that it's not persisted — only that the
+ * tripToLines doesn't care that it's not persisted, only that the
  * fields it reads are present.
  */
 function syntheticRateCard(
@@ -272,7 +272,7 @@ export async function issueQuickInvoiceAction(
     { p_company_id: ctx.companyId },
   );
   if (rpcErr) {
-    // Roll back the trip — easier than holding the gap.
+    // Roll back the trip, easier than holding the gap.
     await ctx.admin.from("trips").delete().eq("id", tripRow.id);
     return { ok: false, error: rpcErr.message };
   }

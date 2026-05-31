@@ -23,7 +23,7 @@ export async function requireUser() {
  * If the signed-in user has any pending invite (a memberships row with
  * matching invited_email and user_id still null), claim it: bind the row
  * to their user_id and stamp accepted_at. Returns how many invites were
- * claimed — the caller can use that to skip the "no membership →
+ * claimed, the caller can use that to skip the "no membership →
  * onboarding" redirect.
  *
  * Runs through the admin client because the user can't UPDATE a row
@@ -56,7 +56,7 @@ export async function claimPendingInvites(
 export async function requireMembership() {
   const { supabase, user } = await requireUser();
 
-  // First pass — do they already have a membership?
+  // First pass, do they already have a membership?
   let { data } = await supabase
     .from("memberships")
     .select("*")

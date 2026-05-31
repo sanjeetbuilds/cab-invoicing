@@ -12,12 +12,12 @@ function Card({
   /**
    * Stronger lift for surfaces that need to feel emphasized (hero
    * tiles, install banners, sticky chips). Every card now gets the
-   * base soft shadow by default — `elevated` opts into a more
+   * base soft shadow by default, `elevated` opts into a more
    * pronounced one.
    */
   elevated?: boolean
 }) {
-  // No border — the soft dual-layer shadow stands in for it. 12px
+  // No border, the soft dual-layer shadow stands in for it. 12px
   // radius is slightly more generous than the old 8px for a softer
   // feel; padding is a uniform 24px so cards breathe at every
   // breakpoint. size="sm" stays compact (16/20 px) for stat tiles

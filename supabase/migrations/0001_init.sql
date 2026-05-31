@@ -1,5 +1,5 @@
 -- =============================================================================
--- Krishna Cabs SaaS — initial schema
+-- Krishna Cabs SaaS, initial schema
 -- Multi-tenant: every business row carries company_id; RLS enforces isolation.
 -- =============================================================================
 

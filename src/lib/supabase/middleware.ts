@@ -45,7 +45,7 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Refresh session if expired. Per @supabase/ssr docs, do NOT add logic
-  // between createServerClient and getUser — that would break cookie refresh.
+  // between createServerClient and getUser, that would break cookie refresh.
   const {
     data: { user },
   } = await supabase.auth.getUser();

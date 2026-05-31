@@ -257,7 +257,7 @@ export async function acceptQuotationAction(id: string): Promise<SimpleResult> {
     .eq("quotation_id", id)
     .order("sort_order", { ascending: true });
 
-  // ON CONFLICT must match the rate_cards unique constraint exactly —
+  // ON CONFLICT must match the rate_cards unique constraint exactly -
   // (company_id, client_id, car_type, mode, plan_name). plan_name is
   // included so Transfer / Package plans (Airport T3, NDLS, …) dedupe
   // per-plan rather than collapsing onto a single (client, car, mode).

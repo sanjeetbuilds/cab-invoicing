@@ -35,7 +35,7 @@ export default async function MorePage() {
               );
             })}
             <li>
-              {/* Real form POST — never a Link. Link prefetch of a
+              {/* Real form POST, never a Link. Link prefetch of a
                   GET /sign-out handler would silently sign the user
                   out the moment this drawer renders. */}
               <form action="/sign-out" method="POST">
@@ -54,7 +54,7 @@ export default async function MorePage() {
       </Card>
 
       <p className="text-xs text-muted-foreground px-1">
-        Signed in as {user.email ?? "—"}
+        Signed in as {user.email ?? "-"}
       </p>
     </div>
   );

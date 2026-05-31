@@ -6,7 +6,7 @@ import {
   visibleStatusPills,
 } from "./list-controls";
 
-describe("list-controls — progressive disclosure rules", () => {
+describe("list-controls, progressive disclosure rules", () => {
   it("search hides under 5 items", () => {
     expect(shouldShowSearch(0)).toBe(false);
     expect(shouldShowSearch(4)).toBe(false);
@@ -19,7 +19,7 @@ describe("list-controls — progressive disclosure rules", () => {
     expect(shouldShowFilter(empty, (x) => x.c)).toBe(false);
     expect(shouldShowFilter([{ c: "A" }, { c: "A" }, { c: "A" }], (x) => x.c)).toBe(false);
     expect(shouldShowFilter([{ c: "A" }, { c: "B" }], (x) => x.c)).toBe(true);
-    // Null/empty values are ignored — a list of 5 nulls is still 0 distinct
+    // Null/empty values are ignored, a list of 5 nulls is still 0 distinct
     expect(shouldShowFilter([{ c: null }, { c: null }], (x) => x.c)).toBe(false);
   });
 
@@ -58,6 +58,6 @@ describe("list-controls — progressive disclosure rules", () => {
     const draftsAndAccepted = [{ s: "draft" }, { s: "accepted" }];
     const out = visibleStatusPills(draftsAndAccepted, pills, (x) => x.s);
     expect(out.map((p) => p.value)).toEqual(["all", "draft", "accepted"]);
-    // "sent" pill is hidden — there are zero sent items
+    // "sent" pill is hidden, there are zero sent items
   });
 });

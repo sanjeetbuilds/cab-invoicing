@@ -9,7 +9,7 @@ import { InvoicesList } from "./invoices-list";
 
 export const metadata = { title: "Invoices" };
 
-// Always fetch fresh — the listing must reflect every invoice the
+// Always fetch fresh, the listing must reflect every invoice the
 // moment it's issued, including the one the user just navigated from.
 export const dynamic = "force-dynamic";
 
@@ -26,7 +26,7 @@ export default async function InvoicesPage() {
       .from("invoices")
       .select("*")
       .eq("company_id", membership.company_id)
-      // Invoice numbers are sequential and atomic — highest = newest.
+      // Invoice numbers are sequential and atomic, highest = newest.
       // Date can be backdated; number cannot. Sort by number.
       .order("invoice_number", { ascending: false })
       .returns<Invoice[]>(),
@@ -53,7 +53,7 @@ export default async function InvoicesPage() {
   const list = invoices ?? [];
   const prefix = company?.invoice_prefix ?? "";
 
-  // Count distinct trip_ids per invoice — that's the "Duties" number.
+  // Count distinct trip_ids per invoice, that's the "Duties" number.
   const dutiesByInvoice = new Map<string, number>();
   if (lineRefs) {
     const seen = new Map<string, Set<string>>();
@@ -73,7 +73,7 @@ export default async function InvoicesPage() {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Invoices"
-        description="Issued invoices. Numbers are atomic — never reused."
+        description="Issued invoices. Numbers are atomic, never reused."
       >
         <Link
           href="/invoices/quick"

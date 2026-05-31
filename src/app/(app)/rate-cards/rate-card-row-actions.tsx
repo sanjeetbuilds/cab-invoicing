@@ -63,7 +63,7 @@ export function RateCardRowActions({ rateCard }: { rateCard: RateCard }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this rate card?</AlertDialogTitle>
             <AlertDialogDescription>
-              Existing invoices already use snapshots — they won&apos;t change.
+              Existing invoices already use snapshots, they won&apos;t change.
               Future trips that match this (client, car type, mode) won&apos;t
               have an active rate until you add one.
             </AlertDialogDescription>

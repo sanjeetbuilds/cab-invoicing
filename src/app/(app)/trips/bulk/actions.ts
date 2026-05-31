@@ -5,7 +5,7 @@ import { z } from "zod";
 import { requireWriter } from "@/lib/auth";
 import type { BulkDraftRow } from "./draft";
 
-/** Per-row TripSchema — same shape as single-trip TripSchema, mirrored here. */
+/** Per-row TripSchema, same shape as single-trip TripSchema, mirrored here. */
 const TripRowSchema = z
   .object({
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -153,7 +153,7 @@ export async function commitBulkRowsAction(
       .eq("company_id", ctx.companyId)
       .eq("user_id", ctx.userId);
     if (delErr) {
-      // Non-fatal — the trips already saved.
+      // Non-fatal, the trips already saved.
       console.warn(`[bulk-draft] delete after commit failed: ${delErr.message}`);
     }
   } else {

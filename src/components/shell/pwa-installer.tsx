@@ -60,7 +60,7 @@ function bumpVisits(): number {
 
 /**
  * Registers the service worker and surfaces a small install prompt the
- * third time the user opens the app — only on real browsers, never
+ * third time the user opens the app, only on real browsers, never
  * inside the installed PWA, and dismissable for 10 days.
  *
  * Android / desktop Chrome / Edge → uses the standard beforeinstallprompt
@@ -74,7 +74,7 @@ export function PwaInstaller() {
   const [showIosHint, setShowIosHint] = useState(false);
   const [eligible, setEligible] = useState(false);
 
-  // Register the service worker once. Failures are non-fatal — the app
+  // Register the service worker once. Failures are non-fatal, the app
   // works fine without it; the SW just speeds up repeat visits.
   useEffect(() => {
     if (typeof navigator === "undefined") return;
@@ -100,7 +100,7 @@ export function PwaInstaller() {
     }
   }, []);
 
-  // Android / Chrome / Edge install — catch the deferred event so we
+  // Android / Chrome / Edge install, catch the deferred event so we
   // can re-trigger the prompt from our own button.
   useEffect(() => {
     function onBefore(e: Event) {
@@ -115,7 +115,7 @@ export function PwaInstaller() {
     try {
       localStorage.setItem(DISMISS_KEY, String(Date.now()));
     } catch {
-      // private mode etc — best effort
+      // private mode etc, best effort
     }
     setDeferred(null);
     setShowIosHint(false);

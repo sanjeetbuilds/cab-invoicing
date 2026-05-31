@@ -87,7 +87,7 @@ export function TermsForm({ company }: { company: Company }) {
           <div>
             <Label htmlFor="terms_quotation">Quotation terms</Label>
             <p className="text-xs text-muted-foreground mt-1 mb-2">
-              Same format — one per line.
+              Same format, one per line.
             </p>
             <Textarea id="terms_quotation" rows={6} {...register("terms_quotation")} />
           </div>

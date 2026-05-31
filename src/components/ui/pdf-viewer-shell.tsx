@@ -70,7 +70,7 @@ export function PdfViewerShell({
       className="-mx-4 sm:-mx-6 -mt-4 sm:-mt-8 flex flex-col"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      {/* Sticky sub-header — sits directly below the app top-bar. */}
+      {/* Sticky sub-header, sits directly below the app top-bar. */}
       <header
         className={cn(
           "sticky z-20 px-3 sm:px-6 py-2 h-14",
@@ -130,7 +130,7 @@ export function PdfViewerShell({
       />
 
       {/* Inline download fallback for browsers (e.g. some Android
-          builds) where iframe PDFs don't render — share button is
+          builds) where iframe PDFs don't render, share button is
           always there too, but a plain link is a clearer escape hatch. */}
       <noscript>
         <a

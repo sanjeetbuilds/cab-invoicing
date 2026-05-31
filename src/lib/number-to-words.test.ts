@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { numberToWords } from "./number-to-words";
 
-describe("numberToWords — BUILD-SPEC reference cases", () => {
+describe("numberToWords, BUILD-SPEC reference cases", () => {
   const cases: [number, string][] = [
     [0,      "Zero"],
     [5800,   "Five Thousand Eight Hundred"],
@@ -21,7 +21,7 @@ describe("numberToWords — BUILD-SPEC reference cases", () => {
   }
 });
 
-describe("numberToWords — extra coverage", () => {
+describe("numberToWords, extra coverage", () => {
   it("strips decimals", () => {
     expect(numberToWords(105050.49)).toBe("One Lakh Five Thousand & Fifty");
   });

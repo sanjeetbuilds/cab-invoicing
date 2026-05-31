@@ -119,7 +119,7 @@ const fhplLines: InvoiceLine[] = [
   },
 ];
 
-describe("InvoicePdf — renders to a non-empty PDF buffer", () => {
+describe("InvoicePdf, renders to a non-empty PDF buffer", () => {
   it("FHPL RCM invoice, single page", async () => {
     const buf = await renderToBuffer(
       <InvoicePdf company={company} invoice={baseInvoice} lines={fhplLines} />,

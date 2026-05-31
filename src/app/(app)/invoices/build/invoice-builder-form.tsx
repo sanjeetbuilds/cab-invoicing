@@ -256,7 +256,7 @@ export function InvoiceBuilderForm({
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
-                        {veh?.number ?? "—"} · {t.car_type} ·{" "}
+                        {veh?.number ?? "-"} · {t.car_type} ·{" "}
                         {t.mode === "local"
                           ? `${t.total_kms}km / ${t.total_hours}hr`
                           : `${t.total_kms}km outstation`}
@@ -292,7 +292,7 @@ export function InvoiceBuilderForm({
               onChange={(e) => setTollOverrideStr(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Tolls aren&apos;t taxed — they&apos;re added separately to the invoice net.
+              Tolls aren&apos;t taxed, they&apos;re added separately to the invoice net.
             </p>
           </CardContent>
         </Card>
@@ -309,7 +309,7 @@ export function InvoiceBuilderForm({
 
             {draft.gst.mode === "RCM" && (
               <p className="text-xs text-muted-foreground">
-                RCM — no GST charged on this invoice.
+                RCM, no GST charged on this invoice.
               </p>
             )}
             {draft.gst.mode === "CGST_SGST" && (

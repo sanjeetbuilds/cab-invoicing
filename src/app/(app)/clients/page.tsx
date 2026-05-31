@@ -158,10 +158,10 @@ export default async function ClientsPage({
                     </TableCell>
                     <TableCell className="text-muted-foreground">{c.state}</TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      {c.gstin || "—"}
+                      {c.gstin || "-"}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {c.default_booked_by || "—"}
+                      {c.default_booked_by || "-"}
                     </TableCell>
                     <TableCell className="text-center">
                       {c.is_rcm ? (

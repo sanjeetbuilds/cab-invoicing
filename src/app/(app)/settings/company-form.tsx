@@ -147,7 +147,7 @@ export function CompanyForm({ company }: { company: Company }) {
           <div className="flex flex-col gap-2">
             <Label htmlFor="invoice_email">
               Invoice email
-              <span className="text-xs text-muted-foreground font-normal"> — shows on the invoice</span>
+              <span className="text-xs text-muted-foreground font-normal">, shows on the invoice</span>
             </Label>
             <Input
               id="invoice_email"

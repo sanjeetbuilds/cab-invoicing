@@ -41,9 +41,9 @@ export interface ImportRateCardRow {
   notes: string | null;
 }
 
-/** A single row's preview entry — either ready to import or flagged. */
+/** A single row's preview entry, either ready to import or flagged. */
 export interface PreviewRow<T> {
-  /** 1-based row number in the source sheet — what Excel shows. */
+  /** 1-based row number in the source sheet, what Excel shows. */
   sheetRow: number;
   /** The parsed row (or partial, when validation failed). */
   data: T;
@@ -56,7 +56,7 @@ export interface PreviewRow<T> {
   errors: string[];
   /** Optional DB-aware hints surfaced for rate-card rows. */
   meta?: {
-    /** A matching rate card already exists — this row will overwrite it. */
+    /** A matching rate card already exists, this row will overwrite it. */
     willUpdate?: boolean;
     /** Client name only appears in this upload's Clients sheet (not in DB yet). */
     clientIsNew?: boolean;

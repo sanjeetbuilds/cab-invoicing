@@ -22,7 +22,7 @@ export default async function AppLayout({
       Pick<Company, "name" | "brand_mode" | "logo_url" | "logo_aspect_ratio">
     >();
 
-  const companyName = company?.name ?? "—";
+  const companyName = company?.name ?? "-";
   const brandMode: BrandMode = company?.brand_mode ?? "text_only";
   const logoUrl = company?.logo_url ?? null;
   const logoAspectRatio = company?.logo_aspect_ratio ?? null;

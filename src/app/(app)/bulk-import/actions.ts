@@ -108,7 +108,7 @@ export async function previewImportAction(args: {
           `Client '${rc.data.client_name}' not found in your existing clients or in this upload's Clients sheet.`,
         );
       }
-      // Annotate even if the row has errors — UI tooltip can still
+      // Annotate even if the row has errors, UI tooltip can still
       // show "would update / new client" context to help the user fix.
       const cid = clientIdByName.get(nameLower);
       const key = cid
@@ -145,7 +145,7 @@ export async function previewImportAction(args: {
     }
   }
 
-  // Rate-card duplicate-within-upload — same (client, car, mode, plan).
+  // Rate-card duplicate-within-upload, same (client, car, mode, plan).
   const seenRcKeys = new Set<string>();
   for (const rc of parsed.rateCards) {
     if (rc.errors.length > 0) continue;
@@ -213,7 +213,7 @@ export async function commitImportAction(args: {
     const toInsert: Record<string, unknown>[] = [];
     for (const r of goodClients) {
       const key = r.data.name.toLowerCase();
-      if (byName.has(key)) continue; // skip — already exists
+      if (byName.has(key)) continue; // skip, already exists
       toInsert.push({
         company_id: ctx.companyId,
         name: r.data.name,
@@ -265,7 +265,7 @@ export async function commitImportAction(args: {
     }
   }
 
-  // ─── Rate cards: upsert by (company, client, car, mode, plan) — the
+  // ─── Rate cards: upsert by (company, client, car, mode, plan), the
   //                unique index added in migration 0007 takes care of
   //                conflict resolution.
   const goodRateCards = parsed.rateCards.filter((r) => r.errors.length === 0);

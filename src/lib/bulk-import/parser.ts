@@ -54,7 +54,7 @@ const STATE_ALIASES: Record<string, string> = {
 
 function normalizeState(raw: string): { value: string; fixed: string | null } {
   const trimmed = raw.trim();
-  // Exact match — keep as-is.
+  // Exact match, keep as-is.
   if ((INDIA_STATES as readonly string[]).includes(trimmed)) {
     return { value: trimmed, fixed: null };
   }
@@ -404,7 +404,7 @@ function readHeaders(ws: ExcelJS.Worksheet): Record<string, number> {
 
 /**
  * Safe cell lookup by header name. Returns null when the column is
- * missing from the sheet — the previous "headers[key] ?? -1" pattern
+ * missing from the sheet, the previous "headers[key] ?? -1" pattern
  * then called `row.getCell(-1)` which throws ExcelJS's
  * "-1 is out of bounds. Excel supports columns from 1 to 16384."
  * That error must never surface to the user.
@@ -487,7 +487,7 @@ export async function parseWorkbookBuffer(
   const clientsSheet = wb.getWorksheet("Clients");
   const vehiclesSheet = wb.getWorksheet("Vehicles");
   const rateCardsSheet = wb.getWorksheet("Rate Cards");
-  // Single-entity uploads usually have a single un-named sheet — fall
+  // Single-entity uploads usually have a single un-named sheet, fall
   // back to the first worksheet when the named one isn't found.
   const fallback = wb.worksheets[0];
 

@@ -37,7 +37,7 @@ export function InlineVehicleForm({
   onCancel,
   onCreated,
 }: {
-  /** Pre-fill the number field — typed text from the picker. */
+  /** Pre-fill the number field, typed text from the picker. */
   defaultNumber?: string;
   /** Quick invoice flow wants "attached" by default (vendor cars). */
   defaultOwnership?: "own" | "attached";
@@ -60,7 +60,7 @@ export function InlineVehicleForm({
       return;
     }
     // Sometimes the user only has the last 4 digits (the visible part on
-    // the cab). Allow it but flag the missing structure — easier to
+    // the cab). Allow it but flag the missing structure, easier to
     // amend later than block the trip-entry flow.
     if (/^\d{1,4}$/.test(number.replace(/\s+/g, ""))) {
       toast.warning(

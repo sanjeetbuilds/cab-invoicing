@@ -18,34 +18,34 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary — solid indigo with a subtle lift shadow so the
+        // Primary, solid indigo with a subtle lift shadow so the
         // CTA reads as "raised" against the soft-shadow card field.
         default: [
           "bg-primary text-primary-foreground border-transparent",
           "shadow-[var(--shadow-primary)]",
           "hover:bg-primary-hover",
         ].join(" "),
-        // Secondary — white surface with a thin grey border.
+        // Secondary, white surface with a thin grey border.
         outline: [
           "bg-card text-foreground border-border",
           "hover:bg-muted",
         ].join(" "),
-        // Soft — indigo-tinted on a light indigo background.
+        // Soft, indigo-tinted on a light indigo background.
         secondary: [
           "bg-accent-soft text-accent-foreground border-transparent",
           "hover:bg-accent-soft/70",
         ].join(" "),
-        // Ghost — no chrome until hover.
+        // Ghost, no chrome until hover.
         ghost: [
           "bg-transparent text-foreground border-transparent",
           "hover:bg-muted",
         ].join(" "),
-        // Danger — destructive intent.
+        // Danger, destructive intent.
         destructive: [
           "bg-destructive text-destructive-foreground border-transparent",
           "hover:bg-destructive/90",
         ].join(" "),
-        // Link — text-only.
+        // Link, text-only.
         link: [
           "bg-transparent text-primary border-transparent underline-offset-4",
           "hover:underline",

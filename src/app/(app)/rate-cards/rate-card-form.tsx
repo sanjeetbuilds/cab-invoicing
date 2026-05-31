@@ -26,7 +26,7 @@ const CAR_TYPES: CarType[] = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "O
 const MODES: TripMode[] = ["local", "outstation", "transfer", "package"];
 
 // Built-in suggestions shown on first use of plan_name when the user
-// hasn't yet created any Transfer plans. Autocomplete only — the user
+// hasn't yet created any Transfer plans. Autocomplete only, the user
 // can type anything.
 const TRANSFER_SUGGESTIONS = [
   "Airport T1 Drop",
@@ -134,7 +134,7 @@ export function RateCardForm({
   const mode = watch("mode") as TripMode;
 
   // When the user switches mode, sync Driver TA to the new mode's
-  // canonical default — but only if the field is still on a canonical
+  // canonical default, but only if the field is still on a canonical
   // value (0 or 300). User-typed numbers stay untouched. Skip the first
   // run so initial defaults aren't overwritten on mount.
   const firstRender = useRef(true);
@@ -374,7 +374,7 @@ export function RateCardForm({
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Trip-level toll / tax / parking is still added on top of the
-                  fixed price when entered — these flags only inform the
+                  fixed price when entered, these flags only inform the
                   driver that the agreement covers them.
                 </p>
               </div>

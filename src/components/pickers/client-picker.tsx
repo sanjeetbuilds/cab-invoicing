@@ -17,7 +17,7 @@ export interface ClientPickerProps {
 }
 
 /**
- * Same UX as VehiclePicker — always shows the client name in the
+ * Same UX as VehiclePicker, always shows the client name in the
  * trigger, never the UUID. Free-text substring search.
  */
 export function ClientPicker({

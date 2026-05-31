@@ -1,6 +1,6 @@
 /**
  * One-shot generator for the PWA icon set. Writes PNGs to
- * public/icons/ — re-run when the brand mark changes.
+ * public/icons/, re-run when the brand mark changes.
  *
  *   node scripts/generate-pwa-icons.mjs
  *
@@ -19,7 +19,7 @@ const OUT = path.join(process.cwd(), "public", "icons");
 
 /**
  * `square: true` produces a flat-edge opaque tile with no rounded
- * corners. Apple touch icon + maskable Android icon both need this —
+ * corners. Apple touch icon + maskable Android icon both need this -
  * iOS rounds the corners on its end, and Android's adaptive-icon mask
  * does the same. Shipping our own rounded PNG produces double-rounded
  * + transparent gaps where the home screen wallpaper bleeds through.
@@ -52,7 +52,7 @@ async function writePng(size, opts, filename) {
   const svg = Buffer.from(svgIcon({ size, ...opts }));
   const out = path.join(OUT, filename);
   // .flatten() collapses any alpha into the indigo background so the
-  // output is fully opaque. iOS needs this — a PNG with alpha gets the
+  // output is fully opaque. iOS needs this, a PNG with alpha gets the
   // home-screen wallpaper bleeding through the rounded corners.
   await sharp(svg)
     .flatten({ background: BRAND })
@@ -63,7 +63,7 @@ async function writePng(size, opts, filename) {
 
 await fs.mkdir(OUT, { recursive: true });
 
-// Standard launcher icons — mark fills ~55% of the tile. These keep
+// Standard launcher icons, mark fills ~55% of the tile. These keep
 // their own subtle radius for surfaces that don't apply a mask.
 await writePng(192, { fontSize: 110 }, "icon-192.png");
 await writePng(512, { fontSize: 300 }, "icon-512.png");

@@ -52,7 +52,7 @@ export default async function DashboardPage() {
 
   // Calmer query set: just the four stats + the last five invoices.
   // No hero-prompt logic, no activity-feed merge, no unbilled-by-client
-  // breakdown — the dashboard is a glance-summary, not a worklist.
+  // breakdown, the dashboard is a glance-summary, not a worklist.
   const [
     { count: clientCount },
     { count: vehicleCount },
@@ -147,7 +147,7 @@ export default async function DashboardPage() {
       {isFresh && <SeedBanner />}
       <SetupChecklist status={setupStatus} />
 
-      {/* 4 stat tiles — 2-up on mobile, 4-up at lg+. auto-rows-fr +
+      {/* 4 stat tiles, 2-up on mobile, 4-up at lg+. auto-rows-fr +
           h-full on the tiles equalises height across rows so a tile
           with a one-line hint doesn't sit shorter than its neighbour. */}
       <div className="grid grid-cols-2 auto-rows-fr gap-3 sm:gap-4 lg:grid-cols-4">
@@ -159,7 +159,7 @@ export default async function DashboardPage() {
         />
         <StatCard
           label="Outstanding"
-          value={outstanding > 0 ? formatINR(outstanding) : "—"}
+          value={outstanding > 0 ? formatINR(outstanding) : "-"}
           hint={
             unpaidInvoices && unpaidInvoices.length > 0
               ? `${unpaidInvoices.length} unpaid invoice${
@@ -171,7 +171,7 @@ export default async function DashboardPage() {
         />
         <StatCard
           label="Billed this month"
-          value={billedThisMonth > 0 ? formatINR(billedThisMonth) : "—"}
+          value={billedThisMonth > 0 ? formatINR(billedThisMonth) : "-"}
           hint={`since ${fmtDate(monthStart)}`}
           href="/invoices"
         />
@@ -182,7 +182,7 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Recent invoices — last 5. The only list on the dashboard. */}
+      {/* Recent invoices, last 5. The only list on the dashboard. */}
       <Card>
         <CardHeader>
           <div>

@@ -15,7 +15,7 @@ export function TopBar({
   logoAspectRatio: number | null;
   email: string;
 }) {
-  // Mobile: thin strip — brand block on the left (mode-aware), user
+  // Mobile: thin strip, brand block on the left (mode-aware), user
   // menu on the right. Desktop: the sidebar already shows the brand, so
   // the top bar collapses to just the user menu on the right.
   // `pt-[env(safe-area-inset-top)]` clears the notch on iOS; the visible

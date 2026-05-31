@@ -78,7 +78,7 @@ const STATUS_PILLS: { value: StatusFilter; label: string }[] = [
 ];
 
 function fmtDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const [y, m, d] = iso.split("-");
   if (!y || !m || !d) return iso;
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
@@ -119,7 +119,7 @@ export function InvoicesList({
   );
   const showFiltersButton = showClientFilter || showPeriodFilter;
 
-  // Server already returns rows by invoice_number DESC — atomic and
+  // Server already returns rows by invoice_number DESC, atomic and
   // sequential, so newest invoice is always on top. No client-side sort.
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -286,7 +286,7 @@ export function InvoicesList({
         </div>
       )}
 
-      {/* Mobile bottom sheet — inline radio sections, no nested
+      {/* Mobile bottom sheet, inline radio sections, no nested
           dropdowns. Apply commits and closes; Clear resets to default. */}
       <BottomSheet
         open={isMobile && showFilters && showFiltersButton}
@@ -380,7 +380,7 @@ export function InvoicesList({
             </Table>
           </div>
 
-          {/* Mobile (<md): rich summary cards — replace the detail page */}
+          {/* Mobile (<md): rich summary cards, replace the detail page */}
           <div className="md:hidden flex flex-col gap-4 md:gap-5">
             {filtered.map((inv) => (
               <MobileInvoiceCard
@@ -422,12 +422,12 @@ function DesktopInvoiceRow({
 
   function openPdf() {
     // Same-tab navigation to the in-shell PDF viewer keeps the user
-    // inside the app — critical on installed PWAs where a new tab
+    // inside the app, critical on installed PWAs where a new tab
     // strands them in the system browser with no way back.
     router.push(viewUrl);
   }
 
-  // WhatsApp / email / Drive share — hands the file blob to the OS
+  // WhatsApp / email / Drive share, hands the file blob to the OS
   // share sheet so the recipient sees "Invoice_2037_Bharti_Foundation.pdf"
   // not the Vercel URL. Falls back to a triggered download with the
   // same filename when Web Share Level 2 isn't available.
@@ -495,14 +495,14 @@ function DesktopInvoiceRow({
         onClick={openPdf}
       >
         <TableCell className="font-mono font-medium">{fullNumber}</TableCell>
-        <TableCell>{invoice.client_name ?? "—"}</TableCell>
+        <TableCell>{invoice.client_name ?? "-"}</TableCell>
         <TableCell className="font-mono">{fmtDate(invoice.invoice_date)}</TableCell>
         <TableCell className="text-xs text-muted-foreground">
           {invoice.period_from && invoice.period_to
             ? `${fmtDate(invoice.period_from)} – ${fmtDate(invoice.period_to)}`
-            : "—"}
+            : "-"}
         </TableCell>
-        <TableCell className="text-right font-mono">{duties || "—"}</TableCell>
+        <TableCell className="text-right font-mono">{duties || "-"}</TableCell>
         <TableCell className="text-right font-mono">
           {formatINR(invoice.net_amount)}
         </TableCell>
@@ -597,7 +597,7 @@ function MobileInvoiceCard({
   const paid = invoice.status === "paid";
 
   function openPdf() {
-    // Same-tab navigation — see DesktopInvoiceRow above.
+    // Same-tab navigation, see DesktopInvoiceRow above.
     router.push(viewUrl);
   }
 
@@ -660,7 +660,7 @@ function MobileInvoiceCard({
     <>
       <Card>
         <CardContent className="py-3 px-3 flex flex-col gap-3">
-          {/* Tappable summary block — anywhere on this area opens the PDF */}
+          {/* Tappable summary block, anywhere on this area opens the PDF */}
           <button
             type="button"
             onClick={openPdf}
@@ -678,7 +678,7 @@ function MobileInvoiceCard({
                 Billed to
               </p>
               <p className="font-semibold text-foreground leading-tight">
-                {invoice.client_name ?? "—"}
+                {invoice.client_name ?? "-"}
               </p>
             </div>
 
@@ -703,7 +703,7 @@ function MobileInvoiceCard({
             </p>
           </button>
 
-          {/* Action row — Share is primary because the most common job is
+          {/* Action row, Share is primary because the most common job is
               sending the invoice to the client. Open PDF stays as a
               secondary outline button for previewing first. */}
           <div className="flex items-center gap-2 border-t border-border pt-3">

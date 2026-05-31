@@ -57,7 +57,7 @@ export function TourLauncher() {
         setOpen(true);
       }
     } catch {
-      // localStorage blocked (private mode etc.) — just show the tour.
+      // localStorage blocked (private mode etc.), just show the tour.
       setOpen(true);
     }
   }, []);

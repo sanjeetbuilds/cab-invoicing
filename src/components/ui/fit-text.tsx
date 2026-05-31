@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
  * Shrinks a single line of text to fit its container. Renders at
- * `maxPx` initially (SSR-safe — server output matches the max size),
+ * `maxPx` initially (SSR-safe, server output matches the max size),
  * then runs a layout pass on mount + resize: if the rendered width
  * exceeds the parent's content width, font-size is decremented by 1px
  * until it fits or hits `minPx`. Below `minPx` the text wraps.
@@ -14,7 +14,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
  * of bleeding outside the tile.
  *
  * `text` is the bare string used as the measurement key. Optional
- * `children` can override what's rendered — useful for cases like
+ * `children` can override what's rendered, useful for cases like
  * styling the ₹ prefix differently from the digits.
  */
 export function FitText({

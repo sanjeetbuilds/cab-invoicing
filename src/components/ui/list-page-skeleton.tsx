@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  *   - Optional sticky toolbar (search + filter pills)
  *   - N stacked card rows on mobile / table rows on desktop
  *
- * Pixel-perfect match isn't the goal — what matters is the user sees a
+ * Pixel-perfect match isn't the goal, what matters is the user sees a
  * shape that resolves into real content rather than a blank screen.
  */
 export function ListPageSkeleton({
@@ -21,13 +21,13 @@ export function ListPageSkeleton({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      {/* Header — title + action button */}
+      {/* Header, title + action button */}
       <div className="flex items-center justify-between gap-3">
         <Skeleton className="h-7 w-32 sm:h-8 sm:w-40" />
         <Skeleton className="h-9 w-32 sm:w-36" />
       </div>
 
-      {/* Toolbar — search + pills */}
+      {/* Toolbar, search + pills */}
       {toolbar && (
         <div className="flex flex-col gap-3">
           <Skeleton className="h-10 w-full" />
@@ -62,7 +62,7 @@ export function ListPageSkeleton({
 }
 
 /**
- * Dashboard-specific skeleton — hero card, 2×2 / 4×1 stat grid, and
+ * Dashboard-specific skeleton, hero card, 2×2 / 4×1 stat grid, and
  * an "unbilled by client" list below. Shape mirrors the dashboard at
  * a glance.
  */

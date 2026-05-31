@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { BrandMode } from "@/lib/supabase/types";
 
 /**
- * Renders the company brand for the app shell — either as text, just the
+ * Renders the company brand for the app shell, either as text, just the
  * uploaded logo, or logo + text. Falls back to text if the logo image
  * fails to load (404, blocked, etc.) so the header never goes blank.
  *
@@ -28,7 +28,7 @@ export function BrandDisplay({
   className?: string;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
-  // Treat a missing URL identically to a failed load — both produce the
+  // Treat a missing URL identically to a failed load, both produce the
   // same fallback path.
   const haveLogo = !!logoUrl && !imgFailed;
 
@@ -36,7 +36,7 @@ export function BrandDisplay({
   const effective: BrandMode =
     !haveLogo && mode !== "text_only" ? "text_only" : mode;
 
-  // Tuned heights — sidebar gets a touch more vertical space than the
+  // Tuned heights, sidebar gets a touch more vertical space than the
   // mobile top strip. Companion text size scales with it.
   const heights = {
     sidebar: { logoOnly: 36, withText: 24, textClass: "text-base" },

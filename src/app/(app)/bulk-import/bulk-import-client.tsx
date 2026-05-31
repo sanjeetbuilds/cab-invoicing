@@ -216,7 +216,7 @@ export function BulkImportClient({
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Step 1 — template download
+// Step 1, template download
 // ─────────────────────────────────────────────────────────────────────
 
 function TemplateCard() {
@@ -246,7 +246,7 @@ function TemplateCard() {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Step 2 — upload (covers idle / selected / parsing / parse-error)
+// Step 2, upload (covers idle / selected / parsing / parse-error)
 // ─────────────────────────────────────────────────────────────────────
 
 function UploadCard({
@@ -295,7 +295,7 @@ function UploadCard({
         />
 
         {!hasFile && (
-          // Idle drop-zone — clickable area that opens the picker.
+          // Idle drop-zone, clickable area that opens the picker.
           <button
             type="button"
             onClick={onPick}
@@ -316,7 +316,7 @@ function UploadCard({
         )}
 
         {hasFile && file && (
-          // File-selected card — green filename, size, remove ×.
+          // File-selected card, green filename, size, remove ×.
           <div
             className={cn(
               "rounded-lg p-4 flex items-center gap-3",
@@ -400,7 +400,7 @@ function UploadCard({
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Step 3 — preview (summary + tabs)
+// Step 3, preview (summary + tabs)
 // ─────────────────────────────────────────────────────────────────────
 
 function PreviewCard({
@@ -431,7 +431,7 @@ function PreviewCard({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Success summary — green */}
+      {/* Success summary, green */}
       <div className="rounded-xl bg-success-soft/40 border border-success/20 p-5 flex items-start gap-3">
         <CheckCircle2 className="h-6 w-6 text-success shrink-0 mt-0.5" />
         <div className="flex-1 flex flex-col gap-3">
@@ -458,7 +458,7 @@ function PreviewCard({
         </div>
       </div>
 
-      {/* Tabs — Clients / Vehicles / Rate Cards */}
+      {/* Tabs, Clients / Vehicles / Rate Cards */}
       <Card>
         <CardContent className="flex flex-col gap-4">
           <Tabs defaultValue={defaultTab}>

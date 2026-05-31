@@ -12,7 +12,7 @@
 --      Milestones 2–6. Cross-company member listing for the Team tab will be
 --      added in Milestone 7 via a SECURITY DEFINER view that bypasses RLS.
 --   2. INSERT/UPDATE/DELETE policies: use a SECURITY DEFINER helper function
---      (user_has_role) that bypasses RLS internally — no recursion.
+--      (user_has_role) that bypasses RLS internally, no recursion.
 -- =============================================================================
 
 -- Helper: does the current user hold one of the given roles in the given company?

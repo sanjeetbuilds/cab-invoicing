@@ -269,7 +269,7 @@ export function QuickInvoiceForm({
       return;
     }
     if (preview.subtotal <= 0) {
-      toast.error("Total amount must be greater than zero — check the rates.");
+      toast.error("Total amount must be greater than zero, check the rates.");
       return;
     }
     if (isFixed && !planName.trim()) {
@@ -446,7 +446,7 @@ export function QuickInvoiceForm({
                 <div className="flex h-9 items-center">
                   <Switch checked={isRcm} onCheckedChange={setIsRcm} />
                   <span className="ml-3 text-sm text-muted-foreground">
-                    {isRcm ? "Yes — GST under RCM" : "No — charge GST"}
+                    {isRcm ? "Yes, GST under RCM" : "No, charge GST"}
                   </span>
                 </div>
               </div>
@@ -565,7 +565,7 @@ export function QuickInvoiceForm({
             )}
 
             {/* Mode-specific RATE inputs. Quick Invoice has no rate card to
-                pull from — the user types the rates inline. The
+                pull from, the user types the rates inline. The
                 count × rate = amount layout makes the math visible
                 while keeping every value editable. */}
             <p className="text-xs text-muted-foreground italic -mt-1">
@@ -586,7 +586,7 @@ export function QuickInvoiceForm({
                     <Num label="Total kms *" value={totalKms} set={setTotalKms} />
                     <Num label="Total hrs" value={totalHours} set={setTotalHours} />
                   </div>
-                  {/* Base — the slab line on the invoice. All three
+                  {/* Base, the slab line on the invoice. All three
                       values are editable parameters for this one trip. */}
                   <div className="rounded-md border border-border bg-muted/30 px-3 py-2 flex flex-col gap-2">
                     <Label className="text-xs">Base (slab)</Label>
@@ -757,7 +757,7 @@ export function QuickInvoiceForm({
                 <div className="flex items-start gap-2 rounded-md bg-warning-soft/60 p-2 text-xs text-warning-foreground">
                   <AlertTriangle className="h-4 w-4 mt-1 shrink-0" />
                   <span>
-                    Tick a label box — invoice will default to &ldquo;Toll &amp; Parking&rdquo;.
+                    Tick a label box, invoice will default to &ldquo;Toll &amp; Parking&rdquo;.
                   </span>
                 </div>
               )}
@@ -798,8 +798,8 @@ export function QuickInvoiceForm({
                 <Row label="Subtotal" value={formatINR(preview.subtotal)} />
                 {preview.gst.mode === "RCM" && (
                   <>
-                    <Row label="CGST @ 2.5% Under RCM" value="—" muted />
-                    <Row label="SGST @ 2.5% Under RCM" value="—" muted />
+                    <Row label="CGST @ 2.5% Under RCM" value="-" muted />
+                    <Row label="SGST @ 2.5% Under RCM" value="-" muted />
                   </>
                 )}
                 {preview.gst.mode === "CGST_SGST" && (
@@ -877,7 +877,7 @@ function Num({
 
 /**
  * Inline [count input] × ₹[rate input]/unit = ₹amount. Both the count
- * and the rate are editable — Quick Invoice has no rate-card metadata
+ * and the rate are editable, Quick Invoice has no rate-card metadata
  * to inherit from.
  */
 function EditableCountRateRow({

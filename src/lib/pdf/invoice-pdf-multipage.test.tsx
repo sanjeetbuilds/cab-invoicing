@@ -60,7 +60,7 @@ function makeInvoice(): Invoice {
   };
 }
 
-// Build N trip groups of 4 lines each — like real FHPL invoices.
+// Build N trip groups of 4 lines each, like real FHPL invoices.
 function makeLines(tripCount: number): InvoiceLine[] {
   const out: InvoiceLine[] = [];
   let sort = 0;
@@ -122,7 +122,7 @@ function makeLines(tripCount: number): InvoiceLine[] {
   return out;
 }
 
-describe("InvoicePdf — multi-page", () => {
+describe("InvoicePdf, multi-page", () => {
   it("2 trips × 4 lines (single page baseline)", async () => {
     const buf = await renderToBuffer(
       <InvoicePdf company={company} invoice={makeInvoice()} lines={makeLines(2)} />,
@@ -145,7 +145,7 @@ describe("InvoicePdf — multi-page", () => {
   });
 
   it("exactly at FIRST_PAGE_BUDGET (30 rows = 7.5 trips)", async () => {
-    // 8 trips × 4 lines = 32 — just over the first-page budget
+    // 8 trips × 4 lines = 32, just over the first-page budget
     const buf = await renderToBuffer(
       <InvoicePdf company={company} invoice={makeInvoice()} lines={makeLines(8)} />,
     );

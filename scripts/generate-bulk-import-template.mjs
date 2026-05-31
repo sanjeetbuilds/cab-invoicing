@@ -6,7 +6,7 @@
  * Writes /public/templates/bulk-import-template.xlsx with four sheets:
  *   Clients · Vehicles · Rate Cards · Notes
  * Required columns are marked with *. Sample rows are tagged
- * "SAMPLE — DELETE BEFORE UPLOAD" in the first column so users don't
+ * "SAMPLE, DELETE BEFORE UPLOAD" in the first column so users don't
  * accidentally import them.
  *
  * Re-run whenever the import schema changes.
@@ -64,7 +64,7 @@ wb.created = new Date();
   applyHeaderRow(ws);
   applySampleRow(
     ws.addRow({
-      name: "SAMPLE — DELETE BEFORE UPLOAD",
+      name: "SAMPLE, DELETE BEFORE UPLOAD",
       gstin: "",
       state: "Haryana",
       address: "",
@@ -77,7 +77,7 @@ wb.created = new Date();
   );
   applySampleRow(
     ws.addRow({
-      name: "SAMPLE — DELETE BEFORE UPLOAD",
+      name: "SAMPLE, DELETE BEFORE UPLOAD",
       gstin: "07ABCDE1234F1Z5",
       state: "Delhi",
       address: "",
@@ -143,7 +143,7 @@ wb.created = new Date();
   applyHeaderRow(ws);
   applySampleRow(
     ws.addRow({
-      client: "SAMPLE — DELETE BEFORE UPLOAD",
+      client: "SAMPLE, DELETE BEFORE UPLOAD",
       car: "Dzire",
       mode: "Local",
       plan: "",
@@ -161,7 +161,7 @@ wb.created = new Date();
   );
   applySampleRow(
     ws.addRow({
-      client: "SAMPLE — DELETE BEFORE UPLOAD",
+      client: "SAMPLE, DELETE BEFORE UPLOAD",
       car: "Crysta",
       mode: "Outstation",
       plan: "",
@@ -179,7 +179,7 @@ wb.created = new Date();
   );
   applySampleRow(
     ws.addRow({
-      client: "SAMPLE — DELETE BEFORE UPLOAD",
+      client: "SAMPLE, DELETE BEFORE UPLOAD",
       car: "Dzire",
       mode: "Transfer",
       plan: "Airport T1 Drop",
@@ -205,10 +205,10 @@ wb.created = new Date();
   const notes = [
     "Required columns are marked with *. Delete the sample rows before uploading.",
     "",
-    "VALID VALUES — Mode: Local, Outstation, Transfer, Package",
-    "VALID VALUES — Ownership: Own, Attached",
-    "VALID VALUES — Car Type: Dzire, Sonet, Crysta, Innova, Ertiga, Other",
-    "VALID VALUES — Yes/No fields accept Yes, No, Y, N, True, False, 1, 0.",
+    "VALID VALUES, Mode: Local, Outstation, Transfer, Package",
+    "VALID VALUES, Ownership: Own, Attached",
+    "VALID VALUES, Car Type: Dzire, Sonet, Crysta, Innova, Ertiga, Other",
+    "VALID VALUES, Yes/No fields accept Yes, No, Y, N, True, False, 1, 0.",
     "",
     "REQUIRED PER MODE (Rate Cards):",
     "  • Local      → Base Rate, Base km, Base hr, Extra km, Extra hour, Night, Driver TA",

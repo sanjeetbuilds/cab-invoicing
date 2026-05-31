@@ -140,7 +140,7 @@ export function TeamSection({
             <p className="text-sm font-semibold text-foreground">Invite teammate</p>
             <p className="text-xs text-muted-foreground mt-1 mb-4">
               Creates a user account with a temp password. Copy it and share
-              it with them — they sign in at <span className="font-mono">/sign-in</span> and
+              it with them, they sign in at <span className="font-mono">/sign-in</span> and
               can reset their password from there.
             </p>
             <form
@@ -259,7 +259,7 @@ export function TeamSection({
               <TableRow key={m.id}>
                 <TableCell>
                   <span className="font-medium text-foreground">
-                    {m.email ?? "—"}
+                    {m.email ?? "-"}
                   </span>
                   {m.is_self && (
                     <span className="ml-2 text-xs text-muted-foreground">
@@ -333,7 +333,7 @@ export function TeamSection({
             <AlertDialogTitle>Remove this member?</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmRemove?.email} will lose access to this company
-              immediately. Their auth account is not deleted — they keep it for
+              immediately. Their auth account is not deleted, they keep it for
               other companies they belong to.
             </AlertDialogDescription>
           </AlertDialogHeader>

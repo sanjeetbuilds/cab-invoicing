@@ -113,7 +113,7 @@ export async function issueInvoiceAction(
 
   // Atomically reserve the next invoice number for this company. Must run
   // through the user-scoped client so auth.uid() resolves inside the
-  // SECURITY DEFINER function — the admin client has no session.
+  // SECURITY DEFINER function, the admin client has no session.
   const userSb = await createUserClient();
   const { data: numberData, error: rpcErr } = await userSb.rpc(
     "allocate_invoice_number",

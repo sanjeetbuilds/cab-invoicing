@@ -3,7 +3,7 @@
 /**
  * Inline-radio filter widgets used by the Invoices and Quotations list
  * pages. Replaces the older nested-dropdown pattern (a Select inside a
- * BottomSheet creates a modal-on-modal — bad). Here every option is
+ * BottomSheet creates a modal-on-modal, bad). Here every option is
  * visible at once, tapped like a row, with the selected state shown
  * via a filled radio circle on the right.
  */

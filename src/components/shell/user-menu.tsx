@@ -21,7 +21,7 @@ export function UserMenu({ email }: { email: string }) {
     try {
       await fetch("/sign-out", { method: "POST" });
     } finally {
-      // Land on the marketing landing — it has Sign in / Try for free
+      // Land on the marketing landing, it has Sign in / Try for free
       // CTAs so the user has a clear next step, and middleware lets
       // signed-out users through.
       router.push("/");

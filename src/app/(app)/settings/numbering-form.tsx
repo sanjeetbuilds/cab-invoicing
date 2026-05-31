@@ -69,7 +69,7 @@ export function NumberingForm({ company }: { company: Company }) {
             <p className="text-sm font-semibold text-foreground">Invoices</p>
             <p className="text-xs text-muted-foreground mt-1">
               The next invoice you issue will be <span className="font-mono">
-                {/* live preview not needed — just hint */}
+                {/* live preview not needed, just hint */}
                 {company.invoice_prefix ?? ""}
                 {company.next_invoice_number}
               </span>.

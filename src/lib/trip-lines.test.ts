@@ -49,7 +49,7 @@ function rate(overrides: Partial<RateCard>): RateCard {
   };
 }
 
-describe("tripToLines — reference invoices from BUILD-SPEC.md", () => {
+describe("tripToLines, reference invoices from BUILD-SPEC.md", () => {
   it("FHPL 17-Apr Sonet local 149km / 9.5hr / night → ₹2,985", () => {
     const r = rate({
       mode: "local",
@@ -162,7 +162,7 @@ describe("tripToLines — reference invoices from BUILD-SPEC.md", () => {
   });
 });
 
-describe("tripToLines — outstation billed as slab borrows the local rate card", () => {
+describe("tripToLines, outstation billed as slab borrows the local rate card", () => {
   it("an outstation trip with billing_method='slab' renders local-style lines", () => {
     // Same 149km/9.5hr/night trip as the FHPL case, but mode='outstation'
     // with the slab override. Output must match the local equivalent.
@@ -225,7 +225,7 @@ describe("tripToLines — outstation billed as slab borrows the local rate card"
   });
 });
 
-describe("tripToLines — edge cases", () => {
+describe("tripToLines, edge cases", () => {
   it("local trip exactly at base kms/hours, no night, no TA: just the base line", () => {
     const r = rate({
       mode: "local",
@@ -283,7 +283,7 @@ describe("tripToLines — edge cases", () => {
     });
   });
 
-  describe("transfer and package — fixed-price modes", () => {
+  describe("transfer and package, fixed-price modes", () => {
     it("transfer renders plan name + fixed price as one line", () => {
       const r = rate({
         mode: "transfer",

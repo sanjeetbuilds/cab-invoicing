@@ -1,7 +1,7 @@
 /**
  * Progressive-disclosure helpers: hide a control when there isn't enough
  * data behind it to make it useful. The thresholds are deliberately low
- * (1, 3, 5) — at small counts the user scans, not searches/sorts/filters.
+ * (1, 3, 5), at small counts the user scans, not searches/sorts/filters.
  *
  * All helpers operate on arbitrary item types via an accessor callback,
  * so the same rules work for invoices, trips, clients, vehicles, etc.
@@ -42,7 +42,7 @@ export function shouldShowFilter<T>(
 
 /**
  * Period filter is only useful when items span more than one calendar
- * month — otherwise narrowing by period can't change the result.
+ * month, otherwise narrowing by period can't change the result.
  */
 export function shouldShowPeriodFilter<T>(
   items: readonly T[],
@@ -62,7 +62,7 @@ export function shouldShowPeriodFilter<T>(
 /**
  * Given the full list of items and the available status pills, return
  * only the pills that actually have items behind them. If all visible
- * items share a single status, return [] — there's nothing to switch to,
+ * items share a single status, return [], there's nothing to switch to,
  * so the entire pill row should be hidden.
  *
  * The "all" pill is always kept as the first entry IF other pills survive,

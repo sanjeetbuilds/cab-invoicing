@@ -1,13 +1,13 @@
 /**
  * Share a server-rendered PDF with the recipient as an attached FILE,
- * not as a URL — so WhatsApp / Mail / Drive see the chosen filename
+ * not as a URL, so WhatsApp / Mail / Drive see the chosen filename
  * (Invoice_2037_Bharti_Foundation.pdf) instead of the Vercel URL.
  *
  * Strategy:
  *   1. Fetch the PDF route to get the bytes.
  *   2. Wrap them in a File so the OS sees an explicit name.
  *   3. If the browser supports Web Share Level 2 (mobile Chrome / Safari
- *      / Edge), call navigator.share({ files }) — the system share sheet
+ *      / Edge), call navigator.share({ files }), the system share sheet
  *      treats it as a file attachment.
  *   4. Otherwise (desktop Firefox, older browsers), fall back to a
  *      regular download triggered by an <a download="…"> click.
@@ -39,7 +39,7 @@ export async function sharePdf(args: {
     return "shared";
   }
 
-  // Fallback — trigger a download. The recipient then attaches the
+  // Fallback, trigger a download. The recipient then attaches the
   // downloaded file manually, but it lands with the correct filename.
   const objectUrl = URL.createObjectURL(blob);
   const a = document.createElement("a");

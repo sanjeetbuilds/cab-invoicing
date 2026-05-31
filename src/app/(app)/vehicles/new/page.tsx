@@ -20,7 +20,7 @@ export default async function NewVehiclePage() {
         </p>
         <PageHeader
           title="Add vehicle"
-          description="Vehicles you drive — own or attached vendor cars."
+          description="Vehicles you drive, own or attached vendor cars."
         />
       </div>
       <VehicleForm />

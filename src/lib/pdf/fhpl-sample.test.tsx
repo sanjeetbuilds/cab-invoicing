@@ -3,7 +3,7 @@
  * eyeball the new TAX INVOICE header, BILLED BY GSTIN position, and the
  * chronological date sort with out-of-order input trips.
  *
- * NOT a regression test — only runs when SAMPLE=1 is set so CI stays fast.
+ * NOT a regression test, only runs when SAMPLE=1 is set so CI stays fast.
  */
 import path from "node:path";
 import fs from "node:fs";
@@ -70,7 +70,7 @@ const invoice: Invoice = {
   updated_at: "2026-05-31",
 };
 
-// 10 trips, intentionally INPUT in out-of-order dates — the renderer
+// 10 trips, intentionally INPUT in out-of-order dates, the renderer
 // should sort them ascending. If sort works the PDF lists 1/5 → 27/5.
 const tripDates = [
   "10/5/26", "3/5/26",  "21/5/26", "7/5/26",  "15/5/26",

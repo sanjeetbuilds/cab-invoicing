@@ -105,7 +105,7 @@ export function BulkAddClient({
   const rateByKey = useMemo(() => {
     const m = new Map<string, RateCard>();
     // Bulk add only handles local + outstation (Transfer/Package require
-    // per-row plan selection — power-user UI, follow-up). Keep the key
+    // per-row plan selection, power-user UI, follow-up). Keep the key
     // shape parallel to the rest of the app: (client, car, mode, plan).
     for (const r of rateCards) {
       m.set(
@@ -324,7 +324,7 @@ export function BulkAddClient({
                       onChange={(e) => patchRow(i, { client_id: e.target.value })}
                       className="h-8 w-full rounded-lg border border-input px-2 text-sm bg-card focus:border-ring focus:ring-2 focus:ring-ring/20 focus:outline-none"
                     >
-                      <option value="">—</option>
+                      <option value="">-</option>
                       {clients.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
@@ -343,7 +343,7 @@ export function BulkAddClient({
                       }}
                       className="h-8 w-full rounded-lg border border-input px-2 text-sm bg-card focus:border-ring focus:ring-2 focus:ring-ring/20 focus:outline-none"
                     >
-                      <option value="">—</option>
+                      <option value="">-</option>
                       {vehicles.map((v) => (
                         <option
                           key={v.id}
@@ -383,7 +383,7 @@ export function BulkAddClient({
                               : "border-input bg-card"
                           }`}
                         >
-                          <option value="">—</option>
+                          <option value="">-</option>
                           {CAR_TYPES.map((t) => (
                             <option key={t} value={t}>{t}</option>
                           ))}
@@ -404,7 +404,7 @@ export function BulkAddClient({
                       }}
                       className="h-8 w-full rounded-lg border border-input px-2 text-sm bg-card focus:border-ring focus:ring-2 focus:ring-ring/20 focus:outline-none"
                     >
-                      <option value="">—</option>
+                      <option value="">-</option>
                       <option value="local">Local</option>
                       <option value="outstation">Outstation</option>
                     </select>
@@ -423,7 +423,7 @@ export function BulkAddClient({
                         title="Bill as slab (use local rate card)"
                       />
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-muted-foreground">-</span>
                     )}
                   </td>
                   <td>
@@ -450,7 +450,7 @@ export function BulkAddClient({
                         className="h-8 px-2 text-sm text-right tabular-nums"
                       />
                     ) : (
-                      <span className="block text-right text-muted-foreground">—</span>
+                      <span className="block text-right text-muted-foreground">-</span>
                     )}
                   </td>
                   <td>
@@ -478,7 +478,7 @@ export function BulkAddClient({
                         className="h-8 px-2 text-sm text-right tabular-nums"
                       />
                     ) : (
-                      <span className="block text-right text-muted-foreground">—</span>
+                      <span className="block text-right text-muted-foreground">-</span>
                     )}
                   </td>
                   <td>
@@ -530,7 +530,7 @@ export function BulkAddClient({
                       ready ? (
                         <span className="text-destructive text-[10px]">no rate</span>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
+                        <span className="text-muted-foreground">-</span>
                       )
                     ) : (
                       formatINR(c.amount)
@@ -584,7 +584,7 @@ export function BulkAddClient({
           Add row
         </Button>
         <p className="text-xs text-muted-foreground self-center">
-          Rows highlighted in amber are missing required fields — they&apos;ll
+          Rows highlighted in amber are missing required fields, they&apos;ll
           stay in the draft when you save.
         </p>
       </div>

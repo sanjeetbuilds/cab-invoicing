@@ -83,7 +83,7 @@ export interface Trip {
   end_date: string | null;
   car_type: CarType;
   mode: TripMode;
-  /** For transfer / package modes — names the rate-card plan picked. */
+  /** For transfer / package modes, names the rate-card plan picked. */
   plan_name: string | null;
   billing_method: BillingMethod;
   total_kms: number;

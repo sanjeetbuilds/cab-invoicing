@@ -3,7 +3,7 @@
 -- Add Transfer + Package modes (fixed-price billing) alongside the
 -- existing Local + Outstation. Same client + car can now have multiple
 -- Transfer plans (Airport T3 / NDLS / OD station) and Package plans
--- (Manali 3D2N / Shimla Weekend) — so the natural key on rate_cards
+-- (Manali 3D2N / Shimla Weekend), so the natural key on rate_cards
 -- gains plan_name. Trips and quotation lines pick up the same shape.
 
 -- ---------- rate_cards ----------

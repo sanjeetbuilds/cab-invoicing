@@ -119,7 +119,7 @@ export function TripForm({
     Trip,
     "client_id" | "vehicle_id" | "car_type" | "mode" | "billing_method"
   > | null;
-  /** Trips from the last 30 days — used to pre-select Mode when the
+  /** Trips from the last 30 days, used to pre-select Mode when the
    *  user changes the (client, car) combo. Most recent wins. */
   recentTrips?: Pick<
     Trip,
@@ -151,7 +151,7 @@ export function TripForm({
       date: trip?.date ?? todayIso(),
       end_date: trip?.end_date ?? "",
       // For NEW trips, seed client + vehicle from the user's most recent
-      // trip in the last week — most drivers log the same combo day after
+      // trip in the last week, most drivers log the same combo day after
       // day. Editing an existing trip uses its own stored values.
       client_id: trip?.client_id ?? recentDefaults?.client_id ?? "",
       vehicle_id: trip?.vehicle_id ?? recentDefaults?.vehicle_id ?? "",
@@ -187,7 +187,7 @@ export function TripForm({
 
   // Smart mode default: when (client, car) changes, pick the most
   // recent mode the user used for that exact combo within the last
-  // 30 days. Only runs when the user changes the combo AFTER mount —
+  // 30 days. Only runs when the user changes the combo AFTER mount -
   // initial mount uses recentDefaults (handled in defaultValues above).
   // Only updates mode if the user hasn't manually touched it for this
   // form session (dirtyFields.mode === false).
@@ -265,7 +265,7 @@ export function TripForm({
   );
 
   // All (mode, plan_name) combos available for the current (client, car).
-  // This is what the Mode dropdown actually shows — one entry per
+  // This is what the Mode dropdown actually shows, one entry per
   // existing rate card. Picking it sets both mode and plan_name.
   const availableRatePlans = useMemo(() => {
     const rows = localRateCards.filter(
@@ -347,7 +347,7 @@ export function TripForm({
       onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col gap-4"
     >
-      {/* Sticky running total — chip pinned just under the top strip so
+      {/* Sticky running total, chip pinned just under the top strip so
           the user always sees the number while filling fields. Kept
           inside the form's natural width (no negative margins) and given
           symmetric vertical padding for clean alignment. */}
@@ -376,7 +376,7 @@ export function TripForm({
             <Label htmlFor="end_date">End date</Label>
             <Input id="end_date" type="date" {...register("end_date")} />
             <p className="text-xs text-muted-foreground">
-              Optional — only set for multi-day duties.
+              Optional, only set for multi-day duties.
             </p>
             {errors.end_date && (
               <p className="text-sm text-destructive">{errors.end_date.message}</p>
@@ -571,7 +571,7 @@ export function TripForm({
       {/* Distances & quantities. Quantity-style fields (TA, Night) use
           the count × rate = amount layout so the math is visible at a
           glance. Rate values come from the active rate card and are
-          shown as metadata (not editable here — edit on the Rate Cards
+          shown as metadata (not editable here, edit on the Rate Cards
           page). */}
       <Card>
         <CardContent className="flex flex-col gap-4">
@@ -751,7 +751,7 @@ export function TripForm({
               </p>
               {mode === "outstation" && effectiveMethod === "slab" && (
                 <p className="text-xs text-muted-foreground">
-                  Slab billing borrows the local rate card — add a local rate
+                  Slab billing borrows the local rate card, add a local rate
                   for this car type or switch this trip back to per-km.
                 </p>
               )}
@@ -810,7 +810,7 @@ export function TripForm({
           onCreated={(rc) => {
             setLocalRateCards((prev) => {
               // Replace any existing rate card with the same natural key
-              // — covers both create-new and edit-existing.
+              //, covers both create-new and edit-existing.
               const filtered = prev.filter(
                 (r) =>
                   !(
@@ -840,7 +840,7 @@ export function TripForm({
 
 /**
  * Inline [count] × ₹rate/unit = ₹amount row. The count is editable; the
- * rate is pulled from the active rate card (read-only here — edit it on
+ * rate is pulled from the active rate card (read-only here, edit it on
  * the Rate Cards page); the amount is the computed result. Renders an
  * "Rate not set" hint if the rate card is missing the relevant field.
  */
@@ -899,12 +899,12 @@ function CountRateAmountRow({
  */
 function rateCardSummary(r: RateCard): string {
   const fmt = (n: number | null | undefined) =>
-    n == null ? "—" : formatINR(n);
+    n == null ? "-" : formatINR(n);
   const ta = `TA ${fmt(r.driver_ta)}/day`;
   if (r.mode === "local") {
     return [
       "Local",
-      `${r.base_kms ?? "—"}km/${r.base_hours ?? "—"}hr`,
+      `${r.base_kms ?? "-"}km/${r.base_hours ?? "-"}hr`,
       `${fmt(r.base_rate)} base`,
       `${fmt(r.extra_km)}/extra km`,
       `${fmt(r.extra_hour)}/extra hr`,
@@ -923,7 +923,7 @@ function rateCardSummary(r: RateCard): string {
   const incl = inclusions.length > 0 ? `incl. ${inclusions.join(" / ")}` : null;
   return [
     r.mode === "transfer" ? "Transfer" : "Package",
-    r.plan_name ?? "—",
+    r.plan_name ?? "-",
     `${fmt(r.fixed_price)} fixed`,
     ta,
     ...(incl ? [incl] : []),
