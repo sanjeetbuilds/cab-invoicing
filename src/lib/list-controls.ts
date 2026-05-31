@@ -9,7 +9,6 @@
 
 export const LIST_THRESHOLDS = {
   search: 5, // search hides when fewer than this many items
-  sort: 3, // sort hides when fewer than this many items
   filter: 2, // a filter needs at least 2 distinct values to be useful
 } as const;
 
@@ -28,11 +27,6 @@ function countDistinct<T>(
 /** Search beats scan from ~5 items. Below that, hide it. */
 export function shouldShowSearch(itemCount: number): boolean {
   return itemCount >= LIST_THRESHOLDS.search;
-}
-
-/** Sort is noise on tiny lists. Below 3, hide it. */
-export function shouldShowSort(itemCount: number): boolean {
-  return itemCount >= LIST_THRESHOLDS.sort;
 }
 
 /**

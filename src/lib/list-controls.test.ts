@@ -3,7 +3,6 @@ import {
   shouldShowFilter,
   shouldShowPeriodFilter,
   shouldShowSearch,
-  shouldShowSort,
   visibleStatusPills,
 } from "./list-controls";
 
@@ -13,12 +12,6 @@ describe("list-controls — progressive disclosure rules", () => {
     expect(shouldShowSearch(4)).toBe(false);
     expect(shouldShowSearch(5)).toBe(true);
     expect(shouldShowSearch(50)).toBe(true);
-  });
-
-  it("sort hides under 3 items", () => {
-    expect(shouldShowSort(0)).toBe(false);
-    expect(shouldShowSort(2)).toBe(false);
-    expect(shouldShowSort(3)).toBe(true);
   });
 
   it("filter hides when fewer than 2 distinct values exist", () => {

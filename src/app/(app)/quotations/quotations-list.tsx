@@ -14,20 +14,11 @@ import {
   Search,
   Share2,
   Trash2,
-  X,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -60,10 +51,18 @@ import { useIsMobile } from "@/lib/use-is-mobile";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import {
+  ClientFilterList,
+  FilterChipBar,
+  PeriodFilterList,
+  periodChipLabel,
+  resolvePeriodBounds,
+  type FilterChip,
+  type PeriodPreset,
+} from "@/components/ui/filter-list";
+import {
   shouldShowFilter,
   shouldShowPeriodFilter,
   shouldShowSearch,
-  shouldShowSort,
   visibleStatusPills,
 } from "@/lib/list-controls";
 import type { Client, Quotation } from "@/lib/supabase/types";
@@ -77,9 +76,6 @@ type StatusFilter =
   | "expired"
   | "rejected";
 
-type SortKey = "newest" | "oldest";
-type PeriodFilter = "all" | "this_month" | "last_month" | "this_year";
-
 const STATUS_PILLS: { value: StatusFilter; label: string }[] = [
   { value: "all", label: "All" },
   { value: "draft", label: "Draft" },
@@ -89,41 +85,11 @@ const STATUS_PILLS: { value: StatusFilter; label: string }[] = [
   { value: "rejected", label: "Rejected" },
 ];
 
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "newest", label: "Newest first" },
-  { value: "oldest", label: "Oldest first" },
-];
-
-const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
-  { value: "all", label: "All time" },
-  { value: "this_month", label: "This month" },
-  { value: "last_month", label: "Last month" },
-  { value: "this_year", label: "This year" },
-];
-
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   const [y, m, d] = iso.split("-");
   if (!y || !m || !d) return iso;
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
-}
-
-function startOfMonthIso(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
-}
-function endOfMonthIso(d: Date): string {
-  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-  return `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, "0")}-${String(last.getDate()).padStart(2, "0")}`;
-}
-function periodBounds(p: PeriodFilter): [string, string] | null {
-  if (p === "all") return null;
-  const now = new Date();
-  if (p === "this_month") return [startOfMonthIso(now), endOfMonthIso(now)];
-  if (p === "last_month") {
-    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    return [startOfMonthIso(prev), endOfMonthIso(prev)];
-  }
-  return [`${now.getFullYear()}-01-01`, `${now.getFullYear()}-12-31`];
 }
 
 export function QuotationsList({
@@ -136,8 +102,9 @@ export function QuotationsList({
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [clientId, setClientId] = useState<string>("all");
-  const [period, setPeriod] = useState<PeriodFilter>("all");
-  const [sort, setSort] = useState<SortKey>("newest");
+  const [period, setPeriod] = useState<PeriodPreset>("all");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
   const [showFilters, setShowFilters] = useState(false);
   const isMobile = useIsMobile();
 
@@ -147,7 +114,6 @@ export function QuotationsList({
   );
 
   const showSearch = shouldShowSearch(quotations.length);
-  const showSort = shouldShowSort(quotations.length);
   const statusPills = useMemo(
     () => visibleStatusPills(quotations, STATUS_PILLS, (q) => q.status),
     [quotations],
@@ -163,10 +129,12 @@ export function QuotationsList({
   );
   const showFiltersButton = showClientFilter || showPeriodFilter;
 
+  // Server returns rows by date DESC. Quotation numbers are alphanumeric
+  // strings, so date is the natural "newest" key. No client-side sort.
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    const bounds = periodBounds(period);
-    const list = quotations.filter((q) => {
+    const bounds = resolvePeriodBounds(period, customFrom, customTo);
+    return quotations.filter((q) => {
       if (status !== "all" && q.status !== status) return false;
       if (clientId !== "all" && q.client_id !== clientId) return false;
       if (bounds && (q.date < bounds[0] || q.date > bounds[1])) return false;
@@ -183,31 +151,55 @@ export function QuotationsList({
       }
       return true;
     });
-    list.sort((a, b) =>
-      sort === "newest"
-        ? b.date.localeCompare(a.date)
-        : a.date.localeCompare(b.date),
-    );
-    return list;
-  }, [quotations, status, clientId, period, search, sort, clientById]);
+  }, [
+    quotations,
+    status,
+    clientId,
+    period,
+    customFrom,
+    customTo,
+    search,
+    clientById,
+  ]);
 
-  const activeFilterCount =
-    (status !== "all" ? 1 : 0) +
-    (clientId !== "all" ? 1 : 0) +
-    (period !== "all" ? 1 : 0);
+  const clientName =
+    clientId === "all" ? null : clients.find((c) => c.id === clientId)?.name ?? null;
+  const periodChip = periodChipLabel(period, customFrom, customTo);
+
+  const chips: FilterChip[] = [];
+  if (clientName) {
+    chips.push({
+      key: "client",
+      label: clientName,
+      onClear: () => setClientId("all"),
+    });
+  }
+  if (periodChip) {
+    chips.push({
+      key: "period",
+      label: periodChip,
+      onClear: () => {
+        setPeriod("all");
+        setCustomFrom("");
+        setCustomTo("");
+      },
+    });
+  }
+
+  const activeFilterCount = chips.length;
 
   function clearAll() {
     setSearch("");
     setStatus("all");
     setClientId("all");
     setPeriod("all");
-    setSort("newest");
-    setShowFilters(false);
+    setCustomFrom("");
+    setCustomTo("");
   }
 
   return (
     <div className="flex flex-col gap-4">
-      {(showSearch || showFiltersButton || statusPills.length > 0 || showSort) && (
+      {(showSearch || showFiltersButton || statusPills.length > 0) && (
         <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background/95 backdrop-blur border-b border-border flex flex-col gap-3">
           {(showSearch || showFiltersButton) && (
             <div className="flex items-center gap-2">
@@ -246,83 +238,71 @@ export function QuotationsList({
             </div>
           )}
 
-          {(statusPills.length > 0 || showSort) && (
-            <div className="flex items-center gap-2 flex-wrap">
-              {statusPills.length > 0 && (
-                <div className="flex gap-2 flex-wrap">
-                  {statusPills.map((p) => (
-                    <button
-                      key={p.value}
-                      type="button"
-                      onClick={() => setStatus(p.value)}
-                      className={cn(
-                        "rounded-full border px-3 py-1 text-xs font-medium transition-colors duration-150",
-                        status === p.value
-                          ? "bg-accent-soft text-accent-foreground border-accent-soft"
-                          : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
-                      )}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {showSort && (
-                <div className="ml-auto flex items-center gap-2">
-                  <Label htmlFor="qsort" className="text-xs text-muted-foreground">
-                    Sort
-                  </Label>
-                  <Select
-                    value={sort}
-                    onValueChange={(v) =>
-                      typeof v === "string" && setSort(v as SortKey)
-                    }
-                  >
-                    <SelectTrigger id="qsort" className="h-9 min-w-[150px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SORT_OPTIONS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+          {statusPills.length > 0 && (
+            <div className="flex gap-2 flex-wrap">
+              {statusPills.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => setStatus(p.value)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors duration-150",
+                    status === p.value
+                      ? "bg-accent-soft text-accent-foreground border-accent-soft"
+                      : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
           )}
 
-          {/* Desktop (md+): inline panel below the toolbar. */}
+          {/* Desktop (md+): inline panel below the toolbar — mirrors the
+              mobile bottom-sheet content. */}
           {showFilters && showFiltersButton && !isMobile && (
-            <div className="hidden md:grid grid-cols-2 gap-3 pt-1">
+            <div className="hidden md:flex flex-col gap-4 pt-1">
               {showClientFilter && (
-                <QFilterClient
+                <ClientFilterList
                   clientId={clientId}
-                  clients={clients}
                   setClientId={setClientId}
+                  clients={clients}
                 />
               )}
               {showPeriodFilter && (
-                <QFilterPeriod period={period} setPeriod={setPeriod} />
+                <PeriodFilterList
+                  preset={period}
+                  setPreset={setPeriod}
+                  customFrom={customFrom}
+                  setCustomFrom={setCustomFrom}
+                  customTo={customTo}
+                  setCustomTo={setCustomTo}
+                />
               )}
-              {(activeFilterCount > 0 || search) && (
-                <button
+              <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={clearAll}
-                  className="col-span-2 inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground self-start"
                 >
-                  <X className="h-3 w-3" />
                   Clear all filters
-                </button>
-              )}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setShowFilters(false)}
+                >
+                  Apply filters
+                </Button>
+              </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Mobile: bottom-sheet with the same filter form. */}
+      {/* Mobile bottom sheet — inline radio sections, no nested
+          dropdowns. Apply commits and closes; Clear resets to default. */}
       <BottomSheet
         open={isMobile && showFilters && showFiltersButton}
         onOpenChange={(o) => setShowFilters(o)}
@@ -333,33 +313,44 @@ export function QuotationsList({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => clearAll()}
+              onClick={clearAll}
+              className="flex-1"
             >
-              Reset
+              Clear all
             </Button>
             <Button
               type="button"
               size="sm"
               onClick={() => setShowFilters(false)}
+              className="flex-1"
             >
-              Apply
+              Apply filters
             </Button>
           </>
         }
       >
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           {showClientFilter && (
-            <QFilterClient
+            <ClientFilterList
               clientId={clientId}
-              clients={clients}
               setClientId={setClientId}
+              clients={clients}
             />
           )}
           {showPeriodFilter && (
-            <QFilterPeriod period={period} setPeriod={setPeriod} />
+            <PeriodFilterList
+              preset={period}
+              setPreset={setPeriod}
+              customFrom={customFrom}
+              setCustomFrom={setCustomFrom}
+              customTo={customTo}
+              setCustomTo={setCustomTo}
+            />
           )}
         </div>
       </BottomSheet>
+
+      <FilterChipBar chips={chips} onClearAll={clearAll} />
 
       {filtered.length === 0 ? (
         <Card>
@@ -820,73 +811,6 @@ function DeleteDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
-}
-
-function QFilterClient({
-  clientId,
-  clients,
-  setClientId,
-}: {
-  clientId: string;
-  clients: Pick<Client, "id" | "name">[];
-  setClientId: (v: string) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor="qf-client" className="text-xs">
-        Client
-      </Label>
-      <Select
-        value={clientId}
-        onValueChange={(v) => typeof v === "string" && setClientId(v)}
-      >
-        <SelectTrigger id="qf-client">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All clients</SelectItem>
-          {clients.map((c) => (
-            <SelectItem key={c.id} value={c.id}>
-              {c.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
-function QFilterPeriod({
-  period,
-  setPeriod,
-}: {
-  period: PeriodFilter;
-  setPeriod: (v: PeriodFilter) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor="qf-period" className="text-xs">
-        Period
-      </Label>
-      <Select
-        value={period}
-        onValueChange={(v) =>
-          typeof v === "string" && setPeriod(v as PeriodFilter)
-        }
-      >
-        <SelectTrigger id="qf-period">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {PERIOD_OPTIONS.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
   );
 }
 

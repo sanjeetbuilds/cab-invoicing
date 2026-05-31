@@ -26,7 +26,8 @@ export default async function InvoicesPage() {
       .from("invoices")
       .select("*")
       .eq("company_id", membership.company_id)
-      .order("invoice_date", { ascending: false })
+      // Invoice numbers are sequential and atomic — highest = newest.
+      // Date can be backdated; number cannot. Sort by number.
       .order("invoice_number", { ascending: false })
       .returns<Invoice[]>(),
     // Pull just the join keys to compute distinct trip_id (= "Duties")
