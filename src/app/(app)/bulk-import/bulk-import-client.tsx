@@ -96,18 +96,21 @@ export function BulkImportClient({
   const [preview, setPreview] = useState<ParsedWorkbook | null>(null);
   const [report, setReport] = useState<ImportReport | null>(null);
 
-  async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (!f) return;
+  async function acceptFile(f: File) {
     const lower = f.name.toLowerCase();
     if (!lower.endsWith(".xlsx") && !lower.endsWith(".xls")) {
-      toast.error("Please upload an .xlsx or .xls file.");
+      toast.error("Please pick an .xlsx or .xls file.");
       return;
     }
     const base64 = await fileToBase64(f);
     setFile({ base64, name: f.name, size: f.size });
     setStage("selected");
     setError("");
+  }
+
+  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (f) acceptFile(f);
   }
 
   function clearFile() {
@@ -189,6 +192,7 @@ export function BulkImportClient({
           fileRef={fileRef}
           onPick={() => fileRef.current?.click()}
           onChange={onFileChange}
+          onDropFile={acceptFile}
           onClear={clearFile}
           onParse={handleParse}
         />
@@ -256,6 +260,7 @@ function UploadCard({
   fileRef,
   onPick,
   onChange,
+  onDropFile,
   onClear,
   onParse,
 }: {
@@ -265,12 +270,30 @@ function UploadCard({
   fileRef: React.RefObject<HTMLInputElement | null>;
   onPick: () => void;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onDropFile: (f: File) => void;
   onClear: () => void;
   onParse: () => void;
 }) {
   const isError = stage === "parse-error";
   const isParsing = stage === "parsing";
   const hasFile = stage === "selected" || isParsing || isError;
+  const [dragOver, setDragOver] = useState(false);
+
+  // Drag-and-drop handlers. preventDefault on dragOver is required
+  // for the drop event to fire at all.
+  function onDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragOver(true);
+  }
+  function onDragLeave() {
+    setDragOver(false);
+  }
+  function onDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) onDropFile(f);
+  }
 
   return (
     <Card>
@@ -295,31 +318,41 @@ function UploadCard({
         />
 
         {!hasFile && (
-          // Idle drop-zone, clickable area that opens the picker.
-          <button
-            type="button"
-            onClick={onPick}
+          // Idle drop zone. The Choose file button is the primary
+          // affordance; drag-and-drop is the secondary path.
+          <div
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
             className={cn(
-              "flex flex-col items-center justify-center gap-2 py-10 rounded-lg",
-              "border-2 border-dashed border-border bg-muted/30",
-              "hover:border-primary/40 hover:bg-muted/50 transition-colors",
+              "flex flex-col items-center justify-center gap-3 py-10 rounded-lg",
+              "border-2 border-dashed transition-colors",
+              dragOver
+                ? "border-primary bg-[rgba(79,70,229,0.06)]"
+                : "border-border bg-muted/30",
             )}
           >
             <Upload className="h-6 w-6 text-muted-foreground" />
-            <p className="text-sm text-foreground font-medium">
-              Drop your file here or click to browse
-            </p>
+            <Button type="button" onClick={onPick}>
+              <Upload className="h-4 w-4" />
+              Choose file
+            </Button>
             <p className="text-xs text-muted-foreground">
-              .xlsx or .xls · up to a few MB
+              or drag your Excel file here
             </p>
-          </button>
+            <p className="text-[11px] text-muted-foreground">
+              .xlsx or .xls, up to a few MB
+            </p>
+          </div>
         )}
 
         {hasFile && file && (
-          // File-selected card, green filename, size, remove ×.
+          // File-selected card. Green filename plus a "Choose a
+          // different file" inline option so the user can swap files
+          // without remembering to clear first.
           <div
             className={cn(
-              "rounded-lg p-4 flex items-center gap-3",
+              "rounded-lg p-4 flex flex-col gap-3 sm:flex-row sm:items-center",
               isError
                 ? "bg-destructive-soft/50 border border-destructive/30"
                 : "bg-success-soft/40 border border-success/20",
@@ -344,16 +377,27 @@ function UploadCard({
                 {formatFileSize(file.size)}
               </p>
             </div>
-            {!isParsing && (
-              <button
-                type="button"
-                onClick={onClear}
-                aria-label="Remove file"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {!isParsing && (
+                <button
+                  type="button"
+                  onClick={onPick}
+                  className="text-xs font-medium text-primary hover:underline underline-offset-2"
+                >
+                  Choose a different file
+                </button>
+              )}
+              {!isParsing && (
+                <button
+                  type="button"
+                  onClick={onClear}
+                  aria-label="Remove file"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
         )}
 
