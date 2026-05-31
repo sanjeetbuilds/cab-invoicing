@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Trash2, Upload } from "lucide-react";
+import { Loader2, Sparkles, Trash2, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -182,7 +182,10 @@ export function BrandingForm({ company }: { company: Company }) {
     <Card>
       <CardContent className="flex flex-col gap-6">
         <div>
-          <h3 className="text-base font-semibold text-foreground">Branding</h3>
+          <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+            <Sparkles className="h-4 w-4 text-[#4f46e5]" />
+            Branding
+          </h3>
           <p className="text-xs text-muted-foreground mt-1">
             Pick how your identity appears in the app and on PDFs.
           </p>

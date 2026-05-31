@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Receipt } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import {
   Card,
@@ -113,13 +114,17 @@ export default async function DashboardPage() {
 
       {isFresh && <SeedBanner />}
 
-      {/* 4 stat tiles — 2-up on mobile, 4-up at lg+. */}
+      {/* 4 stat tiles — 2-up on mobile, 4-up at lg+. A 3px top accent
+          bar tints each tile's meaning at a glance: indigo neutral,
+          amber attention (money owed), green positive (money earned),
+          slate informational. */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           label="Unbilled trips"
           value={String(unbilledCount)}
           hint="trips not yet on an invoice"
           href="/trips"
+          accent="#4f46e5"
         />
         <StatCard
           label="Outstanding"
@@ -132,17 +137,20 @@ export default async function DashboardPage() {
               : "no unpaid invoices"
           }
           href="/invoices"
+          accent="#d97706"
         />
         <StatCard
           label="Billed this month"
           value={billedThisMonth > 0 ? formatINR(billedThisMonth) : "—"}
           hint={`since ${fmtDate(monthStart)}`}
           href="/invoices"
+          accent="#059669"
         />
         <StatCard
           label="Clients · Vehicles"
           value={`${clientCount ?? 0} · ${vehicleCount ?? 0}`}
           hint="active clients you bill, your fleet"
+          accent="#475569"
         />
       </div>
 
@@ -150,7 +158,10 @@ export default async function DashboardPage() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Recent invoices</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-[#4f46e5]" />
+              Recent invoices
+            </CardTitle>
             <CardDescription className="hidden sm:block">
               Last 5 issued.
             </CardDescription>
@@ -224,11 +235,14 @@ function StatCard({
   value,
   hint,
   href,
+  accent,
 }: {
   label: string;
   value: string;
   hint: string;
   href?: string;
+  /** Hex color for the 3px top accent bar. */
+  accent: string;
 }) {
   const body = (
     <Card
@@ -236,6 +250,7 @@ function StatCard({
         href ? "hover:border-foreground/20 transition-colors" : ""
       }
       size="sm"
+      style={{ borderTopColor: accent, borderTopWidth: 3 }}
     >
       <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
         {label}

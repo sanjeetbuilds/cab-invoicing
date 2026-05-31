@@ -1,5 +1,6 @@
 "use client";
 
+import { Building2, FileText, Hash, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Company, Role } from "@/lib/supabase/types";
 import { CompanyForm } from "./company-form";
@@ -21,10 +22,22 @@ export function SettingsTabs({
   return (
     <Tabs defaultValue="company">
       <TabsList className="w-full sm:w-fit">
-        <TabsTrigger value="company">Company</TabsTrigger>
-        <TabsTrigger value="numbering">Numbering</TabsTrigger>
-        <TabsTrigger value="terms">Terms</TabsTrigger>
-        <TabsTrigger value="team">Team</TabsTrigger>
+        <TabsTrigger value="company">
+          <Building2 className="text-[#4f46e5]" />
+          Company
+        </TabsTrigger>
+        <TabsTrigger value="numbering">
+          <Hash className="text-[#4f46e5]" />
+          Numbering
+        </TabsTrigger>
+        <TabsTrigger value="terms">
+          <FileText className="text-[#4f46e5]" />
+          Terms
+        </TabsTrigger>
+        <TabsTrigger value="team">
+          <Users className="text-[#4f46e5]" />
+          Team
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="company" className="pt-4 flex flex-col gap-6">
