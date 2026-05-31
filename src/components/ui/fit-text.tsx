@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
  * Shrinks a single line of text to fit its container. Renders at
@@ -12,14 +12,20 @@ import { useEffect, useRef, useState } from "react";
  * Used by dashboard stat tiles so a small amount displays at the
  * comfortable 24px, while ₹12,34,567.00-class numbers shrink instead
  * of bleeding outside the tile.
+ *
+ * `text` is the bare string used as the measurement key. Optional
+ * `children` can override what's rendered — useful for cases like
+ * styling the ₹ prefix differently from the digits.
  */
 export function FitText({
   text,
+  children,
   maxPx,
   minPx = 16,
   className,
 }: {
   text: string;
+  children?: ReactNode;
   maxPx: number;
   minPx?: number;
   className?: string;
@@ -67,7 +73,7 @@ export function FitText({
       }}
       className={className}
     >
-      {text}
+      {children ?? text}
     </span>
   );
 }

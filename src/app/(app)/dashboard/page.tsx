@@ -223,6 +223,23 @@ export default async function DashboardPage() {
   );
 }
 
+/** Renders a stat value with a smaller, lighter ₹ prefix when the
+ *  value is a rupee amount. The ₹ sits at 75% of the digit size and
+ *  font-normal so any subtle font-fallback mismatch is invisible. */
+function renderStatValue(value: string) {
+  if (value.startsWith("₹")) {
+    return (
+      <>
+        <span className="text-[0.75em] font-normal align-baseline mr-0.5">
+          ₹
+        </span>
+        {value.slice(1)}
+      </>
+    );
+  }
+  return value;
+}
+
 function StatCard({
   label,
   value,
@@ -255,7 +272,9 @@ function StatCard({
           maxPx={24}
           minPx={16}
           className="font-mono font-semibold tabular-nums text-foreground"
-        />
+        >
+          {renderStatValue(value)}
+        </FitText>
       </p>
       <p className="text-xs text-muted-foreground">{hint}</p>
     </Card>
