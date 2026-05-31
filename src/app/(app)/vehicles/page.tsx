@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Upload } from "lucide-react";
+import { Truck, Upload } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requireMembership } from "@/lib/auth";
 import {
   Table,
@@ -50,25 +51,14 @@ export default async function VehiclesPage() {
       )}
 
       {vehicles && vehicles.length === 0 && (
-        <Card>
-          <CardContent className="py-12 px-4 text-center flex flex-col items-center gap-3">
-            <h2 className="text-base font-semibold">No vehicles yet.</h2>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              Add the cars you use for trips. Every trip is linked to one
-              vehicle.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
-              <AddVehicleButton />
-              <Link
-                href="/bulk-import?scope=vehicles"
-                className={buttonVariants({ variant: "outline" })}
-              >
-                <Upload className="h-4 w-4" />
-                Import from Excel
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Truck}
+          title="No vehicles yet."
+          body="Add the cars you use for trips. Every trip is linked to one vehicle."
+          primary={{ label: "Add vehicle", href: "/vehicles/new" }}
+          importHref="/bulk-import?scope=vehicles"
+          setupHint={{ step: 3, total: 6 }}
+        />
       )}
 
       {vehicles && vehicles.length > 0 && (

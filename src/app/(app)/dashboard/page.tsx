@@ -18,12 +18,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import type { Invoice } from "@/lib/supabase/types";
+import type { Company, Invoice } from "@/lib/supabase/types";
 import { formatINR } from "@/lib/format";
 import { PageHeader } from "@/components/ui/page-header";
 import { FitText } from "@/components/ui/fit-text";
 import { cn } from "@/lib/utils";
 import { SeedBanner } from "../seed/seed-banner";
+import { SetupChecklist, type SetupStatus } from "./setup-checklist";
 
 export const metadata = {
   title: "Dashboard",
@@ -55,10 +56,14 @@ export default async function DashboardPage() {
   const [
     { count: clientCount },
     { count: vehicleCount },
+    { count: rateCardCount },
     { count: unbilledTripsCount },
+    { count: tripCount },
+    { count: invoiceCount },
     { data: unpaidInvoices },
     { data: thisMonthInvoices },
     { data: recentInvoices },
+    { data: companyMeta },
   ] = await Promise.all([
     supabase
       .from("clients")
@@ -69,10 +74,22 @@ export default async function DashboardPage() {
       .select("id", { count: "exact", head: true })
       .eq("company_id", membership.company_id),
     supabase
+      .from("rate_cards")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", membership.company_id),
+    supabase
       .from("trips")
       .select("id", { count: "exact", head: true })
       .eq("company_id", membership.company_id)
       .eq("invoiced", false),
+    supabase
+      .from("trips")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", membership.company_id),
+    supabase
+      .from("invoices")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", membership.company_id),
     supabase
       .from("invoices")
       .select("net_amount")
@@ -94,7 +111,21 @@ export default async function DashboardPage() {
       .order("invoice_number", { ascending: false })
       .limit(5)
       .returns<Invoice[]>(),
+    supabase
+      .from("companies")
+      .select("address, phone, gstin")
+      .eq("id", membership.company_id)
+      .maybeSingle<Pick<Company, "address" | "phone" | "gstin">>(),
   ]);
+
+  const setupStatus: SetupStatus = {
+    companyDetails: Boolean(companyMeta?.address || companyMeta?.phone),
+    hasClient: (clientCount ?? 0) > 0,
+    hasVehicle: (vehicleCount ?? 0) > 0,
+    hasRateCard: (rateCardCount ?? 0) > 0,
+    hasTrip: (tripCount ?? 0) > 0,
+    hasInvoice: (invoiceCount ?? 0) > 0,
+  };
 
   const unbilledCount = unbilledTripsCount ?? 0;
   const outstanding = (unpaidInvoices ?? []).reduce(
@@ -114,6 +145,7 @@ export default async function DashboardPage() {
       <PageHeader title="Dashboard" description="Your business at a glance." />
 
       {isFresh && <SeedBanner />}
+      <SetupChecklist status={setupStatus} />
 
       {/* 4 stat tiles — 2-up on mobile, 4-up at lg+. auto-rows-fr +
           h-full on the tiles equalises height across rows so a tile

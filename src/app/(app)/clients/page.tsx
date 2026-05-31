@@ -8,10 +8,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { IndianRupee, Upload } from "lucide-react";
+import { IndianRupee, Upload, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/lib/supabase/types";
@@ -117,22 +118,14 @@ export default async function ClientsPage({
       )}
 
       {clients && clients.length === 0 && (
-        <Card>
-          <CardContent className="py-12 px-4 text-center flex flex-col items-center gap-3">
-            <h2 className="text-base font-semibold">No clients yet</h2>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              Add the companies you bill. State drives intra/inter-state GST
-              on every invoice.
-            </p>
-            <AddClientButton />
-            <Link
-              href="/bulk-import?scope=clients"
-              className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-            >
-              Or import many at once from Excel
-            </Link>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Users}
+          title="No clients yet."
+          body="Add the companies you bill. State drives intra-state and inter-state GST on every invoice."
+          primary={{ label: "Add client", href: "/clients/new" }}
+          importHref="/bulk-import?scope=clients"
+          setupHint={{ step: 2, total: 6 }}
+        />
       )}
 
       {clients && clients.length > 0 && (
