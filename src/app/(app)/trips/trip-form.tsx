@@ -6,10 +6,11 @@ import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -341,7 +342,11 @@ export function TripForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+    <form
+      id="trip-form"
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex flex-col gap-4"
+    >
       {/* Sticky running total — chip pinned just under the top strip so
           the user always sees the number while filling fields. Kept
           inside the form's natural width (no negative margins) and given
@@ -822,21 +827,13 @@ export function TripForm({
         />
       )}
 
-      {/* Footer */}
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/trips")}
-          disabled={pending}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editing ? "Save changes" : "Log trip"}
-        </Button>
-      </div>
+      <SaveBarSpacer />
+      <SaveBar
+        formId="trip-form"
+        pending={pending}
+        onCancel={() => router.push("/trips")}
+        saveLabel={editing ? "Save changes" : "Log trip"}
+      />
     </form>
   );
 }

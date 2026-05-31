@@ -25,16 +25,17 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  // Primary — bottom-nav slots (4 items + the More tab = 5 total).
-  // Five is the comfortable max for thumb reach on a phone; six
-  // wrapped to a second row before this commit.
+  // Primary, the four most-used destinations for mobile bottom tabs
+  // (plus the More tab they collapse into). Clients earns a slot
+  // because every new account adds clients before anything else;
+  // Quotations is the rarer move and lives in More.
   { label: "Dashboard",  href: "/dashboard",  icon: LayoutDashboard, mobile: true },
   { label: "Trips",      href: "/trips",      icon: Car,             mobile: true },
   { label: "Invoices",   href: "/invoices",   icon: Receipt,         mobile: true },
-  { label: "Quotations", href: "/quotations", icon: FileSignature,   mobile: true },
-  // Secondary — desktop sidebar shows them too (no "More" grouping at
-  // lg+); mobile groups them into the /more drawer.
-  { label: "Clients",     href: "/clients",     icon: Users },
+  { label: "Clients",    href: "/clients",    icon: Users,           mobile: true },
+  // Secondary, surfaced in the desktop sidebar and grouped into the
+  // mobile More drawer.
+  { label: "Quotations",  href: "/quotations",  icon: FileSignature },
   { label: "Rate cards",  href: "/rate-cards",  icon: IndianRupee },
   { label: "Fleet",       href: "/vehicles",    icon: Truck },
   { label: "Bulk import", href: "/bulk-import", icon: Upload },

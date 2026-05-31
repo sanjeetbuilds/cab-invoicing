@@ -6,10 +6,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -88,7 +87,11 @@ export function CompanyForm({ company }: { company: Company }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+    <form
+      id="company-form"
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex flex-col gap-6"
+    >
       <Card>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2 flex flex-col gap-2">
@@ -201,12 +204,8 @@ export function CompanyForm({ company }: { company: Company }) {
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-end gap-2">
-        <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Save changes
-        </Button>
-      </div>
+      <SaveBarSpacer />
+      <SaveBar formId="company-form" pending={pending} hideCancel />
     </form>
   );
 }

@@ -6,10 +6,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Company } from "@/lib/supabase/types";
@@ -59,7 +58,11 @@ export function NumberingForm({ company }: { company: Company }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+    <form
+      id="numbering-form"
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex flex-col gap-6"
+    >
       <Card>
         <CardContent className="flex flex-col gap-4">
           <div>
@@ -137,12 +140,13 @@ export function NumberingForm({ company }: { company: Company }) {
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-end gap-2">
-        <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Save numbering
-        </Button>
-      </div>
+      <SaveBarSpacer />
+      <SaveBar
+        formId="numbering-form"
+        pending={pending}
+        hideCancel
+        saveLabel="Save numbering"
+      />
     </form>
   );
 }

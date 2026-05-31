@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -334,6 +335,7 @@ export function QuickInvoiceForm({
 
   return (
     <form
+      id="quick-invoice-form"
       onSubmit={onSubmit}
       className="grid gap-4 lg:grid-cols-[1fr_360px] lg:items-start"
     >
@@ -831,16 +833,21 @@ export function QuickInvoiceForm({
             </Badge>
           )}
 
-          <Button
-            type="submit"
-            disabled={pending || preview.subtotal === 0}
-            className="h-11 text-base"
-          >
-            {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-            Issue invoice
-          </Button>
+          <p className="text-xs text-muted-foreground">
+            Use the Issue invoice button at the bottom of the screen when
+            the totals look right.
+          </p>
         </CardContent>
       </Card>
+      <SaveBarSpacer />
+      <SaveBar
+        formId="quick-invoice-form"
+        pending={pending}
+        canSave={preview.subtotal > 0}
+        onCancel={() => router.push("/invoices")}
+        saveLabel="Issue invoice"
+        savingLabel="Issuing..."
+      />
     </form>
   );
 }

@@ -3,10 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -355,17 +353,20 @@ export function InvoiceBuilderForm({
           </Card>
         )}
 
-        <Button
-          onClick={onIssue}
-          disabled={pending || selectedTrips.length === 0 || hasMissingRate}
-        >
-          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Issue invoice
-        </Button>
         <p className="text-xs text-muted-foreground text-center">
           Issuing reserves the next invoice number for {client.name}.
+          Use the Issue invoice button at the bottom of the screen.
         </p>
       </div>
+      <SaveBarSpacer />
+      <SaveBar
+        onSave={onIssue}
+        pending={pending}
+        canSave={selectedTrips.length > 0 && !hasMissingRate}
+        onCancel={() => router.push("/trips")}
+        saveLabel="Issue invoice"
+        savingLabel="Issuing..."
+      />
     </div>
   );
 }

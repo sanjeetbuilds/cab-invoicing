@@ -6,12 +6,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 import {
   Select,
   SelectContent,
@@ -89,7 +88,11 @@ export function ClientForm({ client }: { client?: Client | null }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+    <form
+      id="client-form"
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex flex-col gap-6"
+    >
       <Card>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2 flex flex-col gap-2">
@@ -168,20 +171,13 @@ export function ClientForm({ client }: { client?: Client | null }) {
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/clients")}
-          disabled={pending}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editing ? "Save changes" : "Add client"}
-        </Button>
-      </div>
+      <SaveBarSpacer />
+      <SaveBar
+        formId="client-form"
+        pending={pending}
+        onCancel={() => router.push("/clients")}
+        saveLabel={editing ? "Save changes" : "Add client"}
+      />
     </form>
   );
 }

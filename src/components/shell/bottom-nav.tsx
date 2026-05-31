@@ -5,12 +5,18 @@ import { usePathname } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MOBILE_PRIMARY } from "./nav-items";
+import { useSaveBarMounted } from "./app-shell-context";
 
 const MOBILE_PRIMARY_HREFS = new Set(MOBILE_PRIMARY.map((n) => n.href));
 
 export function BottomNav() {
   const pathname = usePathname();
   const onSecondary = !MOBILE_PRIMARY_HREFS.has(pathname);
+  const saveBarMounted = useSaveBarMounted();
+
+  // Hide whenever a form's Save bar is on screen so the two footers
+  // never compete for the same row (Rule 4 collision rule).
+  if (saveBarMounted) return null;
 
   return (
     // `pb-[env(safe-area-inset-bottom)]` lifts the 56px tab row above

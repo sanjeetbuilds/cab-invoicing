@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -197,7 +198,11 @@ export function QuotationForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-6">
+    <form
+      id="quotation-form"
+      onSubmit={onSubmit}
+      className="flex flex-col gap-6"
+    >
       <Card>
         <CardContent className="grid gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-2">
@@ -494,20 +499,13 @@ export function QuotationForm({
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/quotations")}
-          disabled={pending}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editing ? "Save changes" : "Create quotation"}
-        </Button>
-      </div>
+      <SaveBarSpacer />
+      <SaveBar
+        formId="quotation-form"
+        pending={pending}
+        onCancel={() => router.push("/quotations")}
+        saveLabel={editing ? "Save changes" : "Create quotation"}
+      />
     </form>
   );
 }

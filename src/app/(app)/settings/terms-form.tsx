@@ -6,10 +6,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Company } from "@/lib/supabase/types";
@@ -60,7 +59,11 @@ export function TermsForm({ company }: { company: Company }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+    <form
+      id="terms-form"
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex flex-col gap-6"
+    >
       <Card>
         <CardContent className="flex flex-col gap-4">
           <div>
@@ -91,12 +94,13 @@ export function TermsForm({ company }: { company: Company }) {
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-end gap-2">
-        <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Save terms
-        </Button>
-      </div>
+      <SaveBarSpacer />
+      <SaveBar
+        formId="terms-form"
+        pending={pending}
+        hideCancel
+        saveLabel="Save terms"
+      />
     </form>
   );
 }

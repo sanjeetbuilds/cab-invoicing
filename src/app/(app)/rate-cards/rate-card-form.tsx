@@ -6,10 +6,9 @@ import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -182,7 +181,11 @@ export function RateCardForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+    <form
+      id="rate-card-form"
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex flex-col gap-4"
+    >
       <Card>
         <CardContent className="grid gap-4 md:grid-cols-3">
           <div className="md:col-span-1 flex flex-col gap-2">
@@ -397,20 +400,13 @@ export function RateCardForm({
         </Card>
       )}
 
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/rate-cards")}
-          disabled={pending}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {editing ? "Save changes" : "Add rate card"}
-        </Button>
-      </div>
+      <SaveBarSpacer />
+      <SaveBar
+        formId="rate-card-form"
+        pending={pending}
+        onCancel={() => router.push("/rate-cards")}
+        saveLabel={editing ? "Save changes" : "Add rate card"}
+      />
     </form>
   );
 }

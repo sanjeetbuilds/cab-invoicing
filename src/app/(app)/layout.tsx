@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/shell/sidebar";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { TopBar } from "@/components/shell/top-bar";
 import { PwaInstaller } from "@/components/shell/pwa-installer";
+import { AppShellProvider } from "@/components/shell/app-shell-context";
 import type { BrandMode, Company } from "@/lib/supabase/types";
 
 export default async function AppLayout({
@@ -26,31 +27,34 @@ export default async function AppLayout({
   const logoAspectRatio = company?.logo_aspect_ratio ?? null;
 
   return (
-    <div className="flex flex-1 min-h-0">
-      <Sidebar
-        companyName={companyName}
-        brandMode={brandMode}
-        logoUrl={logoUrl}
-        logoAspectRatio={logoAspectRatio}
-      />
-      <div className="flex flex-1 flex-col min-w-0">
-        <TopBar
+    // h-dvh + dvh units track the dynamic viewport so the layout
+    // doesn't jump when mobile browser chrome collapses. Sidebar
+    // and top-bar stay put; only <main> scrolls.
+    <AppShellProvider>
+      <div className="h-dvh flex overflow-hidden">
+        <Sidebar
           companyName={companyName}
           brandMode={brandMode}
           logoUrl={logoUrl}
           logoAspectRatio={logoAspectRatio}
-          email={user.email ?? ""}
         />
-        {/* Mobile: bottom padding clears the fixed 56px nav PLUS the
-            iPhone home-indicator inset so the last form / list row is
-            never hidden under the gesture bar. lg+ has a sidebar (no
-            bottom nav) so just a normal py-8 / pb-7. */}
-        <main className="flex-1 px-4 py-4 sm:px-6 sm:py-8 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8">
-          {children}
-        </main>
+        <div className="flex flex-1 flex-col min-w-0">
+          <TopBar
+            companyName={companyName}
+            brandMode={brandMode}
+            logoUrl={logoUrl}
+            logoAspectRatio={logoAspectRatio}
+            email={user.email ?? ""}
+          />
+          <main
+            className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-8 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8"
+          >
+            {children}
+          </main>
+        </div>
+        <BottomNav />
+        <PwaInstaller />
       </div>
-      <BottomNav />
-      <PwaInstaller />
-    </div>
+    </AppShellProvider>
   );
 }
