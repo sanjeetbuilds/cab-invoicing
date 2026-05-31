@@ -54,6 +54,13 @@ export interface PreviewRow<T> {
    * user-readable sentence; the UI lists them under the row.
    */
   errors: string[];
+  /** Optional DB-aware hints surfaced for rate-card rows. */
+  meta?: {
+    /** A matching rate card already exists — this row will overwrite it. */
+    willUpdate?: boolean;
+    /** Client name only appears in this upload's Clients sheet (not in DB yet). */
+    clientIsNew?: boolean;
+  };
 }
 
 export interface ParsedWorkbook {

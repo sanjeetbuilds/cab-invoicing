@@ -54,27 +54,58 @@ export async function previewImportAction(args: {
   }
 
   // Cross-check rate-card client names against existing DB clients +
-  // the client rows already in this upload.
+  // the client rows already in this upload. Also annotate each rate
+  // card row with whether it would update an existing card and
+  // whether its client is brand-new in this upload.
   if (parsed.rateCards.length > 0) {
-    const { data: dbClients } = await ctx.admin
-      .from("clients")
-      .select("name")
-      .eq("company_id", ctx.companyId)
-      .returns<{ name: string }[]>();
-    const knownNames = new Set(
+    const [{ data: dbClients }, { data: dbRateCards }] = await Promise.all([
+      ctx.admin
+        .from("clients")
+        .select("id, name")
+        .eq("company_id", ctx.companyId)
+        .returns<{ id: string; name: string }[]>(),
+      ctx.admin
+        .from("rate_cards")
+        .select("client_id, car_type, mode, plan_name")
+        .eq("company_id", ctx.companyId)
+        .returns<{ client_id: string; car_type: string; mode: string; plan_name: string | null }[]>(),
+    ]);
+    const dbClientNames = new Set(
       (dbClients ?? []).map((c) => c.name.toLowerCase()),
     );
+    const clientIdByName = new Map(
+      (dbClients ?? []).map((c) => [c.name.toLowerCase(), c.id] as const),
+    );
+    const uploadClientNames = new Set<string>();
     for (const row of parsed.clients) {
       if (row.errors.length === 0) {
-        knownNames.add(row.data.name.toLowerCase());
+        uploadClientNames.add(row.data.name.toLowerCase());
       }
     }
+    const existingRcKey = new Set(
+      (dbRateCards ?? []).map(
+        (r) => `${r.client_id}|${r.car_type}|${r.mode}|${r.plan_name ?? ""}`,
+      ),
+    );
     for (const rc of parsed.rateCards) {
-      if (rc.errors.length === 0 && !knownNames.has(rc.data.client_name.toLowerCase())) {
+      const nameLower = rc.data.client_name.toLowerCase();
+      const inDb = dbClientNames.has(nameLower);
+      const inUpload = uploadClientNames.has(nameLower);
+      if (rc.errors.length === 0 && !inDb && !inUpload) {
         rc.errors.push(
           `Client '${rc.data.client_name}' not found in your existing clients or in this upload's Clients sheet.`,
         );
       }
+      // Annotate even if the row has errors — UI tooltip can still
+      // show "would update / new client" context to help the user fix.
+      const cid = clientIdByName.get(nameLower);
+      const key = cid
+        ? `${cid}|${rc.data.car_type}|${rc.data.mode}|${rc.data.plan_name ?? ""}`
+        : null;
+      rc.meta = {
+        willUpdate: key ? existingRcKey.has(key) : false,
+        clientIsNew: !inDb && inUpload,
+      };
     }
   }
 
