@@ -102,7 +102,7 @@ export function RateCardForm({
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
@@ -403,6 +403,7 @@ export function RateCardForm({
       <SaveBarSpacer />
       <SaveBar
         formId="rate-card-form"
+        dirty={isDirty}
         pending={pending}
         onCancel={() => router.push("/rate-cards")}
         saveLabel={editing ? "Save changes" : "Add rate card"}

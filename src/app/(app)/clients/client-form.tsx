@@ -45,7 +45,7 @@ export function ClientForm({ client }: { client?: Client | null }) {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
@@ -174,6 +174,7 @@ export function ClientForm({ client }: { client?: Client | null }) {
       <SaveBarSpacer />
       <SaveBar
         formId="client-form"
+        dirty={isDirty}
         pending={pending}
         onCancel={() => router.push("/clients")}
         saveLabel={editing ? "Save changes" : "Add client"}

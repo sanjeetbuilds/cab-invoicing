@@ -48,7 +48,8 @@ export function CompanyForm({ company }: { company: Company }) {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    reset,
+    formState: { errors, isDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
@@ -79,6 +80,9 @@ export function CompanyForm({ company }: { company: Company }) {
     });
     if (result.ok) {
       toast.success("Company details saved.");
+      // Mark the form clean again so the Save bar slides away. Reset
+      // to the values we just submitted, not to the old defaults.
+      reset(values);
       router.refresh();
     } else {
       toast.error(result.error);
@@ -205,7 +209,12 @@ export function CompanyForm({ company }: { company: Company }) {
       </Card>
 
       <SaveBarSpacer />
-      <SaveBar formId="company-form" pending={pending} hideCancel />
+      <SaveBar
+        formId="company-form"
+        dirty={isDirty}
+        pending={pending}
+        hideCancel
+      />
     </form>
   );
 }

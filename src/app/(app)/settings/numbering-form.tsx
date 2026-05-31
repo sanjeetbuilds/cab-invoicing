@@ -29,7 +29,8 @@ export function NumberingForm({ company }: { company: Company }) {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    reset,
+    formState: { errors, isDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
@@ -50,6 +51,7 @@ export function NumberingForm({ company }: { company: Company }) {
     });
     if (result.ok) {
       toast.success("Numbering saved.");
+      reset(values);
       router.refresh();
     } else {
       toast.error(result.error);
@@ -143,6 +145,7 @@ export function NumberingForm({ company }: { company: Company }) {
       <SaveBarSpacer />
       <SaveBar
         formId="numbering-form"
+        dirty={isDirty}
         pending={pending}
         hideCancel
         saveLabel="Save numbering"

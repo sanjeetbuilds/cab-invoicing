@@ -44,7 +44,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
@@ -196,6 +196,7 @@ export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
       <SaveBarSpacer />
       <SaveBar
         formId="vehicle-form"
+        dirty={isDirty}
         pending={pending}
         onCancel={() => router.push("/vehicles")}
         saveLabel={editing ? "Save changes" : "Add vehicle"}

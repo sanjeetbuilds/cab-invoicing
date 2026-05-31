@@ -35,7 +35,12 @@ export function TermsForm({ company }: { company: Company }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
 
-  const { register, handleSubmit } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isDirty },
+  } = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
       terms_invoice: toLines(company.terms_invoice),
@@ -51,6 +56,7 @@ export function TermsForm({ company }: { company: Company }) {
     });
     if (result.ok) {
       toast.success("Terms saved.");
+      reset(values);
       router.refresh();
     } else {
       toast.error(result.error);
@@ -97,6 +103,7 @@ export function TermsForm({ company }: { company: Company }) {
       <SaveBarSpacer />
       <SaveBar
         formId="terms-form"
+        dirty={isDirty}
         pending={pending}
         hideCancel
         saveLabel="Save terms"

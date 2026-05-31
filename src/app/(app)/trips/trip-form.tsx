@@ -144,7 +144,7 @@ export function TripForm({
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
@@ -830,6 +830,7 @@ export function TripForm({
       <SaveBarSpacer />
       <SaveBar
         formId="trip-form"
+        dirty={isDirty}
         pending={pending}
         onCancel={() => router.push("/trips")}
         saveLabel={editing ? "Save changes" : "Log trip"}

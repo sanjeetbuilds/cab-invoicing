@@ -48,7 +48,11 @@ export default async function AppLayout({
             email={user.email ?? ""}
           />
           <main
-            className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-8 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8"
+            // Reserves enough room at the bottom to clear either the
+            // mobile BottomNav (h-16 + safe-area) or the desktop /
+            // mobile SaveBar (~h-14 + safe-area). The two never show
+            // at the same time, so one fixed reserve covers both.
+            className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-8 pb-[calc(6rem+env(safe-area-inset-bottom))]"
           >
             {children}
           </main>
