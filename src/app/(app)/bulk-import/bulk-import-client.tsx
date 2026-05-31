@@ -30,6 +30,7 @@ import { formatINR } from "@/lib/format";
 import {
   commitImportAction,
   previewImportAction,
+  type ImportFailStep,
 } from "./actions";
 import type {
   ImportClientRow,
@@ -64,6 +65,18 @@ interface ImportReport {
   skipped: number;
 }
 
+interface ImportFailure {
+  step: ImportFailStep;
+  message: string;
+  technical: string;
+  partial: {
+    clients: number;
+    vehicles: number;
+    rateCards: number;
+    rateCardsUpdated: number;
+  };
+}
+
 async function fileToBase64(file: File): Promise<string> {
   const buf = await file.arrayBuffer();
   const bytes = new Uint8Array(buf);
@@ -95,6 +108,7 @@ export function BulkImportClient({
   const [error, setError] = useState<string>("");
   const [preview, setPreview] = useState<ParsedWorkbook | null>(null);
   const [report, setReport] = useState<ImportReport | null>(null);
+  const [failure, setFailure] = useState<ImportFailure | null>(null);
 
   async function acceptFile(f: File) {
     const lower = f.name.toLowerCase();
@@ -145,7 +159,12 @@ export function BulkImportClient({
       scope,
     });
     if (!result.ok) {
-      setError(result.error);
+      setFailure({
+        step: result.step,
+        message: result.error,
+        technical: result.technical,
+        partial: result.partial,
+      });
       setStage("import-error");
       return;
     }
@@ -174,6 +193,7 @@ export function BulkImportClient({
     setError("");
     setPreview(null);
     setReport(null);
+    setFailure(null);
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -212,8 +232,12 @@ export function BulkImportClient({
         <SuccessCard report={report} onReset={reset} />
       )}
 
-      {stage === "import-error" && (
-        <ImportErrorCard error={error} onRetry={handleImport} onReset={reset} />
+      {stage === "import-error" && failure && (
+        <ImportErrorCard
+          failure={failure}
+          onRetry={handleImport}
+          onReset={reset}
+        />
       )}
     </div>
   );
@@ -830,10 +854,13 @@ function SuccessCard({
   onReset: () => void;
 }) {
   return (
-    <Card elevated>
+    <Card
+      elevated
+      className="bg-[rgba(5,150,105,0.06)] border border-[rgba(5,150,105,0.18)]"
+    >
       <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
-        <div className="h-14 w-14 rounded-full bg-success-soft flex items-center justify-center">
-          <CheckCircle2 className="h-8 w-8 text-success" />
+        <div className="h-14 w-14 rounded-full bg-[rgba(5,150,105,0.14)] flex items-center justify-center">
+          <CheckCircle2 className="h-8 w-8 text-[#059669]" />
         </div>
         <div>
           <h2 className="text-xl font-bold text-foreground flex items-center justify-center gap-2">
@@ -943,37 +970,93 @@ function ImportCount({
 // Import error
 // ─────────────────────────────────────────────────────────────────────
 
+const STEP_TITLES: Record<ImportFailStep, string> = {
+  parse: "We could not read the file.",
+  clients: "We could not save the clients.",
+  vehicles: "We could not save the vehicles.",
+  rate_cards: "We could not save the rate cards.",
+};
+
 function ImportErrorCard({
-  error,
+  failure,
   onRetry,
   onReset,
 }: {
-  error: string;
+  failure: ImportFailure;
   onRetry: () => void;
   onReset: () => void;
 }) {
+  const savedPartial =
+    failure.partial.clients > 0 || failure.partial.vehicles > 0;
+
   return (
-    <Card>
-      <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
-        <div className="h-12 w-12 rounded-full bg-destructive-soft flex items-center justify-center">
-          <AlertCircle className="h-7 w-7 text-destructive" />
+    <Card
+      elevated
+      className="bg-[rgba(220,38,38,0.05)] border border-[rgba(220,38,38,0.18)]"
+    >
+      <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
+        <div className="h-12 w-12 rounded-full bg-[rgba(220,38,38,0.14)] flex items-center justify-center">
+          <AlertCircle className="h-7 w-7 text-[#dc2626]" />
         </div>
-        <div>
+        <div className="max-w-md">
           <h2 className="text-base font-semibold text-foreground">
-            Something went wrong during import.
+            {STEP_TITLES[failure.step]}
           </h2>
-          <p className="text-sm text-muted-foreground mt-1 max-w-md">
-            {error}
+          <p className="text-sm text-muted-foreground mt-1">
+            {failure.message} You can try again, or download a fresh
+            template and re-upload.
           </p>
         </div>
-        <div className="flex gap-2">
+
+        {savedPartial && (
+          // Partial failure summary in user words. Never imply success
+          // or failure beyond what actually happened.
+          <ul className="text-sm text-foreground/80 max-w-md">
+            <li>
+              We did save{" "}
+              <span className="font-bold tabular-nums">
+                {failure.partial.clients}
+              </span>{" "}
+              client{failure.partial.clients === 1 ? "" : "s"}
+              {failure.partial.vehicles > 0 && (
+                <>
+                  {" "}and{" "}
+                  <span className="font-bold tabular-nums">
+                    {failure.partial.vehicles}
+                  </span>{" "}
+                  vehicle{failure.partial.vehicles === 1 ? "" : "s"}
+                </>
+              )}{" "}
+              before this. They are in your account now.
+            </li>
+          </ul>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-2 pt-1">
           <Button type="button" onClick={onRetry}>
             Try again
           </Button>
+          <a
+            href="/templates/bulk-import-template.xlsx"
+            download
+            className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-lg border border-border bg-card text-sm font-medium hover:bg-muted"
+          >
+            <Download className="h-4 w-4" />
+            Download fresh template
+          </a>
           <Button type="button" variant="ghost" onClick={onReset}>
             Start over
           </Button>
         </div>
+
+        <details className="text-xs text-muted-foreground max-w-md w-full">
+          <summary className="cursor-pointer hover:text-foreground inline-flex">
+            Technical details
+          </summary>
+          <pre className="mt-2 p-3 rounded-md bg-muted/60 text-left whitespace-pre-wrap break-words font-mono">
+            {failure.technical}
+          </pre>
+        </details>
       </CardContent>
     </Card>
   );

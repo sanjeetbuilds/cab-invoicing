@@ -169,9 +169,25 @@ export interface ImportResult {
   rateCards: number;
   rateCardsUpdated: number;
 }
+
+/** Which step failed. Drives the friendly title in the UI. */
+export type ImportFailStep = "parse" | "clients" | "vehicles" | "rate_cards";
+
 export interface ImportError {
   ok: false;
+  /** Plain-English explanation for the user. */
   error: string;
+  /** Which step failed, used by the UI to pick a friendly title. */
+  step: ImportFailStep;
+  /** Raw DB / parser error for the "Technical details" disclosure. */
+  technical: string;
+  /** Rows that did get saved before the step that failed. */
+  partial: {
+    clients: number;
+    vehicles: number;
+    rateCards: number;
+    rateCardsUpdated: number;
+  };
 }
 
 /**
@@ -184,7 +200,15 @@ export async function commitImportAction(args: {
   scope: ImportEntity;
 }): Promise<ImportResult | ImportError> {
   const ctx = await requireWriter();
-  if (!ctx.ok) return ctx;
+  if (!ctx.ok) {
+    return {
+      ok: false,
+      error: ctx.error,
+      step: "parse",
+      technical: ctx.error,
+      partial: { clients: 0, vehicles: 0, rateCards: 0, rateCardsUpdated: 0 },
+    };
+  }
 
   let parsed: ParsedWorkbook;
   try {
@@ -193,7 +217,13 @@ export async function commitImportAction(args: {
       SCOPE_MAP[args.scope],
     );
   } catch (e) {
-    return { ok: false, error: `Couldn't re-read the file: ${(e as Error).message}` };
+    return {
+      ok: false,
+      error: "We could not read the file. Re-download the template and try again.",
+      step: "parse",
+      technical: (e as Error).message,
+      partial: { clients: 0, vehicles: 0, rateCards: 0, rateCardsUpdated: 0 },
+    };
   }
 
   // ─── Clients: upsert by name within this company (case-insensitive
@@ -228,7 +258,15 @@ export async function commitImportAction(args: {
     }
     if (toInsert.length > 0) {
       const { error } = await ctx.admin.from("clients").insert(toInsert);
-      if (error) return { ok: false, error: `Client insert failed: ${error.message}` };
+      if (error) {
+        return {
+          ok: false,
+          error: "We could not save the clients sheet.",
+          step: "clients",
+          technical: error.message,
+          partial: { clients: 0, vehicles: 0, rateCards: 0, rateCardsUpdated: 0 },
+        };
+      }
       insertedClients = toInsert.length;
     }
   }
@@ -260,7 +298,20 @@ export async function commitImportAction(args: {
     }
     if (toInsert.length > 0) {
       const { error } = await ctx.admin.from("vehicles").insert(toInsert);
-      if (error) return { ok: false, error: `Vehicle insert failed: ${error.message}` };
+      if (error) {
+        return {
+          ok: false,
+          error: "We could not save the vehicles sheet.",
+          step: "vehicles",
+          technical: error.message,
+          partial: {
+            clients: insertedClients,
+            vehicles: 0,
+            rateCards: 0,
+            rateCardsUpdated: 0,
+          },
+        };
+      }
       insertedVehicles = toInsert.length;
     }
   }
@@ -329,7 +380,20 @@ export async function commitImportAction(args: {
       const { error } = await ctx.admin.from("rate_cards").upsert(rows, {
         onConflict: "company_id,client_id,car_type,mode,plan_name",
       });
-      if (error) return { ok: false, error: `Rate-card upsert failed: ${error.message}` };
+      if (error) {
+        return {
+          ok: false,
+          error: "We could not save the rate cards sheet.",
+          step: "rate_cards",
+          technical: error.message,
+          partial: {
+            clients: insertedClients,
+            vehicles: insertedVehicles,
+            rateCards: 0,
+            rateCardsUpdated: 0,
+          },
+        };
+      }
     }
   }
 
