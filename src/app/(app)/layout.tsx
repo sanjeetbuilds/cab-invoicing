@@ -3,7 +3,7 @@ import { Sidebar } from "@/components/shell/sidebar";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { TopBar } from "@/components/shell/top-bar";
 import { PwaInstaller } from "@/components/shell/pwa-installer";
-import type { Company } from "@/lib/supabase/types";
+import type { BrandMode, Company } from "@/lib/supabase/types";
 
 export default async function AppLayout({
   children,
@@ -14,17 +14,33 @@ export default async function AppLayout({
 
   const { data: company } = await supabase
     .from("companies")
-    .select("name")
+    .select("name, brand_mode, logo_url, logo_aspect_ratio")
     .eq("id", membership.company_id)
-    .single<Pick<Company, "name">>();
+    .single<
+      Pick<Company, "name" | "brand_mode" | "logo_url" | "logo_aspect_ratio">
+    >();
 
   const companyName = company?.name ?? "—";
+  const brandMode: BrandMode = company?.brand_mode ?? "text_only";
+  const logoUrl = company?.logo_url ?? null;
+  const logoAspectRatio = company?.logo_aspect_ratio ?? null;
 
   return (
     <div className="flex flex-1 min-h-0">
-      <Sidebar companyName={companyName} />
+      <Sidebar
+        companyName={companyName}
+        brandMode={brandMode}
+        logoUrl={logoUrl}
+        logoAspectRatio={logoAspectRatio}
+      />
       <div className="flex flex-1 flex-col min-w-0">
-        <TopBar companyName={companyName} email={user.email ?? ""} />
+        <TopBar
+          companyName={companyName}
+          brandMode={brandMode}
+          logoUrl={logoUrl}
+          logoAspectRatio={logoAspectRatio}
+          email={user.email ?? ""}
+        />
         {/* Mobile: bottom padding clears the fixed 56px nav PLUS the
             iPhone home-indicator inset so the last form / list row is
             never hidden under the gesture bar. lg+ has a sidebar (no

@@ -3,6 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { QuotationPdf } from "@/lib/pdf/quotation-pdf";
+import { loadPdfBrand } from "@/lib/pdf/load-brand";
 import { quotationFilename } from "@/lib/filename";
 import type {
   Client,
@@ -69,12 +70,20 @@ export async function GET(
     clientName = data?.name ?? q.client_name;
   }
 
+  const brand = await loadPdfBrand(
+    admin,
+    company.brand_mode,
+    company.logo_url,
+    company.logo_aspect_ratio,
+  );
+
   const buffer = await renderToBuffer(
     <QuotationPdf
       company={company}
       quotation={q}
       lines={lines ?? []}
       clientName={clientName}
+      brand={brand}
     />,
   );
 

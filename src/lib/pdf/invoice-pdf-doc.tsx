@@ -12,6 +12,8 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { Company, Invoice, InvoiceLine } from "@/lib/supabase/types";
 import { formatINR, formatINRBlank, formatINRDash, formatQtyDash } from "@/lib/format";
+import { PdfBrandHeading } from "./pdf-brand-heading";
+import type { PdfBrand } from "./load-brand";
 
 export const INVOICE_FONT_FAMILY = "NotoSansMono";
 
@@ -35,6 +37,8 @@ export interface InvoicePdfProps {
   >;
   invoice: Invoice;
   lines: InvoiceLine[];
+  /** Optional — defaults to text_only when omitted. */
+  brand?: PdfBrand;
 }
 
 const COLORS = {
@@ -490,10 +494,12 @@ function HeaderBand({
   company,
   invoice,
   fullNumber,
+  brand,
 }: {
   company: InvoicePdfProps["company"];
   invoice: Invoice;
   fullNumber: string;
+  brand: PdfBrand | undefined;
 }) {
   const phones = [company.phone, company.phone2].filter(Boolean).join(", ");
   const invoiceEmail = company.invoice_email ?? company.email ?? "";
@@ -503,7 +509,11 @@ function HeaderBand({
     <>
       {/* Top band — brand left, TAX INVOICE / Original for Recipient right. */}
       <View style={styles.topBand}>
-        <Text style={styles.brand}>{(company.name ?? "").toUpperCase()}</Text>
+        <PdfBrandHeading
+          brand={brand}
+          companyName={company.name ?? ""}
+          fontFamily={INVOICE_FONT_FAMILY}
+        />
         <View style={styles.topRight}>
           <Text style={styles.taxInvoiceTitle}>TAX INVOICE</Text>
           <Text style={styles.taxInvoiceSub}>Original for Recipient</Text>
@@ -557,7 +567,7 @@ function HeaderBand({
   );
 }
 
-export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
+export function InvoicePdf({ company, invoice, lines, brand }: InvoicePdfProps) {
   const fullNumber = `${company.invoice_prefix ?? ""}${invoice.invoice_number}`;
   // Sort lines by stored sort_order first (preserves the order of lines
   // WITHIN a trip), group them, then sort whole groups chronologically by
@@ -595,6 +605,7 @@ export function InvoicePdf({ company, invoice, lines }: InvoicePdfProps) {
                 company={company}
                 invoice={invoice}
                 fullNumber={fullNumber}
+                brand={brand}
               />
             )}
             <ColumnHeader />

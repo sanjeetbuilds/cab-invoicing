@@ -3,6 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Company, Role } from "@/lib/supabase/types";
 import { CompanyForm } from "./company-form";
+import { BrandingForm } from "./branding-form";
 import { NumberingForm } from "./numbering-form";
 import { TermsForm } from "./terms-form";
 import { TeamSection } from "./team-section";
@@ -26,8 +27,9 @@ export function SettingsTabs({
         <TabsTrigger value="team">Team</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="company" className="pt-4">
+      <TabsContent value="company" className="pt-4 flex flex-col gap-6">
         <CompanyForm company={company} />
+        <BrandingForm company={company} />
       </TabsContent>
       <TabsContent value="numbering" className="pt-4">
         <NumberingForm company={company} />

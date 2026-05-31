@@ -3,6 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { InvoicePdf } from "@/lib/pdf/invoice-pdf";
+import { loadPdfBrand } from "@/lib/pdf/load-brand";
 import { invoiceFilename } from "@/lib/filename";
 import type {
   Company,
@@ -91,12 +92,20 @@ export async function GET(
     }
   }
 
+  const brand = await loadPdfBrand(
+    admin,
+    company.brand_mode,
+    company.logo_url,
+    company.logo_aspect_ratio,
+  );
+
   // Render fresh.
   const buffer = await renderToBuffer(
     <InvoicePdf
       company={company}
       invoice={invoice}
       lines={lines ?? []}
+      brand={brand}
     />,
   );
 

@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav-items";
+import { BrandDisplay } from "./brand-display";
+import type { BrandMode } from "@/lib/supabase/types";
 
 /**
  * Desktop sidebar — shows every navigation item directly. Vertical
@@ -12,7 +14,17 @@ import { NAV_ITEMS } from "./nav-items";
  * just adds clicks. The mobile bottom nav still uses the 5-tab + More
  * pattern because that's the only thing that fits a thumb-reach row.
  */
-export function Sidebar({ companyName }: { companyName: string }) {
+export function Sidebar({
+  companyName,
+  brandMode,
+  logoUrl,
+  logoAspectRatio,
+}: {
+  companyName: string;
+  brandMode: BrandMode;
+  logoUrl: string | null;
+  logoAspectRatio: number | null;
+}) {
   const pathname = usePathname();
 
   return (
@@ -21,12 +33,15 @@ export function Sidebar({ companyName }: { companyName: string }) {
         <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
           Company
         </p>
-        <p
-          className="font-semibold text-foreground truncate mt-1"
-          title={companyName}
-        >
-          {companyName}
-        </p>
+        <div className="mt-1">
+          <BrandDisplay
+            mode={brandMode}
+            name={companyName}
+            logoUrl={logoUrl}
+            aspectRatio={logoAspectRatio}
+            size="sidebar"
+          />
+        </div>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map((item) => {

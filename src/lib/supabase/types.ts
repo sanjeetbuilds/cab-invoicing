@@ -11,6 +11,8 @@ export type Ownership = "own" | "attached";
 export type QuotationStatus = "draft" | "sent" | "accepted" | "expired" | "rejected";
 export type InvoiceStatus = "draft" | "unpaid" | "paid" | "reversed";
 
+export type BrandMode = "text_only" | "logo_only" | "logo_with_text";
+
 export interface Company {
   id: string;
   name: string;
@@ -28,6 +30,9 @@ export interface Company {
   terms_invoice: string[] | null;
   terms_quotation: string[] | null;
   plan: "free" | "pro";
+  brand_mode: BrandMode;
+  logo_url: string | null;
+  logo_aspect_ratio: number | null;
   created_at: string;
   updated_at: string;
 }

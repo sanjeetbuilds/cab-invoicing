@@ -18,6 +18,8 @@ import type {
   QuotationLine,
 } from "@/lib/supabase/types";
 import { formatINRBlank } from "@/lib/format";
+import { PdfBrandHeading } from "./pdf-brand-heading";
+import type { PdfBrand } from "./load-brand";
 
 const FONT_FAMILY = "NotoSansMono";
 
@@ -45,6 +47,8 @@ export interface QuotationPdfProps {
   quotation: Quotation;
   lines: QuotationLine[];
   clientName: string | null;
+  /** Optional — defaults to text_only when omitted. */
+  brand?: PdfBrand;
 }
 
 const COLORS = {
@@ -177,6 +181,7 @@ export function QuotationPdf({
   quotation,
   lines,
   clientName,
+  brand,
 }: QuotationPdfProps) {
   const terms = (company.terms_quotation ?? []).filter(Boolean);
   const phones = [company.phone, company.phone2].filter(Boolean).join(", ");
@@ -187,7 +192,11 @@ export function QuotationPdf({
     <Document title={`Quotation ${quotation.number}`}>
       <Page size="A4" style={styles.page} wrap>
         <View style={styles.topBand}>
-          <Text style={styles.brand}>{(company.name ?? "").toUpperCase()}</Text>
+          <PdfBrandHeading
+            brand={brand}
+            companyName={company.name ?? ""}
+            fontFamily={FONT_FAMILY}
+          />
           <View style={styles.topRight}>
             <Text style={styles.quoteNumber}>QUOTATION- {quotation.number}</Text>
             <Text style={styles.quoteDate}>Date: {fmtDate(quotation.date)}</Text>
