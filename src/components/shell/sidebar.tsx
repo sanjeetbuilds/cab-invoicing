@@ -2,20 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MoreHorizontal } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MOBILE_PRIMARY, SECONDARY } from "./nav-items";
+import { NAV_ITEMS } from "./nav-items";
 
-const SECONDARY_HREFS = new Set(SECONDARY.map((n) => n.href));
-
+/**
+ * Desktop sidebar — shows every navigation item directly. Vertical
+ * space is plentiful at lg+, so hiding items behind a "More" grouping
+ * just adds clicks. The mobile bottom nav still uses the 5-tab + More
+ * pattern because that's the only thing that fits a thumb-reach row.
+ */
 export function Sidebar({ companyName }: { companyName: string }) {
   const pathname = usePathname();
-  // "More" is active whenever the current path lives inside the
-  // secondary destinations (Fleet, Settings) or the /more page itself.
-  const onSecondary =
-    pathname.startsWith("/more") ||
-    SECONDARY_HREFS.has(pathname) ||
-    SECONDARY.some((s) => pathname.startsWith(s.href + "/"));
 
   return (
     <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-border bg-sidebar">
@@ -31,7 +29,7 @@ export function Sidebar({ companyName }: { companyName: string }) {
         </p>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {MOBILE_PRIMARY.map((item) => {
+        {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active =
             pathname === item.href || pathname.startsWith(item.href + "/");
@@ -49,33 +47,28 @@ export function Sidebar({ companyName }: { companyName: string }) {
               <Icon
                 className={cn(
                   "h-4 w-4 shrink-0",
-                  active ? "text-sidebar-accent-foreground" : "text-muted-foreground",
+                  active
+                    ? "text-sidebar-accent-foreground"
+                    : "text-muted-foreground",
                 )}
               />
               {item.label}
             </Link>
           );
         })}
+      </nav>
+      <div className="border-t border-border px-3 py-3">
         <Link
-          href="/more"
+          href="/sign-out"
           className={cn(
             "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
-            onSecondary
-              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            "text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
         >
-          <MoreHorizontal
-            className={cn(
-              "h-4 w-4 shrink-0",
-              onSecondary
-                ? "text-sidebar-accent-foreground"
-                : "text-muted-foreground",
-            )}
-          />
-          More
+          <LogOut className="h-4 w-4 shrink-0 text-muted-foreground" />
+          Sign out
         </Link>
-      </nav>
+      </div>
     </aside>
   );
 }

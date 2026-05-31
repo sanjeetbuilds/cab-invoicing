@@ -5,6 +5,7 @@ import {
   FileSignature,
   Users,
   Truck,
+  Upload,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -30,10 +31,12 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Trips",      href: "/trips",      icon: Car,             mobile: true },
   { label: "Invoices",   href: "/invoices",   icon: Receipt,         mobile: true },
   { label: "Quotations", href: "/quotations", icon: FileSignature,   mobile: true },
-  // Secondary — surface only inside the /more drawer.
-  { label: "Clients",    href: "/clients",    icon: Users },
-  { label: "Fleet",      href: "/vehicles",   icon: Truck },
-  { label: "Settings",   href: "/settings",   icon: Settings },
+  // Secondary — desktop sidebar shows them too (no "More" grouping at
+  // lg+); mobile groups them into the /more drawer.
+  { label: "Clients",     href: "/clients",     icon: Users },
+  { label: "Fleet",       href: "/vehicles",    icon: Truck },
+  { label: "Bulk import", href: "/bulk-import", icon: Upload },
+  { label: "Settings",    href: "/settings",    icon: Settings },
 ];
 
 export const MOBILE_PRIMARY = NAV_ITEMS.filter((n) => n.mobile);
