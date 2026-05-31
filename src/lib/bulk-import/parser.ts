@@ -159,6 +159,8 @@ function cellNumber(value: unknown): number | null {
  *   Name, GSTIN, State, Address, Contact Person, Phone, Email,
  *   RCM (Yes/No), Notes
  */
+const CLIENTS_REQUIRED = ["name", "state"];
+
 function parseClientsSheet(
   ws: ExcelJS.Worksheet | undefined,
 ): PreviewRow<ImportClientRow>[] {
@@ -169,7 +171,7 @@ function parseClientsSheet(
   ws.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return; // header
     const get = (key: string) =>
-      cellString(row.getCell(headers[key.toLowerCase()] ?? -1).value).trim();
+      cellString(cellAt(row, headers, key)).trim();
 
     const name = get("name");
     if (!name) return; // empty row, skip silently
@@ -207,7 +209,7 @@ function parseClientsSheet(
         state,
         address: get("address") || null,
         default_booked_by: bookedBy || null,
-        is_rcm: parseYesNo(row.getCell(headers["rcm (yes/no)"] ?? headers["rcm"] ?? -1).value, false),
+        is_rcm: parseYesNo(cellAt(row, headers, "rcm"), false),
         notes: get("notes") || null,
       },
       fixes,
@@ -217,6 +219,8 @@ function parseClientsSheet(
 
   return out;
 }
+
+const VEHICLES_REQUIRED = ["number", "type", "ownership"];
 
 function parseVehiclesSheet(
   ws: ExcelJS.Worksheet | undefined,
@@ -228,7 +232,7 @@ function parseVehiclesSheet(
   ws.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
     const get = (key: string) =>
-      cellString(row.getCell(headers[key.toLowerCase()] ?? -1).value).trim();
+      cellString(cellAt(row, headers, key)).trim();
 
     const rawNumber = get("number");
     if (!rawNumber) return;
@@ -251,7 +255,7 @@ function parseVehiclesSheet(
       );
     if (carType?.fixed) fixes.push(carType.fixed);
 
-    const ownershipRaw = get("ownership") || get("ownership (own/attached)");
+    const ownershipRaw = get("ownership");
     const ownership = ownershipRaw ? normalizeOwnership(ownershipRaw) : null;
     if (!ownershipRaw) errors.push("Ownership is required (Own or Attached).");
     else if (!ownership)
@@ -265,10 +269,7 @@ function parseVehiclesSheet(
         type: carType?.value ?? ("Other" as CarType),
         ownership: ownership?.value ?? ("attached" as Ownership),
         vendor_name: get("vendor name") || null,
-        active: parseYesNo(
-          row.getCell(headers["active (yes/no)"] ?? headers["active"] ?? -1).value,
-          true,
-        ),
+        active: parseYesNo(cellAt(row, headers, "active"), true),
       },
       fixes,
       errors,
@@ -277,6 +278,8 @@ function parseVehiclesSheet(
 
   return out;
 }
+
+const RATE_CARDS_REQUIRED = ["client name", "car type", "mode"];
 
 function parseRateCardsSheet(
   ws: ExcelJS.Worksheet | undefined,
@@ -288,9 +291,9 @@ function parseRateCardsSheet(
   ws.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
     const get = (key: string) =>
-      cellString(row.getCell(headers[key.toLowerCase()] ?? -1).value).trim();
+      cellString(cellAt(row, headers, key)).trim();
     const getNum = (key: string) =>
-      cellNumber(row.getCell(headers[key.toLowerCase()] ?? -1).value);
+      cellNumber(cellAt(row, headers, key));
 
     const clientName = get("client name");
     if (!clientName) return;
@@ -304,14 +307,14 @@ function parseRateCardsSheet(
     else if (!carType) errors.push(`Car Type '${typeRaw}' isn't valid.`);
     if (carType?.fixed) fixes.push(carType.fixed);
 
-    const modeRaw = get("mode") || get("mode (local/outstation/transfer/package)");
+    const modeRaw = get("mode");
     const mode = modeRaw ? normalizeMode(modeRaw) : null;
     if (!modeRaw) errors.push("Mode is required.");
     else if (!mode) errors.push(`Mode '${modeRaw}' isn't valid.`);
     if (mode?.fixed) fixes.push(mode.fixed);
 
     const isFixed = mode?.value === "transfer" || mode?.value === "package";
-    const planName = get("plan name") || get("plan name (for transfer/package only)");
+    const planName = get("plan name");
     if (isFixed && !planName) {
       errors.push("Plan Name is required for Transfer/Package modes.");
     }
@@ -327,7 +330,7 @@ function parseRateCardsSheet(
     const extraKm = getNum("extra km ₹") ?? getNum("extra km");
     const extraHour = getNum("extra hour ₹") ?? getNum("extra hour");
     const night = getNum("night ₹") ?? getNum("night");
-    const perKm = getNum("per km ₹") ?? getNum("per km") ?? getNum("per km ₹ (outstation only)");
+    const perKm = getNum("per km ₹") ?? getNum("per km");
     let driverTa = getNum("driver ta ₹/day") ?? getNum("driver ta");
 
     if (mode?.value === "local") {
@@ -371,29 +374,116 @@ function parseRateCardsSheet(
   return out;
 }
 
+/**
+ * Header normalization. The template flags required columns with a
+ * trailing asterisk ("Name*") and inline parenthesized hints
+ * ("Ownership* (Own/Attached)"). Neither is part of the canonical
+ * column name, so they get stripped before matching. ₹ and other
+ * currency / unit characters are preserved so headers like
+ * "Base Rate ₹" can be distinguished from "Base Rate".
+ */
+function normalizeHeader(raw: string): string {
+  return raw
+    .trim()
+    .replace(/\*/g, "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
 function readHeaders(ws: ExcelJS.Worksheet): Record<string, number> {
   const headers: Record<string, number> = {};
   const row = ws.getRow(1);
   row.eachCell((cell, colNumber) => {
-    const key = cellString(cell.value).trim().toLowerCase();
+    const key = normalizeHeader(cellString(cell.value));
     if (key) headers[key] = colNumber;
   });
   return headers;
 }
 
 /**
+ * Safe cell lookup by header name. Returns null when the column is
+ * missing from the sheet — the previous "headers[key] ?? -1" pattern
+ * then called `row.getCell(-1)` which throws ExcelJS's
+ * "-1 is out of bounds. Excel supports columns from 1 to 16384."
+ * That error must never surface to the user.
+ */
+function cellAt(
+  row: ExcelJS.Row,
+  headers: Record<string, number>,
+  key: string,
+): ExcelJS.CellValue {
+  const col = headers[normalizeHeader(key)];
+  if (col == null || col < 1) return null;
+  return row.getCell(col).value;
+}
+
+function missingHeaders(
+  headers: Record<string, number>,
+  required: readonly string[],
+): string[] {
+  return required.filter((k) => !(normalizeHeader(k) in headers));
+}
+
+function quoteList(names: string[]): string {
+  return names.map((n) => `'${titleCase(n)}'`).join(", ");
+}
+
+function titleCase(s: string): string {
+  return s
+    .split(" ")
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
+function maybeParse<T>(
+  sheet: ExcelJS.Worksheet | undefined,
+  sheetLabel: string,
+  required: readonly string[],
+  parse: (ws: ExcelJS.Worksheet) => PreviewRow<T>[],
+  topErrors: string[],
+): PreviewRow<T>[] {
+  if (!sheet) return [];
+  const missing = missingHeaders(readHeaders(sheet), required);
+  if (missing.length > 0) {
+    topErrors.push(
+      `Sheet '${sheetLabel}' is missing required column${
+        missing.length === 1 ? "" : "s"
+      }: ${quoteList(missing)}. Re-download the latest template and try again.`,
+    );
+    return [];
+  }
+  return parse(sheet);
+}
+
+/**
  * Parse a Buffer of bytes (uploaded .xlsx) into a preview-ready
- * structure. Throws on a fundamentally malformed file. Per-row
- * problems become PreviewRow.errors entries.
+ * structure. Never throws to the caller: malformed workbooks and
+ * missing required columns surface as topErrors so the UI can show
+ * a specific user-readable message instead of a SheetJS / ExcelJS
+ * exception.
  */
 export async function parseWorkbookBuffer(
   buf: Buffer,
   scope: "clients" | "vehicles" | "rate_cards" | "all",
 ): Promise<ParsedWorkbook> {
-  const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(buf as unknown as ArrayBuffer);
-
   const topErrors: string[] = [];
+
+  const wb = new ExcelJS.Workbook();
+  try {
+    await wb.xlsx.load(buf as unknown as ArrayBuffer);
+  } catch (e) {
+    return {
+      clients: [],
+      vehicles: [],
+      rateCards: [],
+      topErrors: [
+        `Couldn't read this file as an Excel workbook (${(e as Error).message}). Use the .xlsx template above.`,
+      ],
+    };
+  }
+
   const clientsSheet = wb.getWorksheet("Clients");
   const vehiclesSheet = wb.getWorksheet("Vehicles");
   const rateCardsSheet = wb.getWorksheet("Rate Cards");
@@ -405,21 +495,49 @@ export async function parseWorkbookBuffer(
   let vehicles: PreviewRow<ImportVehicleRow>[] = [];
   let rateCards: PreviewRow<ImportRateCardRow>[] = [];
 
-  if (scope === "clients" || scope === "all") {
-    clients = parseClientsSheet(clientsSheet ?? (scope === "clients" ? fallback : undefined));
-  }
-  if (scope === "vehicles" || scope === "all") {
-    vehicles = parseVehiclesSheet(vehiclesSheet ?? (scope === "vehicles" ? fallback : undefined));
-  }
-  if (scope === "rate_cards" || scope === "all") {
-    rateCards = parseRateCardsSheet(rateCardsSheet ?? (scope === "rate_cards" ? fallback : undefined));
+  try {
+    if (scope === "clients" || scope === "all") {
+      const sheet = clientsSheet ?? (scope === "clients" ? fallback : undefined);
+      clients = maybeParse<ImportClientRow>(
+        sheet,
+        "Clients",
+        CLIENTS_REQUIRED,
+        parseClientsSheet,
+        topErrors,
+      );
+    }
+    if (scope === "vehicles" || scope === "all") {
+      const sheet = vehiclesSheet ?? (scope === "vehicles" ? fallback : undefined);
+      vehicles = maybeParse<ImportVehicleRow>(
+        sheet,
+        "Vehicles",
+        VEHICLES_REQUIRED,
+        parseVehiclesSheet,
+        topErrors,
+      );
+    }
+    if (scope === "rate_cards" || scope === "all") {
+      const sheet = rateCardsSheet ?? (scope === "rate_cards" ? fallback : undefined);
+      rateCards = maybeParse<ImportRateCardRow>(
+        sheet,
+        "Rate Cards",
+        RATE_CARDS_REQUIRED,
+        parseRateCardsSheet,
+        topErrors,
+      );
+    }
+  } catch (e) {
+    topErrors.push(
+      `Something unexpected went wrong reading the file (${(e as Error).message}). Re-download the latest template and try again.`,
+    );
   }
 
   if (
     scope === "all" &&
     clients.length === 0 &&
     vehicles.length === 0 &&
-    rateCards.length === 0
+    rateCards.length === 0 &&
+    topErrors.length === 0
   ) {
     topErrors.push(
       "Workbook had no recognizable Clients / Vehicles / Rate Cards sheets. Use the template above.",

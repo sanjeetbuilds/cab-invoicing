@@ -53,6 +53,18 @@ export async function previewImportAction(args: {
     return { ok: false, error: `Couldn't read the file: ${err.message}` };
   }
 
+  // If the workbook produced nothing parseable AND there's a top-level
+  // explanation, surface it to the UI as a parse error so the user
+  // sees the red Try-again state instead of an empty preview.
+  if (
+    parsed.topErrors.length > 0 &&
+    parsed.clients.length === 0 &&
+    parsed.vehicles.length === 0 &&
+    parsed.rateCards.length === 0
+  ) {
+    return { ok: false, error: parsed.topErrors.join(" ") };
+  }
+
   // Cross-check rate-card client names against existing DB clients +
   // the client rows already in this upload. Also annotate each rate
   // card row with whether it would update an existing card and
