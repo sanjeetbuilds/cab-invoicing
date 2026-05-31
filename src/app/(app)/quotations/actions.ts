@@ -257,9 +257,15 @@ export async function acceptQuotationAction(id: string): Promise<SimpleResult> {
     .eq("quotation_id", id)
     .order("sort_order", { ascending: true });
 
+  // ON CONFLICT must match the rate_cards unique constraint exactly —
+  // (company_id, client_id, car_type, mode, plan_name). plan_name is
+  // included so Transfer / Package plans (Airport T3, NDLS, …) dedupe
+  // per-plan rather than collapsing onto a single (client, car, mode).
   for (const l of lines ?? []) {
     const isLocal = l.mode === "local";
-    await ctx.admin
+    const isOutstation = l.mode === "outstation";
+    const isFixed = l.mode === "transfer" || l.mode === "package";
+    const { error: rcErr } = await ctx.admin
       .from("rate_cards")
       .upsert(
         {
@@ -267,19 +273,30 @@ export async function acceptQuotationAction(id: string): Promise<SimpleResult> {
           client_id: clientId,
           car_type: l.car_type,
           mode: l.mode,
+          plan_name: isFixed ? l.plan_name : null,
           base_rate: isLocal ? l.base_rate : null,
           base_kms: isLocal ? l.base_kms : null,
           base_hours: isLocal ? l.base_hours : null,
           extra_km: isLocal ? l.extra_km : null,
           extra_hour: isLocal ? l.extra_hour : null,
           night: isLocal ? l.night : null,
-          per_km: !isLocal ? l.per_km : null,
+          per_km: isOutstation ? l.per_km : null,
+          fixed_price: isFixed ? l.fixed_price : null,
+          includes_toll: isFixed ? l.includes_toll : false,
+          includes_tax: isFixed ? l.includes_tax : false,
+          includes_parking: isFixed ? l.includes_parking : false,
           driver_ta: l.driver_ta,
           source_quotation_id: id,
           active_from: new Date().toISOString().slice(0, 10),
         },
-        { onConflict: "company_id,client_id,car_type,mode" },
+        { onConflict: "company_id,client_id,car_type,mode,plan_name" },
       );
+    if (rcErr) {
+      return {
+        ok: false,
+        error: `Couldn't create rate card for ${l.car_type} · ${l.mode}: ${rcErr.message}`,
+      };
+    }
   }
 
   await ctx.admin
