@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, IndianRupee, LogOut } from "lucide-react";
+import { ChevronRight, LogOut } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -7,22 +7,8 @@ import { SECONDARY } from "@/components/shell/nav-items";
 
 export const metadata = { title: "More" };
 
-// Rate-cards lives here too: power-user cross-client bulk-edit view.
-// Surface it via /rate-cards even though it isn't in NAV_ITEMS, since
-// it's still a real route. Add an explicit entry below the secondary
-// nav items.
-const EXTRA_ENTRIES = [
-  {
-    label: "Bulk edit rates",
-    href: "/rate-cards",
-    icon: IndianRupee,
-  },
-];
-
 export default async function MorePage() {
   const { user } = await requireMembership();
-  // Combine the secondary nav items + the extras (Bulk edit rates).
-  const items = [...SECONDARY, ...EXTRA_ENTRIES];
 
   return (
     <div className="flex flex-col gap-4">
@@ -31,7 +17,7 @@ export default async function MorePage() {
       <Card>
         <CardContent className="-mx-4 -my-4 sm:-mx-6 sm:-my-6 px-0 py-0">
           <ul className="divide-y divide-border">
-            {items.map((item) => {
+            {SECONDARY.map((item) => {
               const Icon = item.icon;
               return (
                 <li key={item.href}>

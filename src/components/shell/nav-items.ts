@@ -4,6 +4,7 @@ import {
   Receipt,
   FileSignature,
   Users,
+  IndianRupee,
   Truck,
   Upload,
   Settings,
@@ -34,6 +35,7 @@ export const NAV_ITEMS: NavItem[] = [
   // Secondary — desktop sidebar shows them too (no "More" grouping at
   // lg+); mobile groups them into the /more drawer.
   { label: "Clients",     href: "/clients",     icon: Users },
+  { label: "Rate cards",  href: "/rate-cards",  icon: IndianRupee },
   { label: "Fleet",       href: "/vehicles",    icon: Truck },
   { label: "Bulk import", href: "/bulk-import", icon: Upload },
   { label: "Settings",    href: "/settings",    icon: Settings },
