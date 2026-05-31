@@ -21,6 +21,7 @@ import { buttonVariants } from "@/components/ui/button";
 import type { Invoice } from "@/lib/supabase/types";
 import { formatINR } from "@/lib/format";
 import { PageHeader } from "@/components/ui/page-header";
+import { cn } from "@/lib/utils";
 import { SeedBanner } from "../seed/seed-banner";
 
 export const metadata = {
@@ -230,18 +231,23 @@ function StatCard({
   hint: string;
   href?: string;
 }) {
+  // Hierarchy is the point — the number dominates, label and hint
+  // recede. 12px between label and number, 8px between number and
+  // hint, all four tiles share identical layout (no per-tile colour).
   const body = (
     <Card
-      className={
-        href ? "hover:border-foreground/20 transition-colors" : ""
-      }
-      size="sm"
+      className={cn(
+        "gap-0",
+        href && "hover:shadow-card-hover transition-shadow",
+      )}
     >
-      <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+      <p className="text-[11px] uppercase tracking-[0.05em] text-muted-foreground font-medium">
         {label}
       </p>
-      <p className="font-mono text-2xl font-semibold tabular-nums">{value}</p>
-      <p className="text-xs text-muted-foreground">{hint}</p>
+      <p className="mt-3 font-mono text-[28px] sm:text-4xl font-bold tabular-nums leading-none text-foreground">
+        {value}
+      </p>
+      <p className="mt-2 text-[13px] text-muted-foreground">{hint}</p>
     </Card>
   );
   return href ? (

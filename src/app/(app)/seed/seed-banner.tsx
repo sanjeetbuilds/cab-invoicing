@@ -28,7 +28,7 @@ export function SeedBanner() {
   }
 
   return (
-    <Card className="border-primary/30 bg-primary/5">
+    <Card className="border border-primary/30 bg-primary/5">
       <CardContent className="py-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           <Sparkles className="h-5 w-5 mt-1 text-primary shrink-0" />

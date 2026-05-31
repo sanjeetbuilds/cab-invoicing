@@ -55,16 +55,14 @@ export function Sidebar({
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
                 active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  ? "bg-[rgba(79,70,229,0.10)] text-[#4f46e5] font-medium"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
               <Icon
                 className={cn(
-                  "h-4 w-4 shrink-0",
-                  active
-                    ? "text-sidebar-accent-foreground"
-                    : "text-muted-foreground",
+                  "h-4 w-4 shrink-0 transition-colors duration-150",
+                  active ? "text-[#4f46e5]" : "text-muted-foreground",
                 )}
               />
               {item.label}

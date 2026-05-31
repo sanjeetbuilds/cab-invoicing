@@ -10,23 +10,26 @@ function Card({
 }: React.ComponentProps<"div"> & {
   size?: "default" | "sm"
   /**
-   * Opt-in subtle shadow. Default is flat (border-only) per the
-   * Phase 5 design system: every card flat by default, shadow only
-   * for surfaces that genuinely need to feel elevated (the dashboard
-   * "What's next" hero, install banners, the sticky trip-total chip).
+   * Stronger lift for surfaces that need to feel emphasized (hero
+   * tiles, install banners, sticky chips). Every card now gets the
+   * base soft shadow by default — `elevated` opts into a more
+   * pronounced one.
    */
   elevated?: boolean
 }) {
-  // Padding is ~20% tighter on mobile (p-4) and grows on sm+ (p-6) per
-  // the design-system scale. Same gap rule for the inner CardContent.
+  // No border — the soft dual-layer shadow stands in for it. 12px
+  // radius is slightly more generous than the old 8px for a softer
+  // feel; padding is a uniform 24px so cards breathe at every
+  // breakpoint. size="sm" stays compact (16/20 px) for stat tiles
+  // and dense lists.
   return (
     <div
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-3 sm:gap-4 rounded-lg border border-border bg-card text-sm text-card-foreground",
-        elevated && "shadow-card",
-        "data-[size=default]:p-4 sm:data-[size=default]:p-6 data-[size=sm]:p-3 sm:data-[size=sm]:p-4 data-[size=sm]:gap-2 sm:data-[size=sm]:gap-3",
+        "group/card flex flex-col gap-3 sm:gap-4 rounded-xl bg-card text-sm text-card-foreground",
+        elevated ? "shadow-card-hover" : "shadow-card",
+        "data-[size=default]:p-6 data-[size=sm]:p-4 sm:data-[size=sm]:p-5 data-[size=sm]:gap-2 sm:data-[size=sm]:gap-3",
         className
       )}
       {...props}
@@ -89,12 +92,13 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
 
 function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   // Negative margins must cancel the Card's padding at each breakpoint.
+  // Default cards are p-6 everywhere; sm cards are p-4 mobile / p-5 sm+.
   return (
     <div
       data-slot="card-footer"
       className={cn(
-        "-mx-4 -mb-4 px-4 py-3 sm:-mx-6 sm:-mb-6 sm:px-6 sm:py-4 flex items-center justify-end gap-2 border-t border-border bg-muted/40 rounded-b-lg",
-        "group-data-[size=sm]/card:-mx-3 group-data-[size=sm]/card:-mb-3 group-data-[size=sm]/card:px-3 group-data-[size=sm]/card:py-2 sm:group-data-[size=sm]/card:-mx-4 sm:group-data-[size=sm]/card:-mb-4 sm:group-data-[size=sm]/card:px-4 sm:group-data-[size=sm]/card:py-3",
+        "-mx-6 -mb-6 px-6 py-4 flex items-center justify-end gap-2 border-t border-border bg-muted/40 rounded-b-xl",
+        "group-data-[size=sm]/card:-mx-4 group-data-[size=sm]/card:-mb-4 group-data-[size=sm]/card:px-4 group-data-[size=sm]/card:py-3 sm:group-data-[size=sm]/card:-mx-5 sm:group-data-[size=sm]/card:-mb-5 sm:group-data-[size=sm]/card:px-5",
         className
       )}
       {...props}

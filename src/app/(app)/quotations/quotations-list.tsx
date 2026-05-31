@@ -368,7 +368,7 @@ export function QuotationsList({
       ) : (
         <>
           {/* Desktop (md+): table; row click opens PDF in new tab */}
-          <div className="hidden md:block rounded-lg border border-border bg-card overflow-hidden">
+          <div className="hidden md:block rounded-xl bg-card shadow-card overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -396,7 +396,7 @@ export function QuotationsList({
           </div>
 
           {/* Mobile (<md): rich summary cards */}
-          <div className="md:hidden flex flex-col gap-3">
+          <div className="md:hidden flex flex-col gap-4 md:gap-5">
             {filtered.map((q) => (
               <MobileQuotationCard
                 key={q.id}

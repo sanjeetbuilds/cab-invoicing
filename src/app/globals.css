@@ -28,9 +28,13 @@
   --radius-3xl: calc(var(--radius) * 2.5);
   --radius-4xl: calc(var(--radius) * 3);
 
-  /* Custom shadow tokens */
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-card-hover: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  /* Custom shadow tokens — soft elevation. Cards no longer use a 1px
+     border; this dual-layer shadow stands in for it without the hard
+     edge that borders give. */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  /* Subtle lift on the primary CTA. */
+  --shadow-primary: 0 1px 2px rgba(79, 70, 229, 0.15);
 
   /* Color tokens — map shadcn names to the EasyBills palette */
   --color-background: var(--background);
@@ -185,10 +189,21 @@
     @apply border-border outline-ring/40;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply text-foreground font-sans;
+    /* Very subtle indigo wash at the top fading to standard grey —
+       depth, not paint. Light theme only; the .dark override below
+       restores the solid dark surface. */
+    background:
+      linear-gradient(180deg, #f7f6ff 0%, #fafafa 40%) no-repeat;
+    background-color: #fafafa;
+    background-attachment: fixed;
+    min-height: 100vh;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  .dark body {
+    background: var(--background);
   }
   html {
     @apply font-sans;

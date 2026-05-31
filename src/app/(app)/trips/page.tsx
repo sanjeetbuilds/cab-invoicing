@@ -339,7 +339,7 @@ export default async function TripsPage({
           </div>
 
           {/* Mobile cards */}
-          <div className="md:hidden flex flex-col gap-2">
+          <div className="md:hidden flex flex-col gap-4 md:gap-5">
             {tripList.map((t) => {
               const c = clientById.get(t.client_id);
               const v = vehicleById.get(t.vehicle_id);

@@ -31,13 +31,19 @@ export function BottomNav() {
             <li key={item.href} className="flex">
               <Link
                 href={item.href}
-                className={cn(
-                  "flex flex-1 flex-col items-center justify-center gap-1 text-[11px]",
-                  active ? "text-foreground" : "text-muted-foreground",
-                )}
+                className="flex flex-1 flex-col items-center justify-center"
               >
-                <Icon className="h-5 w-5" />
-                {item.label}
+                <span
+                  className={cn(
+                    "inline-flex flex-col items-center gap-1 px-3 py-1 rounded-lg text-[11px] transition-colors duration-150",
+                    active
+                      ? "bg-[rgba(79,70,229,0.10)] text-[#4f46e5] font-medium"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                </span>
               </Link>
             </li>
           );
@@ -45,16 +51,20 @@ export function BottomNav() {
         <li className="flex">
           <Link
             href="/more"
-            className={cn(
-              "flex flex-1 flex-col items-center justify-center gap-1 text-[11px]",
-              onSecondary || pathname.startsWith("/more")
-                ? "text-foreground"
-                : "text-muted-foreground",
-            )}
+            className="flex flex-1 flex-col items-center justify-center"
             aria-label="More"
           >
-            <MoreHorizontal className="h-5 w-5" />
-            More
+            <span
+              className={cn(
+                "inline-flex flex-col items-center gap-1 px-3 py-1 rounded-lg text-[11px] transition-colors duration-150",
+                onSecondary || pathname.startsWith("/more")
+                  ? "bg-[rgba(79,70,229,0.10)] text-[#4f46e5] font-medium"
+                  : "text-muted-foreground",
+              )}
+            >
+              <MoreHorizontal className="h-5 w-5" />
+              More
+            </span>
           </Link>
         </li>
       </ul>

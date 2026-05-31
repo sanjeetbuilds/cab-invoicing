@@ -18,9 +18,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary — solid indigo. The single most prominent action on a screen.
+        // Primary — solid indigo with a subtle lift shadow so the
+        // CTA reads as "raised" against the soft-shadow card field.
         default: [
           "bg-primary text-primary-foreground border-transparent",
+          "shadow-[var(--shadow-primary)]",
           "hover:bg-primary-hover",
         ].join(" "),
         // Secondary — white surface with a thin grey border.

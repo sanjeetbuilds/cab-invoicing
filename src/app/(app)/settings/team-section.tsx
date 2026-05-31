@@ -244,7 +244,7 @@ export function TeamSection({
         </Card>
       )}
 
-      <div className="rounded-lg border border-border bg-card shadow-card overflow-hidden">
+      <div className="rounded-xl bg-card shadow-card overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>

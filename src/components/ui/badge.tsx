@@ -11,30 +11,27 @@ import { cn } from "@/lib/utils"
  */
 const badgeVariants = cva(
   [
-    "inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1",
-    "rounded-full border border-transparent px-2 py-1",
-    "text-[11px] font-medium leading-none whitespace-nowrap",
+    "inline-flex w-fit shrink-0 items-center justify-center gap-1",
+    "rounded-md border border-transparent px-2 py-0.5",
+    "text-[11px] font-medium leading-tight whitespace-nowrap",
     "[&>svg]:pointer-events-none [&>svg]:size-3",
   ].join(" "),
   {
     variants: {
+      // Faint tinted backgrounds (~8% opacity) with the saturated
+      // accent colour as text — so the pill reads as a label, not a
+      // loud sticker. Reversed/inactive uses grey-100 so it visibly
+      // recedes.
       variant: {
-        // Neutral grey — default
         default: "bg-muted text-foreground",
-        // Indigo tint — accent semantic
-        accent: "bg-accent-soft text-accent-foreground",
-        // Success — paid, active, ok
-        success: "bg-success-soft text-success-foreground",
-        // Warning — unpaid, pending, attention
-        warning: "bg-warning-soft text-warning-foreground",
-        // Destructive — reversed, errors, dangerous state
-        destructive: "bg-destructive-soft text-destructive",
-        // Outline — quiet labels
+        accent: "bg-[rgba(79,70,229,0.08)] text-[#4f46e5]",
+        success: "bg-[rgba(5,150,105,0.08)] text-[#059669]",
+        warning: "bg-[rgba(217,119,6,0.08)] text-[#d97706]",
+        destructive: "bg-[rgba(220,38,38,0.08)] text-[#dc2626]",
         outline: "border-border bg-card text-foreground",
-        // Subtle ghost — for inactive/disabled rows
-        ghost: "bg-transparent text-muted-foreground",
+        ghost: "bg-[#f3f4f6] text-[#6b7280]",
         // Legacy alias kept for back-compat with existing call sites
-        secondary: "bg-accent-soft text-accent-foreground",
+        secondary: "bg-[rgba(79,70,229,0.08)] text-[#4f46e5]",
       },
     },
     defaultVariants: {

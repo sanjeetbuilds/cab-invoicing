@@ -71,7 +71,7 @@ export default async function VehiclesPage() {
       {vehicles && vehicles.length > 0 && (
         <>
           {/* Desktop table */}
-          <div className="hidden md:block rounded-lg border border-border bg-card shadow-card overflow-hidden">
+          <div className="hidden md:block rounded-xl bg-card shadow-card overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -117,7 +117,7 @@ export default async function VehiclesPage() {
           </div>
 
           {/* Mobile cards */}
-          <div className="md:hidden flex flex-col gap-3">
+          <div className="md:hidden flex flex-col gap-4 md:gap-5">
             {vehicles.map((v) => (
               <Card key={v.id} size="sm">
                 <div className="flex items-start justify-between gap-3">

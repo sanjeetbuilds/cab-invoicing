@@ -138,7 +138,7 @@ export default async function ClientsPage({
       {clients && clients.length > 0 && (
         <>
           {/* Desktop table */}
-          <div className="hidden md:block rounded-lg border border-border bg-card shadow-card overflow-hidden">
+          <div className="hidden md:block rounded-xl bg-card shadow-card overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -187,7 +187,7 @@ export default async function ClientsPage({
           </div>
 
           {/* Mobile cards */}
-          <div className="md:hidden flex flex-col gap-3">
+          <div className="md:hidden flex flex-col gap-4 md:gap-5">
             {clients.map((c) => (
               <Card key={c.id} size="sm">
                 <div className="flex items-start justify-between gap-3">
