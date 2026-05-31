@@ -57,7 +57,11 @@ export function FitText({
       ref={ref}
       style={{
         fontSize: `${size}px`,
-        lineHeight: 1,
+        // 1.0 was clipping the ascender on the ₹ glyph (its top sits
+        // above the em-box in most mono fonts) once the parent set
+        // overflow-hidden. 1.15 gives every glyph room to breathe
+        // without throwing off the tile's vertical rhythm.
+        lineHeight: 1.15,
         display: "inline-block",
         whiteSpace: size > minPx ? "nowrap" : "normal",
       }}
