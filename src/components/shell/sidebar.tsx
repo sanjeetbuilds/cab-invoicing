@@ -71,16 +71,21 @@ export function Sidebar({
         })}
       </nav>
       <div className="border-t border-border px-3 py-3">
-        <Link
-          href="/sign-out"
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
-            "text-muted-foreground hover:bg-muted hover:text-foreground",
-          )}
-        >
-          <LogOut className="h-4 w-4 shrink-0 text-muted-foreground" />
-          Sign out
-        </Link>
+        {/* Real <form method="POST"> so Next.js doesn't prefetch the
+            target (Link prefetching to a GET sign-out handler would
+            silently log the user out on every layout mount). */}
+        <form action="/sign-out" method="POST">
+          <button
+            type="submit"
+            className={cn(
+              "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
+              "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            <LogOut className="h-4 w-4 shrink-0 text-muted-foreground" />
+            Sign out
+          </button>
+        </form>
       </div>
     </aside>
   );
