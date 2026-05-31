@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Upload } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import {
   Table,
@@ -26,6 +27,7 @@ const MODE_LABELS: Record<TripMode, string> = {
 };
 import { formatINR } from "@/lib/format";
 import { PageHeader } from "@/components/ui/page-header";
+import { buttonVariants } from "@/components/ui/button";
 import { AddRateCardButton } from "./add-rate-card-button";
 import { RateCardRowActions } from "./rate-card-row-actions";
 
@@ -68,6 +70,13 @@ export default async function RateCardsPage() {
         title="Rate cards"
         description="Per-client pricing. Updated when you accept a new quotation."
       >
+        <Link
+          href="/bulk-import?scope=rate_cards"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          <Upload className="h-4 w-4" />
+          Import
+        </Link>
         <AddRateCardButton clients={clientList} />
       </PageHeader>
 

@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Upload } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import {
   Table,
@@ -8,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import type { Vehicle } from "@/lib/supabase/types";
@@ -32,6 +35,13 @@ export default async function VehiclesPage() {
         title="Vehicles"
         description="Your fleet — own and attached cars."
       >
+        <Link
+          href="/bulk-import?scope=vehicles"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          <Upload className="h-4 w-4" />
+          Import
+        </Link>
         <AddVehicleButton />
       </PageHeader>
 
@@ -48,6 +58,12 @@ export default async function VehiclesPage() {
               logged against one vehicle.
             </p>
             <AddVehicleButton />
+            <Link
+              href="/bulk-import?scope=vehicles"
+              className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+            >
+              Or import many at once from Excel
+            </Link>
           </CardContent>
         </Card>
       )}

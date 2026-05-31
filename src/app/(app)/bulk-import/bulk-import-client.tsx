@@ -20,7 +20,11 @@ import {
   commitImportAction,
   previewImportAction,
 } from "./actions";
-import type { ParsedWorkbook, PreviewRow } from "@/lib/bulk-import/types";
+import type {
+  ImportEntity,
+  ParsedWorkbook,
+  PreviewRow,
+} from "@/lib/bulk-import/types";
 
 async function fileToBase64(file: File): Promise<string> {
   const buf = await file.arrayBuffer();
@@ -37,7 +41,12 @@ async function fileToBase64(file: File): Promise<string> {
 
 type Stage = "idle" | "preview" | "importing";
 
-export function BulkImportClient() {
+export function BulkImportClient({
+  initialScope = "all",
+}: {
+  initialScope?: ImportEntity;
+}) {
+  const scope = initialScope;
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileBase64, setFileBase64] = useState<string>("");
@@ -61,7 +70,7 @@ export function BulkImportClient() {
     try {
       const b64 = await fileToBase64(file);
       setFileBase64(b64);
-      const result = await previewImportAction({ fileBase64: b64, scope: "all" });
+      const result = await previewImportAction({ fileBase64: b64, scope });
       if (!result.ok) {
         toast.error(result.error);
         setPreview(null);
@@ -79,7 +88,7 @@ export function BulkImportClient() {
     if (!fileBase64) return;
     setStage("importing");
     setPending(true);
-    const result = await commitImportAction({ fileBase64, scope: "all" });
+    const result = await commitImportAction({ fileBase64, scope });
     setPending(false);
     if (!result.ok) {
       toast.error(result.error);
@@ -98,9 +107,17 @@ export function BulkImportClient() {
       rateCardsUpdated: result.rateCardsUpdated,
       skipped,
     });
-    toast.success(
-      `Imported ${result.clients} clients, ${result.vehicles} vehicles, ${result.rateCards} rate cards.`,
-    );
+    const parts: string[] = [];
+    if (scope === "all" || scope === "clients") {
+      parts.push(`${result.clients} clients`);
+    }
+    if (scope === "all" || scope === "vehicles") {
+      parts.push(`${result.vehicles} vehicles`);
+    }
+    if (scope === "all" || scope === "rate_cards") {
+      parts.push(`${result.rateCards} rate cards`);
+    }
+    toast.success(`Imported ${parts.join(", ")}.`);
     router.refresh();
   }
 
@@ -295,34 +312,40 @@ export function BulkImportClient() {
               <p className="font-medium">Import complete</p>
             </div>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>
-                <span className="font-medium text-foreground">
-                  {report.clients}
-                </span>{" "}
-                clients added
-              </li>
-              <li>
-                <span className="font-medium text-foreground">
-                  {report.vehicles}
-                </span>{" "}
-                vehicles added
-              </li>
-              <li>
-                <span className="font-medium text-foreground">
-                  {report.rateCards}
-                </span>{" "}
-                rate cards added
-                {report.rateCardsUpdated > 0 && (
-                  <>
-                    {" "}
-                    ·{" "}
-                    <span className="font-medium text-foreground">
-                      {report.rateCardsUpdated}
-                    </span>{" "}
-                    updated
-                  </>
-                )}
-              </li>
+              {(scope === "all" || scope === "clients") && (
+                <li>
+                  <span className="font-medium text-foreground">
+                    {report.clients}
+                  </span>{" "}
+                  clients added
+                </li>
+              )}
+              {(scope === "all" || scope === "vehicles") && (
+                <li>
+                  <span className="font-medium text-foreground">
+                    {report.vehicles}
+                  </span>{" "}
+                  vehicles added
+                </li>
+              )}
+              {(scope === "all" || scope === "rate_cards") && (
+                <li>
+                  <span className="font-medium text-foreground">
+                    {report.rateCards}
+                  </span>{" "}
+                  rate cards added
+                  {report.rateCardsUpdated > 0 && (
+                    <>
+                      {" "}
+                      ·{" "}
+                      <span className="font-medium text-foreground">
+                        {report.rateCardsUpdated}
+                      </span>{" "}
+                      updated
+                    </>
+                  )}
+                </li>
+              )}
               {report.skipped > 0 && (
                 <li>
                   <span className="font-medium text-foreground">
