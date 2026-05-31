@@ -21,6 +21,7 @@ import { buttonVariants } from "@/components/ui/button";
 import type { Invoice } from "@/lib/supabase/types";
 import { formatINR } from "@/lib/format";
 import { PageHeader } from "@/components/ui/page-header";
+import { FitText } from "@/components/ui/fit-text";
 import { cn } from "@/lib/utils";
 import { SeedBanner } from "../seed/seed-banner";
 
@@ -231,9 +232,9 @@ function StatCard({
   hint: string;
   href?: string;
 }) {
-  // Hierarchy is the point — the number dominates, label and hint
-  // recede. 12px between label and number, 8px between number and
-  // hint, all four tiles share identical layout (no per-tile colour).
+  // FitText keeps a long ₹X,XX,XXX.00 amount on one line — it
+  // measures the rendered width on mount and shrinks the font from
+  // 24px down to 16px before letting the number wrap.
   const body = (
     <Card
       className={cn(
@@ -244,10 +245,15 @@ function StatCard({
       <p className="text-[11px] uppercase tracking-[0.05em] text-muted-foreground font-medium">
         {label}
       </p>
-      <p className="mt-3 font-mono text-[28px] sm:text-4xl font-bold tabular-nums leading-none text-foreground">
-        {value}
+      <p className="mt-3 overflow-hidden">
+        <FitText
+          text={value}
+          maxPx={24}
+          minPx={16}
+          className="font-mono font-semibold tabular-nums text-foreground"
+        />
       </p>
-      <p className="mt-2 text-[13px] text-muted-foreground">{hint}</p>
+      <p className="mt-2 text-xs text-muted-foreground">{hint}</p>
     </Card>
   );
   return href ? (
