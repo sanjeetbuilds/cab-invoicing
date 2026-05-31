@@ -171,14 +171,13 @@ export default async function DashboardPage() {
         <CardContent>
           {recent.length === 0 ? (
             <p className="text-sm text-muted-foreground py-3">
-              No invoices yet —{" "}
+              No invoices yet.{" "}
               <Link
                 href="/invoices/build"
                 className="font-medium text-primary hover:text-primary-hover"
               >
-                build your first invoice
+                Make your first invoice.
               </Link>
-              .
             </p>
           ) : (
             <Table>

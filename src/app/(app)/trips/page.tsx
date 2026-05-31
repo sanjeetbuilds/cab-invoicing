@@ -176,10 +176,11 @@ export default async function TripsPage({
       {noPrereqs && (
         <Card>
           <CardContent className="py-6 text-sm text-muted-foreground">
-            Add at least one{" "}
-            <Link href="/clients" className="underline">client</Link> and one{" "}
-            <Link href="/vehicles" className="underline">vehicle</Link> before
-            logging trips.
+            First add one{" "}
+            <Link href="/clients" className="font-medium text-primary underline-offset-2 hover:underline">client</Link>{" "}
+            and one{" "}
+            <Link href="/vehicles" className="font-medium text-primary underline-offset-2 hover:underline">vehicle</Link>.
+            Then you can add trips.
           </CardContent>
         </Card>
       )}
@@ -214,12 +215,12 @@ export default async function TripsPage({
         <Card>
           <CardContent className="py-12 px-4 text-center flex flex-col items-center gap-3">
             <h2 className="text-base font-semibold">
-              {status === "uninvoiced" ? "All caught up" : "No trips yet"}
+              {status === "uninvoiced" ? "All caught up." : "No trips yet."}
             </h2>
             <p className="text-sm text-muted-foreground max-w-sm">
               {status === "uninvoiced"
-                ? "No uninvoiced trips. Log a duty to bill it on the next invoice."
-                : "Log a duty. Each trip becomes a line on a monthly invoice."}
+                ? "No trips waiting to be billed."
+                : "Add your first trip to put it on the next invoice."}
             </p>
             {!noPrereqs && <AddTripButton disabled={false} />}
           </CardContent>

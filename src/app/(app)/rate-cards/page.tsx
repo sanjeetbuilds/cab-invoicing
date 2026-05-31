@@ -83,11 +83,14 @@ export default async function RateCardsPage() {
       {clientList.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            Add{" "}
-            <Link href="/clients" className="underline">
-              clients
+            Add a{" "}
+            <Link
+              href="/clients"
+              className="font-medium text-primary underline-offset-2 hover:underline"
+            >
+              client
             </Link>{" "}
-            first — rate cards live under a client.
+            first. Each price list belongs to a client.
           </CardContent>
         </Card>
       )}

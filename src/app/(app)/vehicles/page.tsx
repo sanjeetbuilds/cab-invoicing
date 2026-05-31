@@ -52,18 +52,21 @@ export default async function VehiclesPage() {
       {vehicles && vehicles.length === 0 && (
         <Card>
           <CardContent className="py-12 px-4 text-center flex flex-col items-center gap-3">
-            <h2 className="text-base font-semibold">No vehicles yet</h2>
+            <h2 className="text-base font-semibold">No vehicles yet.</h2>
             <p className="text-sm text-muted-foreground max-w-sm">
-              Add your fleet — own cars and attached vehicles. Each trip is
-              logged against one vehicle.
+              Add the cars you use for trips. Every trip is linked to one
+              vehicle.
             </p>
-            <AddVehicleButton />
-            <Link
-              href="/bulk-import?scope=vehicles"
-              className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-            >
-              Or import many at once from Excel
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+              <AddVehicleButton />
+              <Link
+                href="/bulk-import?scope=vehicles"
+                className={buttonVariants({ variant: "outline" })}
+              >
+                <Upload className="h-4 w-4" />
+                Import from Excel
+              </Link>
+            </div>
           </CardContent>
         </Card>
       )}

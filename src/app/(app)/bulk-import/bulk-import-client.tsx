@@ -225,10 +225,10 @@ function TemplateCard() {
       <CardContent className="flex flex-col gap-3">
         <div>
           <p className="text-sm font-semibold text-foreground">
-            Step 1 · Download the template
+            Step 1. Download the template
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            One Excel workbook with three sheets — Clients, Vehicles, and Rate
+            One Excel workbook with three sheets: Clients, Vehicles, and Rate
             Cards. Fill in your data, save, then upload below.
           </p>
         </div>
@@ -277,11 +277,12 @@ function UploadCard({
       <CardContent className="flex flex-col gap-4">
         <div>
           <p className="text-sm font-semibold text-foreground">
-            Step 2 · Upload your filled template
+            Step 2. Upload your filled template
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            We&apos;ll preview every row before anything saves. Auto-fixes (state
-            casing, vehicle-number spacing) get flagged per row.
+            You will see every row before anything is saved. We fix small
+            things like state spelling and vehicle number spacing, and we
+            show you each fix.
           </p>
         </div>
 
@@ -793,28 +794,36 @@ function SuccessCard({
         <div>
           <h2 className="text-xl font-bold text-foreground flex items-center justify-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            All done!
+            Done. Your data is added.
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Your data is in. Verify it looks right on the lists below.
+            Please check the lists below to confirm.
           </p>
         </div>
 
         <ul className="text-sm text-foreground space-y-1">
           <li>
-            <span className="font-bold tabular-nums">{report.clients}</span>{" "}
-            client{report.clients === 1 ? "" : "s"} added
+            <ImportCount
+              n={report.clients}
+              singular="new client"
+              plural="new clients"
+              emptyFallback="0 new clients, all already existed"
+            />
           </li>
           <li>
-            <span className="font-bold tabular-nums">{report.vehicles}</span>{" "}
-            vehicle{report.vehicles === 1 ? "" : "s"} added
+            <ImportCount
+              n={report.vehicles}
+              singular="new vehicle"
+              plural="new vehicles"
+              emptyFallback="0 new vehicles, all already existed"
+            />
           </li>
           <li>
             <span className="font-bold tabular-nums">{report.rateCards}</span>{" "}
-            rate card{report.rateCards === 1 ? "" : "s"} added
+            {report.rateCards === 1 ? "rate" : "rates"} added
             {report.rateCardsUpdated > 0 && (
               <>
-                {" · "}
+                {", "}
                 <span className="font-bold tabular-nums">
                   {report.rateCardsUpdated}
                 </span>{" "}
@@ -825,15 +834,19 @@ function SuccessCard({
           {report.skipped > 0 && (
             <li className="text-warning-foreground">
               <span className="font-bold tabular-nums">{report.skipped}</span>{" "}
-              row{report.skipped === 1 ? "" : "s"} skipped — see issues above.
+              row{report.skipped === 1 ? "" : "s"} skipped. See issues above.
             </li>
           )}
         </ul>
 
+        <p className="text-sm text-foreground/80 max-w-md pt-2">
+          Next, add a trip, then make your first invoice.
+        </p>
+
         <div className="flex flex-col sm:flex-row gap-2 pt-2 w-full sm:w-auto">
-          <Link href="/clients" className="flex-1">
+          <Link href="/trips/new" className="flex-1">
             <Button type="button" className="w-full">
-              View clients
+              Add a trip
             </Button>
           </Link>
           <Link href="/rate-cards" className="flex-1">
@@ -843,7 +856,7 @@ function SuccessCard({
           </Link>
           <Link href="/dashboard" className="flex-1">
             <Button type="button" variant="ghost" className="w-full">
-              Back to dashboard
+              Go to dashboard
             </Button>
           </Link>
         </div>
@@ -856,6 +869,29 @@ function SuccessCard({
         </button>
       </CardContent>
     </Card>
+  );
+}
+
+/** "0 new clients, all already existed" reads better than a bare "0
+ *  clients added" because a zero count doesn't mean the import failed,
+ *  it usually means we matched existing records. */
+function ImportCount({
+  n,
+  singular,
+  plural,
+  emptyFallback,
+}: {
+  n: number;
+  singular: string;
+  plural: string;
+  emptyFallback: string;
+}) {
+  if (n === 0) return <>{emptyFallback}</>;
+  return (
+    <>
+      <span className="font-bold tabular-nums">{n}</span>{" "}
+      {n === 1 ? singular : plural} added
+    </>
   );
 }
 
