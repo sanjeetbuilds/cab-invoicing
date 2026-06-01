@@ -67,10 +67,9 @@ export function SamplePreview({
       </div>
 
       {/* Floating guide card. Sits above the rows; clearly its own
-          layer thanks to a hairline border, the heavier
-          shadow-card-hover, and a 3 px indigo left-edge stripe with
-          a faint indigo wash that fades to white across the first
-          40% of the card. */}
+          layer thanks to the white surface, a hairline border, and
+          the heavier shadow-card-hover. No coloured edge accent,
+          the tinted icon below carries the only colour. */}
       <div
         ref={cardRef}
         tabIndex={-1}
@@ -81,8 +80,6 @@ export function SamplePreview({
           "rounded-xl bg-card border border-border shadow-card-hover",
           "p-5 flex flex-col gap-3",
           "outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-          "border-l-[3px] border-l-[#4f46e5]",
-          "bg-[linear-gradient(90deg,rgba(79,70,229,0.05)_0%,rgba(255,255,255,0)_40%)]",
         )}
       >
         <div className="flex items-start gap-3">
