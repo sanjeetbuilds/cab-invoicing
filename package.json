@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "check-rls": "node scripts/check-rls.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

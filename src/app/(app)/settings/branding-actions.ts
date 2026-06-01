@@ -101,6 +101,19 @@ export async function uploadLogoAction(
     return { ok: false, error: "Logo file must be under 2 MB." };
   }
 
+  // Magic-byte check: don't trust the extension alone. PNGs start
+  // with 89 50 4E 47, JPEGs start with FF D8 FF. A renamed file that
+  // claims to be PNG but isn't would slip through the ext check.
+  const isPng =
+    buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+  const isJpg = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+  if (!isPng && !isJpg) {
+    return {
+      ok: false,
+      error: "That file does not look like a PNG or JPG image.",
+    };
+  }
+
   const ctx = await requireWriter();
   if (!ctx.ok) return ctx;
   if (ctx.role !== "owner" && ctx.role !== "admin") {

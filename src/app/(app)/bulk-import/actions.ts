@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireWriter } from "@/lib/auth";
 import { parseWorkbookBuffer } from "@/lib/bulk-import/parser";
+import { rateLimit } from "@/lib/rate-limit";
 import type {
   ParsedWorkbook,
   ImportEntity,
@@ -12,6 +13,11 @@ import type {
 function base64ToBuffer(b64: string): Buffer {
   return Buffer.from(b64, "base64");
 }
+
+/** Server-side ceiling on uploaded files. The bulk-import client
+ *  already enforces this in the browser but we re-check here so a
+ *  forged client can't bypass it. */
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
 
 const SCOPE_MAP: Record<ImportEntity, "clients" | "vehicles" | "rate_cards" | "all"> = {
   clients: "clients",
@@ -41,6 +47,23 @@ export async function previewImportAction(args: {
 }): Promise<PreviewResult | PreviewError> {
   const ctx = await requireWriter();
   if (!ctx.ok) return ctx;
+
+  const rate = await rateLimit({
+    action: "bulk-import-preview",
+    limit: 10,
+    windowMs: 60_000,
+  });
+  if (!rate.ok) return { ok: false, error: rate.message };
+
+  // Re-validate file size on the server. Base64 inflates bytes by
+  // about 4/3, so cap the decoded length.
+  const decodedSize = Math.floor((args.fileBase64.length * 3) / 4);
+  if (decodedSize > MAX_UPLOAD_BYTES) {
+    return {
+      ok: false,
+      error: "That file is too large. Please keep it under 10 MB.",
+    };
+  }
 
   let parsed: ParsedWorkbook;
   try {
@@ -206,6 +229,32 @@ export async function commitImportAction(args: {
       error: ctx.error,
       step: "parse",
       technical: ctx.error,
+      partial: { clients: 0, vehicles: 0, rateCards: 0, rateCardsUpdated: 0 },
+    };
+  }
+
+  const rate = await rateLimit({
+    action: "bulk-import-commit",
+    limit: 6,
+    windowMs: 60_000,
+  });
+  if (!rate.ok) {
+    return {
+      ok: false,
+      error: rate.message,
+      step: "parse",
+      technical: rate.message,
+      partial: { clients: 0, vehicles: 0, rateCards: 0, rateCardsUpdated: 0 },
+    };
+  }
+
+  const decodedSize = Math.floor((args.fileBase64.length * 3) / 4);
+  if (decodedSize > MAX_UPLOAD_BYTES) {
+    return {
+      ok: false,
+      error: "That file is too large. Please keep it under 10 MB.",
+      step: "parse",
+      technical: `Decoded size ${decodedSize} > ${MAX_UPLOAD_BYTES}`,
       partial: { clients: 0, vehicles: 0, rateCards: 0, rateCardsUpdated: 0 },
     };
   }

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { claimPendingInvites } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 
 const PASSWORD_MIN = 8;
 
@@ -63,6 +64,13 @@ export async function signInAction(formData: FormData): Promise<AuthResult> {
     return { ok: false, error: parsed.error.issues[0].message };
   }
 
+  const rate = await rateLimit({
+    action: "sign-in",
+    limit: 10,
+    windowMs: 60_000,
+  });
+  if (!rate.ok) return { ok: false, error: rate.message };
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({
     email: parsed.data.email,
@@ -100,6 +108,13 @@ export async function signUpAction(formData: FormData): Promise<AuthResult> {
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0].message };
   }
+
+  const rate = await rateLimit({
+    action: "sign-up",
+    limit: 5,
+    windowMs: 60_000,
+  });
+  if (!rate.ok) return { ok: false, error: rate.message };
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
@@ -141,6 +156,15 @@ export async function sendPasswordResetAction(
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0].message };
   }
+  // Tighter limit on password-reset emails so the form can't be used
+  // to spam an inbox.
+  const rate = await rateLimit({
+    action: "password-reset",
+    limit: 3,
+    windowMs: 60_000,
+  });
+  if (!rate.ok) return { ok: false, error: rate.message };
+
   const supabase = await createClient();
   const origin = await originFromHeaders();
   const callbackUrl = new URL("/auth/callback", origin);
@@ -165,6 +189,13 @@ export async function resetPasswordAction(
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0].message };
   }
+  const rate = await rateLimit({
+    action: "password-reset-apply",
+    limit: 5,
+    windowMs: 60_000,
+  });
+  if (!rate.ok) return { ok: false, error: rate.message };
+
   const supabase = await createClient();
   const {
     data: { user },
