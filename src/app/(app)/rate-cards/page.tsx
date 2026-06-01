@@ -99,7 +99,6 @@ export default async function RateCardsPage() {
 
       {clientList.length > 0 && cardList.length === 0 && (
         <SamplePreview
-          pageKey="rate-cards"
           icon={<IndianRupee className="h-4 w-4" />}
           title="This is where your rates live."
           body="Set Local and Outstation rates per client. Each invoice uses the right rate automatically."

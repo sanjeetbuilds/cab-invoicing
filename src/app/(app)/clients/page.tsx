@@ -121,7 +121,6 @@ export default async function ClientsPage({
 
       {clients && clients.length === 0 && (
         <SamplePreview
-          pageKey="clients"
           icon={<Users className="h-4 w-4" />}
           title="This is where your clients live."
           body="Add the companies you bill. State drives intra-state and inter-state GST."

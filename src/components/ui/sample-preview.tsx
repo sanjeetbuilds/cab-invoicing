@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, Upload, X } from "lucide-react";
+import { ArrowRight, Upload } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -11,22 +11,22 @@ import { cn } from "@/lib/utils";
  * Trips, Invoices, and Quotations when the page has zero real rows.
  *
  * The page passes its own faded "sample" rows as children rendered in
- * the real list layout. SamplePreview overlays a centered explainer
- * card with a single primary action plus optional Import-from-Excel
- * secondary and a "Step N of 6 in setup" hint.
+ * the real list layout. SamplePreview lays them under a soft
+ * downward gradient that fades to nothing so the lower rows can't be
+ * mistaken for real data, and overlays a single guide card on top
+ * with the primary action.
  *
- * Rules baked in:
- * - Sample rows are aria-hidden and pointer-events-none, so they read
- *   as decoration and can't be tabbed into.
- * - A soft gradient fades the bottom of the sample area so it clearly
- *   isn't real data.
- * - The explainer card itself is role=status, the focus target, and
- *   the only interactive surface.
- * - Dismiss is persisted per pageKey in localStorage; once dismissed
- *   the preview never auto-returns on this browser.
+ * Driven entirely by data, not a dismiss flag: the page renders this
+ * whenever it has zero real rows, and stops the moment a real row
+ * exists. No stored "dismissed" state, no X button. If a user opens
+ * the add form and leaves without saving, they come back to the
+ * same guide.
+ *
+ * Sample rows are aria-hidden + pointer-events-none and are never
+ * counted or saved, the page already gated this branch on "zero real
+ * rows" before rendering.
  */
 export function SamplePreview({
-  pageKey,
   icon,
   title,
   body,
@@ -35,14 +35,6 @@ export function SamplePreview({
   setupHint,
   children,
 }: {
-  /** Unique key for the dismissal flag in localStorage. */
-  pageKey:
-    | "clients"
-    | "vehicles"
-    | "rate-cards"
-    | "trips"
-    | "invoices"
-    | "quotations";
   // Pre-rendered icon node (e.g. <Users className="h-4 w-4" />) so the
   // server page can pass it across the RSC boundary into this client
   // component without trying to serialize a function reference.
@@ -54,61 +46,47 @@ export function SamplePreview({
   setupHint?: { step: number; total: number };
   children: ReactNode;
 }) {
-  const storageKey = `easybills_sample_dismissed_${pageKey}_v1`;
-  const [dismissed, setDismissed] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem(storageKey)) setDismissed(true);
-    } catch {
-      // localStorage unavailable, just leave dismissed=false.
-    }
-  }, [storageKey]);
 
   // Move keyboard focus to the explainer card on mount so screen
   // readers and tab-users land on the actionable content, not the
   // decorative sample rows behind it.
   useEffect(() => {
-    if (!dismissed) cardRef.current?.focus();
-  }, [dismissed]);
-
-  function dismiss() {
-    try {
-      window.localStorage.setItem(storageKey, "1");
-    } catch {
-      // ignore
-    }
-    setDismissed(true);
-  }
-
-  if (dismissed) return null;
+    cardRef.current?.focus();
+  }, []);
 
   return (
     <div className="relative">
-      {/* Faded sample rows. Hidden from a11y, never interactive. */}
+      {/* Faded sample rows. Hidden from a11y, never interactive.
+          Min-height pushes the gradient down toward the viewport
+          bottom so the page never reads as "blank" below the guide. */}
       <div
         aria-hidden
-        className="pointer-events-none select-none opacity-50"
+        className="pointer-events-none select-none opacity-60 min-h-[calc(100dvh-14rem)]"
         style={{
-          // Soft bottom fade so the sample clearly isn't real data
-          // and the eye is drawn back up toward the explainer card.
+          // Aggressive fade: full at the top, half at 40%, gone by
+          // 90%. Combined with opacity-60 above, the bottom half is
+          // clearly sample-not-real.
           maskImage:
-            "linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%)",
+            "linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 30%, rgba(0,0,0,0.4) 65%, rgba(0,0,0,0) 95%)",
           WebkitMaskImage:
-            "linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%)",
+            "linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 30%, rgba(0,0,0,0.4) 65%, rgba(0,0,0,0) 95%)",
         }}
       >
         {children}
       </div>
 
-      {/* Explainer card, the only interactive surface. */}
+      {/* Guide card. Positioned absolute inside this wrapper, so it
+          sits BELOW the page's PageHeader (which renders before this
+          wrapper). The page's primary action buttons (Log trip,
+          Bulk add, Build invoice, etc.) stay fully clickable above
+          this card. */}
       <div
         ref={cardRef}
         tabIndex={-1}
         role="status"
         className={cn(
-          "absolute inset-x-0 top-6 mx-auto",
+          "absolute inset-x-0 top-4 mx-auto",
           "w-[min(420px,calc(100%-32px))]",
           "rounded-xl bg-card shadow-card-hover p-5",
           "flex flex-col gap-3",
@@ -128,14 +106,6 @@ export function SamplePreview({
             <h2 className="text-sm font-semibold text-foreground">{title}</h2>
             <p className="text-sm text-muted-foreground mt-1">{body}</p>
           </div>
-          <button
-            type="button"
-            aria-label="Dismiss"
-            onClick={dismiss}
-            className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">

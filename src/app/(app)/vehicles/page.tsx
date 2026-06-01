@@ -54,7 +54,6 @@ export default async function VehiclesPage() {
 
       {vehicles && vehicles.length === 0 && (
         <SamplePreview
-          pageKey="vehicles"
           icon={<Truck className="h-4 w-4" />}
           title="This is where your fleet lives."
           body="Add the cars you use for trips. Every trip is linked to one vehicle."
