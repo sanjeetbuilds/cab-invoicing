@@ -29,7 +29,7 @@ export default async function NewQuotationPage() {
         </p>
         <PageHeader
           title="New quotation"
-          description="Add rate lines per (car × mode). On accept, these become the client's rate cards."
+          description="Add rate lines per car and mode. When the client accepts, these become their rate cards."
         />
       </div>
       <QuotationForm clients={clients ?? []} />

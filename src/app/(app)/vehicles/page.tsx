@@ -57,7 +57,7 @@ export default async function VehiclesPage() {
           icon={<Truck className="h-4 w-4" />}
           title="This is where your fleet lives."
           body="Add the cars you use for trips. Every trip is linked to one vehicle."
-          primary={{ label: "Add your first vehicle", href: "/vehicles/new" }}
+          primary={{ label: "Add vehicle", href: "/vehicles/new" }}
           importHref="/bulk-import?scope=vehicles"
           setupHint={{ step: 3, total: 6 }}
         >

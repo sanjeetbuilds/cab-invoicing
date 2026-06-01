@@ -50,7 +50,7 @@ export default async function QuotationsPage() {
           icon={<FileSignature className="h-4 w-4" />}
           title="This is where your quotations live."
           body="Send rates to a client. Accepting one creates or updates their rate cards."
-          primary={{ label: "Make your first quotation", href: "/quotations/new" }}
+          primary={{ label: "New quotation", href: "/quotations/new" }}
         >
           <QuotationsSampleRows />
         </SamplePreview>

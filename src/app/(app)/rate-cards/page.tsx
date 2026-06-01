@@ -102,7 +102,7 @@ export default async function RateCardsPage() {
           icon={<IndianRupee className="h-4 w-4" />}
           title="This is where your rates live."
           body="Set Local and Outstation rates per client. Each invoice uses the right rate automatically."
-          primary={{ label: "Add your first rate card", href: "/rate-cards/new" }}
+          primary={{ label: "Add rate card", href: "/rate-cards/new" }}
           importHref="/bulk-import?scope=rate_cards"
           setupHint={{ step: 4, total: 6 }}
         >

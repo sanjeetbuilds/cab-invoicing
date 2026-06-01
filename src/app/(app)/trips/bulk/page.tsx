@@ -68,7 +68,7 @@ export default async function BulkAddPage() {
           Bulk add trips
         </h1>
         <p className="text-sm text-muted-foreground">
-          Enter many duties in one go. Your work auto-saves while you type.
+          Enter many trips in one go. Your work auto-saves while you type.
           Complete rows save as trips; incomplete rows stay in the draft.
         </p>
       </div>

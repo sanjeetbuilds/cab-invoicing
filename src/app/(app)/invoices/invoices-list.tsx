@@ -361,7 +361,7 @@ export function InvoicesList({
                   <TableHead>Client</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Period</TableHead>
-                  <TableHead className="text-right">Duties</TableHead>
+                  <TableHead className="text-right">Trips</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
@@ -699,7 +699,7 @@ function MobileInvoiceCard({
                   {fmtDate(invoice.period_from)}–{fmtDate(invoice.period_to)}
                 </>
               ) : null}
-              {duties > 0 ? ` · Duties: ${duties}` : null}
+              {duties > 0 ? ` · ${duties} trip${duties === 1 ? "" : "s"}` : null}
             </p>
           </button>
 

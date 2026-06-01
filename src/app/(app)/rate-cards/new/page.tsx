@@ -65,7 +65,7 @@ export default async function NewRateCardPage({
         </p>
         <PageHeader
           title="Add rate card"
-          description="One row per (client × car type × mode). Transfer and Package modes also key on plan name."
+          description="One row per client, car type, and mode. Transfer and Package modes also need a plan name."
         />
       </div>
       <RateCardForm

@@ -75,7 +75,7 @@ export default async function InvoicesPage() {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Invoices"
-        description="Issued invoices. Numbers are atomic, never reused."
+        description="Invoice numbers are never repeated."
       >
         <Link
           href="/invoices/quick"
@@ -99,7 +99,7 @@ export default async function InvoicesPage() {
           icon={<Receipt className="h-4 w-4" />}
           title="This is where your invoices live."
           body="Pick a client's unbilled trips and turn them into one bill."
-          primary={{ label: "Make your first invoice", href: "/invoices/build" }}
+          primary={{ label: "Build invoice", href: "/invoices/build" }}
           setupHint={{ step: 6, total: 6 }}
         >
           <InvoicesSampleRows />

@@ -87,7 +87,7 @@ export default async function NewTripPage() {
         </p>
         <PageHeader
           title="Log trip"
-          description="One trip per duty. The amount preview uses the active rate card for this client + car + mode."
+          description="One row per trip. The amount preview uses the saved rate card for this client, car, and mode."
         />
       </div>
       <TripForm

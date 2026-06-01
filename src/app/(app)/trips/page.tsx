@@ -161,7 +161,7 @@ export default async function TripsPage({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Trips"
-        description="Daily duties. Each trip becomes a line on a monthly invoice."
+        description="Your daily trips. Each trip becomes a line on a monthly bill."
       >
         <Link
           href="/trips/bulk"
@@ -231,10 +231,10 @@ export default async function TripsPage({
           title="This is where your trips live."
           body={
             status === "uninvoiced"
-              ? "Log each duty here. Trips become lines on the next invoice."
-              : "Log each duty here. Filtered view, nothing matches yet."
+              ? "Add each trip here. Trips become lines on the next bill."
+              : "Add each trip here. Filtered view, nothing matches yet."
           }
-          primary={{ label: "Add your first trip", href: "/trips/new" }}
+          primary={{ label: "Log trip", href: "/trips/new" }}
           setupHint={{ step: 5, total: 6 }}
         >
           <TripsSampleRows />

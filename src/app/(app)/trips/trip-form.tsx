@@ -376,7 +376,7 @@ export function TripForm({
             <Label htmlFor="end_date">End date</Label>
             <Input id="end_date" type="date" {...register("end_date")} />
             <p className="text-xs text-muted-foreground">
-              Optional, only set for multi-day duties.
+              Optional, only set for multi-day trips.
             </p>
             {errors.end_date && (
               <p className="text-sm text-destructive">{errors.end_date.message}</p>
