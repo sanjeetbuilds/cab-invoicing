@@ -20,6 +20,40 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Route smoke test
+
+`npm run smoke` hits every main app route over HTTP and fails if any of
+them returns a 5xx. The goal is to catch request-time errors (RSC
+serialization, server-component throws) that `npm run build` does not,
+since dynamic routes only fully render at request time.
+
+Run against a local dev server:
+
+```bash
+npm run dev          # in one terminal
+npm run smoke        # in another, defaults to http://localhost:3000
+```
+
+Run against a deployment:
+
+```bash
+npm run smoke -- https://your-easybills-deployment.example.app
+```
+
+By default the (app) routes redirect to `/sign-in` for unauthenticated
+requests, the smoke check still passes them as OK. To force each route
+to actually render its server component, copy your signed-in session
+cookie (DevTools, Application, Cookies, look for `sb-...-auth-token`)
+and run with `SMOKE_COOKIE` set:
+
+```powershell
+$env:SMOKE_COOKIE = 'sb-xxxx-auth-token=...; sb-xxxx-auth-token-code-verifier=...'
+npm run smoke -- https://your-easybills-deployment.example.app
+```
+
+Exit code is non-zero on any failure, so the script is safe to gate a
+deploy or a CI step on.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
