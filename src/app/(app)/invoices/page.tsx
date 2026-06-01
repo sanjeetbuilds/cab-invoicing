@@ -11,9 +11,11 @@ import { InvoicesList } from "./invoices-list";
 
 export const metadata = { title: "Invoices" };
 
-// Always fetch fresh, the listing must reflect every invoice the
-// moment it's issued, including the one the user just navigated from.
-export const dynamic = "force-dynamic";
+// Freshness is guaranteed by revalidatePath("/invoices") in every
+// invoice / quick-invoice / quotation action. The route is already
+// dynamic by inference because the auth wrapper reads cookies, so
+// an explicit force-dynamic adds nothing and opts out of future
+// partial-prerendering wins.
 
 export default async function InvoicesPage() {
   const { supabase, membership } = await requireMembership();

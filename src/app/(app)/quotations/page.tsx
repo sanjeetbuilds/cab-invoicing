@@ -11,8 +11,6 @@ import { QuotationsList } from "./quotations-list";
 
 export const metadata = { title: "Quotations" };
 
-export const dynamic = "force-dynamic";
-
 export default async function QuotationsPage() {
   const { supabase, membership } = await requireMembership();
 

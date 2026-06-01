@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -9,15 +10,20 @@ const WRITER_ROLES: Role[] = ["owner", "admin", "staff"];
 /**
  * Returns the current authenticated user, or redirects to /sign-in if none.
  * Use this at the top of any protected Server Component or Action.
+ *
+ * Wrapped in React's request-scoped cache so the layout's call and
+ * every page's call in the same render share one network round
+ * trip to Supabase Auth, instead of revalidating the session 3+
+ * times per navigation.
  */
-export async function requireUser() {
+export const requireUser = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
   return { supabase, user };
-}
+});
 
 /**
  * If the signed-in user has any pending invite (a memberships row with
@@ -52,8 +58,11 @@ export async function claimPendingInvites(
  * Returns the user and their "current" membership (currently the first one).
  * Redirects to /onboarding if the user has no memberships *and* has no
  * pending invites to claim.
+ *
+ * Cached per request so the layout and every page share one
+ * memberships lookup, regardless of how many components call this.
  */
-export async function requireMembership() {
+export const requireMembership = cache(async () => {
   const { supabase, user } = await requireUser();
 
   // First pass, do they already have a membership?
@@ -83,7 +92,7 @@ export async function requireMembership() {
   if (!data) redirect("/onboarding");
 
   return { supabase, user, membership: data };
-}
+});
 
 /**
  * For server actions that perform writes. Verifies the user is signed in,

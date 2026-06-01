@@ -4,8 +4,6 @@ import { PdfViewerShell } from "@/components/ui/pdf-viewer-shell";
 import { invoiceFilename } from "@/lib/filename";
 import type { Company, Invoice } from "@/lib/supabase/types";
 
-export const dynamic = "force-dynamic";
-
 export default async function InvoiceViewerPage({
   params,
 }: {

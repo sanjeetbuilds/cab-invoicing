@@ -30,8 +30,6 @@ export const metadata = {
   title: "Dashboard",
 };
 
-export const dynamic = "force-dynamic";
-
 function fmtDate(iso: string) {
   const [y, m, d] = iso.split("-");
   if (!y || !m || !d) return iso;

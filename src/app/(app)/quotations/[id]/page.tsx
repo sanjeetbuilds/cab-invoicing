@@ -4,8 +4,6 @@ import { PdfViewerShell } from "@/components/ui/pdf-viewer-shell";
 import { quotationFilename } from "@/lib/filename";
 import type { Client, Quotation } from "@/lib/supabase/types";
 
-export const dynamic = "force-dynamic";
-
 export default async function QuotationViewerPage({
   params,
 }: {
