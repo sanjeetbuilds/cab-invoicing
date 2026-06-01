@@ -228,7 +228,7 @@ export default async function TripsPage({
       {!tripsError && tripList.length === 0 && !noPrereqs && (
         <SamplePreview
           pageKey="trips"
-          icon={Car}
+          icon={<Car className="h-4 w-4" />}
           title="This is where your trips live."
           body={
             status === "uninvoiced"

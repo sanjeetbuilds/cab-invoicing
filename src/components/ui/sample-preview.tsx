@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, Upload, X, type LucideIcon } from "lucide-react";
+import { ArrowRight, Upload, X } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
  */
 export function SamplePreview({
   pageKey,
-  icon: Icon,
+  icon,
   title,
   body,
   primary,
@@ -43,7 +43,10 @@ export function SamplePreview({
     | "trips"
     | "invoices"
     | "quotations";
-  icon?: LucideIcon;
+  // Pre-rendered icon node (e.g. <Users className="h-4 w-4" />) so the
+  // server page can pass it across the RSC boundary into this client
+  // component without trying to serialize a function reference.
+  icon?: ReactNode;
   title: string;
   body: string;
   primary: { label: string; href: string };
@@ -113,12 +116,12 @@ export function SamplePreview({
         )}
       >
         <div className="flex items-start gap-3">
-          {Icon && (
+          {icon && (
             <span
               aria-hidden
               className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(79,70,229,0.10)] text-[#4f46e5]"
             >
-              <Icon className="h-4 w-4" />
+              {icon}
             </span>
           )}
           <div className="flex-1 min-w-0">

@@ -97,7 +97,7 @@ export default async function InvoicesPage() {
       {!error && list.length === 0 ? (
         <SamplePreview
           pageKey="invoices"
-          icon={Receipt}
+          icon={<Receipt className="h-4 w-4" />}
           title="This is where your invoices live."
           body="Pick a client's unbilled trips and turn them into one bill."
           primary={{ label: "Make your first invoice", href: "/invoices/build" }}
