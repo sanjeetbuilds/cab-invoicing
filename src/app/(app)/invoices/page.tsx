@@ -71,11 +71,14 @@ export default async function InvoicesPage() {
     for (const [inv, set] of seen) dutiesByInvoice.set(inv, set.size);
   }
 
+  const isEmpty = list.length === 0;
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Invoices"
         description="Invoice numbers are never repeated."
+        bordered
       >
         <Link
           href="/invoices/quick"
@@ -84,7 +87,10 @@ export default async function InvoicesPage() {
           <Zap className="h-4 w-4" />
           Quick invoice
         </Link>
-        <Link href="/invoices/build" className={buttonVariants()}>
+        <Link
+          href="/invoices/build"
+          className={buttonVariants({ variant: isEmpty ? "outline" : "default" })}
+        >
           <Plus className="h-4 w-4" />
           Build invoice
         </Link>

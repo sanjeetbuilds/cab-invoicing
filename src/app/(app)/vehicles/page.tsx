@@ -32,11 +32,14 @@ export default async function VehiclesPage() {
     .order("number", { ascending: true })
     .returns<Vehicle[]>();
 
+  const isEmpty = (vehicles ?? []).length === 0;
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Vehicles"
         description="Your fleet, own and attached cars."
+        bordered
       >
         <Link
           href="/bulk-import?scope=vehicles"
@@ -45,7 +48,7 @@ export default async function VehiclesPage() {
           <Upload className="h-4 w-4" />
           Import
         </Link>
-        <AddVehicleButton />
+        <AddVehicleButton muted={isEmpty} />
       </PageHeader>
 
       {error && (

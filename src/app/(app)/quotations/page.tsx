@@ -32,14 +32,19 @@ export default async function QuotationsPage() {
   ]);
 
   const list = quotations ?? [];
+  const isEmpty = list.length === 0;
 
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Quotations"
         description="Send rates to clients. Accepting one creates or updates their rate cards."
+        bordered
       >
-        <Link href="/quotations/new" className={buttonVariants()}>
+        <Link
+          href="/quotations/new"
+          className={buttonVariants({ variant: isEmpty ? "outline" : "default" })}
+        >
           <Plus className="h-4 w-4" />
           New quotation
         </Link>

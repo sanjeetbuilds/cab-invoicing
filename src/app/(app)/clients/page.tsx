@@ -58,11 +58,14 @@ export default async function ClientsPage({
     { value: "all", label: "All" },
   ];
 
+  const isEmpty = (clients ?? []).length === 0;
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Clients"
         description="Companies you bill. State drives intra/inter-state GST."
+        bordered
       >
         <Link
           href="/bulk-import?scope=clients"
@@ -78,7 +81,7 @@ export default async function ClientsPage({
           <IndianRupee className="h-4 w-4" />
           Bulk edit rates
         </Link>
-        <AddClientButton />
+        <AddClientButton muted={isEmpty} />
       </PageHeader>
 
       {/* One-time customers can outnumber regular clients in a high-volume

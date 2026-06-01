@@ -66,11 +66,14 @@ export default async function RateCardsPage() {
     byClient.set(card.client_id, list);
   }
 
+  const showingSamples = clientList.length > 0 && cardList.length === 0;
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Rate cards"
         description="Per-client pricing. Updated when you accept a new quotation."
+        bordered
       >
         <Link
           href="/bulk-import?scope=rate_cards"
@@ -79,7 +82,10 @@ export default async function RateCardsPage() {
           <Upload className="h-4 w-4" />
           Import
         </Link>
-        <AddRateCardButton clients={clientList} />
+        <AddRateCardButton
+          clients={clientList}
+          variant={showingSamples ? "outline" : "default"}
+        />
       </PageHeader>
 
       {clientList.length === 0 && (

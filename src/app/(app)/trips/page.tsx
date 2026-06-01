@@ -157,11 +157,14 @@ export default async function TripsPage({
   const showStatusPills =
     (invoicedCount ?? 0) > 0 && (uninvoicedCount ?? 0) > 0;
 
+  const showingSamples = !tripsError && tripList.length === 0 && !noPrereqs;
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Trips"
         description="Your daily trips. Each trip becomes a line on a monthly bill."
+        bordered
       >
         <Link
           href="/trips/bulk"
@@ -173,7 +176,7 @@ export default async function TripsPage({
         >
           Bulk add
         </Link>
-        <AddTripButton disabled={noPrereqs} />
+        <AddTripButton disabled={noPrereqs} muted={showingSamples} />
       </PageHeader>
 
       {noPrereqs && (

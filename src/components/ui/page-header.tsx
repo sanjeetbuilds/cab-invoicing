@@ -6,22 +6,29 @@ import { cn } from "@/lib/utils";
  * button sits inline with the title, the goal is to keep the first
  * content row of the page above the fold on a typical phone. Desktop:
  * larger title with subtitle for context.
+ *
+ * Set `bordered` on list pages to render a hairline divider below
+ * the header, so the title + toolbar visually anchor the top and
+ * the list reads as a separate region underneath.
  */
 export function PageHeader({
   title,
   description,
   children,
+  bordered = false,
   className,
 }: {
   title: React.ReactNode;
   description?: React.ReactNode;
   children?: React.ReactNode;
+  bordered?: boolean;
   className?: string;
 }) {
   return (
     <div
       className={cn(
         "flex flex-wrap items-center justify-between gap-3",
+        bordered && "pb-4 border-b border-border",
         className,
       )}
     >
