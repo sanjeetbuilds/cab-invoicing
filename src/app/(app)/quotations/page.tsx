@@ -16,33 +16,35 @@ export const dynamic = "force-dynamic";
 export default async function QuotationsPage() {
   const { supabase, membership } = await requireMembership();
 
-  const [{ data: quotations }, { data: clients }, { data: company }] =
-    await Promise.all([
-      supabase
-        .from("quotations")
-        .select("*")
-        .eq("company_id", membership.company_id)
-        .order("date", { ascending: false })
-        .returns<Quotation[]>(),
-      supabase
-        .from("clients")
-        .select("id, name")
-        .eq("company_id", membership.company_id)
-        .order("name", { ascending: true })
-        .returns<Pick<Client, "id" | "name">[]>(),
-      // Lifetime check, the counter only goes up. Distinguishes a
-      // brand new account from one that has issued quotations
-      // before and currently has none.
-      supabase
-        .from("companies")
-        .select("next_quotation_number")
-        .eq("id", membership.company_id)
-        .maybeSingle<{ next_quotation_number: number }>(),
-    ]);
+  const [
+    { data: quotations },
+    { data: clients },
+    { count: lifetimeQuotationCount },
+  ] = await Promise.all([
+    supabase
+      .from("quotations")
+      .select("*")
+      .eq("company_id", membership.company_id)
+      .order("date", { ascending: false })
+      .returns<Quotation[]>(),
+    supabase
+      .from("clients")
+      .select("id, name")
+      .eq("company_id", membership.company_id)
+      .order("name", { ascending: true })
+      .returns<Pick<Client, "id" | "name">[]>(),
+    // True lifetime row count for first-time detection. Operators
+    // can set a custom starting quotation number, so the counter
+    // on companies cannot stand in for "has ever issued one".
+    supabase
+      .from("quotations")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", membership.company_id),
+  ]);
 
   const list = quotations ?? [];
   const isEmpty = list.length === 0;
-  const isFirstTime = (company?.next_quotation_number ?? 1) === 1;
+  const isFirstTime = (lifetimeQuotationCount ?? 0) === 0;
   const showingSamples = isEmpty && isFirstTime;
   const showingCalmEmpty = isEmpty && !isFirstTime;
 

@@ -23,6 +23,7 @@ export default async function InvoicesPage() {
     { data: lineRefs },
     { data: clients },
     { data: company },
+    { count: lifetimeInvoiceCount },
   ] = await Promise.all([
     supabase
       .from("invoices")
@@ -47,12 +48,17 @@ export default async function InvoicesPage() {
       .returns<Pick<Client, "id" | "name">[]>(),
     supabase
       .from("companies")
-      .select("invoice_prefix, next_invoice_number")
+      .select("invoice_prefix")
       .eq("id", membership.company_id)
-      .maybeSingle<{
-        invoice_prefix: string | null;
-        next_invoice_number: number;
-      }>(),
+      .maybeSingle<{ invoice_prefix: string | null }>(),
+    // True lifetime row count for first-time detection. We cannot
+    // infer it from next_invoice_number, the operator can set a
+    // custom starting number to continue an offline sequence (e.g.
+    // 2000), so the counter is never 1 even with zero invoices.
+    supabase
+      .from("invoices")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", membership.company_id),
   ]);
 
   const list = invoices ?? [];
@@ -75,11 +81,7 @@ export default async function InvoicesPage() {
   }
 
   const isEmpty = list.length === 0;
-  // Lifetime check, the counter only goes up. So even if every
-  // invoice has been deleted, an operator who has ever issued one
-  // reads as experienced and gets the calm empty card, not the
-  // tutorial samples.
-  const isFirstTime = (company?.next_invoice_number ?? 1) === 1;
+  const isFirstTime = (lifetimeInvoiceCount ?? 0) === 0;
   const showingSamples = !error && isEmpty && isFirstTime;
   const showingCalmEmpty = !error && isEmpty && !isFirstTime;
 
