@@ -157,7 +157,22 @@ export default async function TripsPage({
   const showStatusPills =
     (invoicedCount ?? 0) > 0 && (uninvoicedCount ?? 0) > 0;
 
-  const showingSamples = !tripsError && tripList.length === 0 && !noPrereqs;
+  // "Has ever logged a trip". The counts ignore the status filter,
+  // so an operator with 100 invoiced trips and 0 uninvoiced still
+  // reads as experienced when they land on the default uninvoiced
+  // view.
+  const hasEverTrip =
+    (invoicedCount ?? 0) > 0 || (uninvoicedCount ?? 0) > 0;
+  const isFirstTime = !hasEverTrip;
+
+  // Show the tutorial samples only for a true first-time operator,
+  // never for an experienced one whose current filter happens to be
+  // empty. Existing operators with an empty filtered view get the
+  // calm empty card below instead.
+  const showingSamples =
+    !tripsError && tripList.length === 0 && !noPrereqs && isFirstTime;
+  const showingCalmEmpty =
+    !tripsError && tripList.length === 0 && !noPrereqs && !isFirstTime;
 
   return (
     <div className="flex flex-col gap-6">
@@ -228,20 +243,28 @@ export default async function TripsPage({
         </Card>
       )}
 
-      {!tripsError && tripList.length === 0 && !noPrereqs && (
+      {showingSamples && (
         <SamplePreview
           icon={<Car className="h-4 w-4" />}
           title="This is where your trips live."
-          body={
-            status === "uninvoiced"
-              ? "Add each trip here. Trips become lines on the next bill."
-              : "Add each trip here. Filtered view, nothing matches yet."
-          }
+          body="Add each trip here. Trips become lines on the next bill."
           primary={{ label: "Log trip", href: "/trips/new" }}
           setupHint={{ step: 5, total: 6 }}
         >
           <TripsSampleRows />
         </SamplePreview>
+      )}
+
+      {showingCalmEmpty && (
+        <Card>
+          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+            {status === "uninvoiced"
+              ? "All caught up. No trips waiting to be billed."
+              : status === "invoiced"
+                ? "No invoiced trips here yet."
+                : "No trips here."}
+          </CardContent>
+        </Card>
       )}
 
       {tripList.length > 0 && (

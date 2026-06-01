@@ -42,15 +42,22 @@ export default async function ClientsPage({
   if (group === "regular") baseQuery.eq("is_quick_customer", false);
   if (group === "quick") baseQuery.eq("is_quick_customer", true);
 
-  const { data: clients, error } = await baseQuery
-    .order("name", { ascending: true })
-    .returns<Client[]>();
-
-  const { count: quickCount } = await supabase
-    .from("clients")
-    .select("id", { count: "exact", head: true })
-    .eq("company_id", membership.company_id)
-    .eq("is_quick_customer", true);
+  const [{ data: clients, error }, { count: quickCount }, { count: totalClients }] =
+    await Promise.all([
+      baseQuery.order("name", { ascending: true }).returns<Client[]>(),
+      supabase
+        .from("clients")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", membership.company_id)
+        .eq("is_quick_customer", true),
+      // Lifetime check across every group, not just the current one.
+      // An operator with quick customers only must read as experienced
+      // when they land on the default "regular" tab.
+      supabase
+        .from("clients")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", membership.company_id),
+    ]);
 
   const TABS: { value: ClientGroup; label: string; count?: number }[] = [
     { value: "regular", label: "Regular" },
@@ -58,7 +65,11 @@ export default async function ClientsPage({
     { value: "all", label: "All" },
   ];
 
-  const isEmpty = (clients ?? []).length === 0;
+  const list = clients ?? [];
+  const filteredEmpty = list.length === 0;
+  const isFirstTime = (totalClients ?? 0) === 0;
+  const showingSamples = filteredEmpty && isFirstTime;
+  const showingCalmEmpty = filteredEmpty && !isFirstTime;
 
   return (
     <div className="flex flex-col gap-6">
@@ -81,7 +92,7 @@ export default async function ClientsPage({
           <IndianRupee className="h-4 w-4" />
           Bulk edit rates
         </Link>
-        <AddClientButton muted={isEmpty} />
+        <AddClientButton muted={showingSamples} />
       </PageHeader>
 
       {/* One-time customers can outnumber regular clients in a high-volume
@@ -122,7 +133,7 @@ export default async function ClientsPage({
         <p className="text-sm text-destructive">Failed to load: {error.message}</p>
       )}
 
-      {clients && clients.length === 0 && (
+      {showingSamples && (
         <SamplePreview
           icon={<Users className="h-4 w-4" />}
           title="This is where your clients live."
@@ -135,7 +146,19 @@ export default async function ClientsPage({
         </SamplePreview>
       )}
 
-      {clients && clients.length > 0 && (
+      {showingCalmEmpty && (
+        <Card>
+          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+            {group === "regular"
+              ? "No regular clients here yet."
+              : group === "quick"
+                ? "No one-time customers here yet."
+                : "No clients here."}
+          </CardContent>
+        </Card>
+      )}
+
+      {list.length > 0 && (
         <>
           {/* Desktop table */}
           <div className="hidden md:block rounded-xl bg-card shadow-card overflow-hidden">
@@ -151,7 +174,7 @@ export default async function ClientsPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {clients.map((c) => (
+                {list.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium text-foreground">
                       <span className="inline-flex items-center gap-2">
@@ -188,7 +211,7 @@ export default async function ClientsPage({
 
           {/* Mobile cards */}
           <div className="md:hidden flex flex-col gap-4 md:gap-5">
-            {clients.map((c) => (
+            {list.map((c) => (
               <Card key={c.id} size="sm">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">

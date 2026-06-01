@@ -16,23 +16,35 @@ export const dynamic = "force-dynamic";
 export default async function QuotationsPage() {
   const { supabase, membership } = await requireMembership();
 
-  const [{ data: quotations }, { data: clients }] = await Promise.all([
-    supabase
-      .from("quotations")
-      .select("*")
-      .eq("company_id", membership.company_id)
-      .order("date", { ascending: false })
-      .returns<Quotation[]>(),
-    supabase
-      .from("clients")
-      .select("id, name")
-      .eq("company_id", membership.company_id)
-      .order("name", { ascending: true })
-      .returns<Pick<Client, "id" | "name">[]>(),
-  ]);
+  const [{ data: quotations }, { data: clients }, { data: company }] =
+    await Promise.all([
+      supabase
+        .from("quotations")
+        .select("*")
+        .eq("company_id", membership.company_id)
+        .order("date", { ascending: false })
+        .returns<Quotation[]>(),
+      supabase
+        .from("clients")
+        .select("id, name")
+        .eq("company_id", membership.company_id)
+        .order("name", { ascending: true })
+        .returns<Pick<Client, "id" | "name">[]>(),
+      // Lifetime check, the counter only goes up. Distinguishes a
+      // brand new account from one that has issued quotations
+      // before and currently has none.
+      supabase
+        .from("companies")
+        .select("next_quotation_number")
+        .eq("id", membership.company_id)
+        .maybeSingle<{ next_quotation_number: number }>(),
+    ]);
 
   const list = quotations ?? [];
   const isEmpty = list.length === 0;
+  const isFirstTime = (company?.next_quotation_number ?? 1) === 1;
+  const showingSamples = isEmpty && isFirstTime;
+  const showingCalmEmpty = isEmpty && !isFirstTime;
 
   return (
     <div className="flex flex-col gap-4">
@@ -43,14 +55,16 @@ export default async function QuotationsPage() {
       >
         <Link
           href="/quotations/new"
-          className={buttonVariants({ variant: isEmpty ? "outline" : "default" })}
+          className={buttonVariants({
+            variant: showingSamples ? "outline" : "default",
+          })}
         >
           <Plus className="h-4 w-4" />
           New quotation
         </Link>
       </PageHeader>
 
-      {list.length === 0 ? (
+      {showingSamples && (
         <SamplePreview
           icon={<FileSignature className="h-4 w-4" />}
           title="This is where your quotations live."
@@ -59,7 +73,17 @@ export default async function QuotationsPage() {
         >
           <QuotationsSampleRows />
         </SamplePreview>
-      ) : (
+      )}
+
+      {showingCalmEmpty && (
+        <Card>
+          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+            No quotations here.
+          </CardContent>
+        </Card>
+      )}
+
+      {!isEmpty && (
         <QuotationsList quotations={list} clients={clients ?? []} />
       )}
     </div>

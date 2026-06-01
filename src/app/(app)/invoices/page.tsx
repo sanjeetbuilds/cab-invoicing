@@ -47,9 +47,12 @@ export default async function InvoicesPage() {
       .returns<Pick<Client, "id" | "name">[]>(),
     supabase
       .from("companies")
-      .select("invoice_prefix")
+      .select("invoice_prefix, next_invoice_number")
       .eq("id", membership.company_id)
-      .maybeSingle<{ invoice_prefix: string | null }>(),
+      .maybeSingle<{
+        invoice_prefix: string | null;
+        next_invoice_number: number;
+      }>(),
   ]);
 
   const list = invoices ?? [];
@@ -72,6 +75,13 @@ export default async function InvoicesPage() {
   }
 
   const isEmpty = list.length === 0;
+  // Lifetime check, the counter only goes up. So even if every
+  // invoice has been deleted, an operator who has ever issued one
+  // reads as experienced and gets the calm empty card, not the
+  // tutorial samples.
+  const isFirstTime = (company?.next_invoice_number ?? 1) === 1;
+  const showingSamples = !error && isEmpty && isFirstTime;
+  const showingCalmEmpty = !error && isEmpty && !isFirstTime;
 
   return (
     <div className="flex flex-col gap-4">
@@ -89,7 +99,9 @@ export default async function InvoicesPage() {
         </Link>
         <Link
           href="/invoices/build"
-          className={buttonVariants({ variant: isEmpty ? "outline" : "default" })}
+          className={buttonVariants({
+            variant: showingSamples ? "outline" : "default",
+          })}
         >
           <Plus className="h-4 w-4" />
           Build invoice
@@ -100,7 +112,7 @@ export default async function InvoicesPage() {
         <p className="text-sm text-destructive">Failed to load: {error.message}</p>
       )}
 
-      {!error && list.length === 0 ? (
+      {showingSamples && (
         <SamplePreview
           icon={<Receipt className="h-4 w-4" />}
           title="This is where your invoices live."
@@ -110,7 +122,17 @@ export default async function InvoicesPage() {
         >
           <InvoicesSampleRows />
         </SamplePreview>
-      ) : (
+      )}
+
+      {showingCalmEmpty && (
+        <Card>
+          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+            No invoices here.
+          </CardContent>
+        </Card>
+      )}
+
+      {!error && !isEmpty && (
         <InvoicesList
           invoices={list}
           clients={clients ?? []}
