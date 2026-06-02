@@ -3,7 +3,7 @@ import { Plus, ReceiptIndianRupee, Zap } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ListSticky } from "@/components/ui/list-sticky";
+import { ListHeader } from "@/components/ui/list-header";
 import { PageHeader } from "@/components/ui/page-header";
 import { SamplePreview } from "@/components/ui/sample-preview";
 import { InvoicesSampleRows } from "@/components/ui/sample-rows";
@@ -122,14 +122,14 @@ export default async function InvoicesPage() {
     <div className="flex flex-col gap-4">
       {error && (
         <>
-          <ListSticky>{header}</ListSticky>
+          <ListHeader>{header}</ListHeader>
           <p className="text-sm text-destructive">Failed to load: {error.message}</p>
         </>
       )}
 
       {showingSamples && (
         <>
-          <ListSticky>{header}</ListSticky>
+          <ListHeader>{header}</ListHeader>
           <SamplePreview
             icon={<ReceiptIndianRupee className="h-4 w-4" />}
             iconChipBg="#E1F5EE"
@@ -146,7 +146,7 @@ export default async function InvoicesPage() {
 
       {showingCalmEmpty && (
         <>
-          <ListSticky>{header}</ListSticky>
+          <ListHeader>{header}</ListHeader>
           <Card>
             <CardContent className="py-12 text-center text-sm text-muted-foreground">
               No invoices here.

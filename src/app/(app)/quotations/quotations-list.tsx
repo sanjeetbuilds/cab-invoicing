@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
+  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -91,27 +92,6 @@ function fmtDate(iso: string | null | undefined): string {
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
 }
 
-/** Shared column widths between the sticky column header and the
- *  data table below. table-layout: fixed honours these. null = auto. */
-const QUOTATION_COL_WIDTHS: (string | null)[] = [
-  "110px", // Number
-  null,    // Client (auto)
-  "85px",  // Date
-  "100px", // Valid until
-  "110px", // Status
-  "55px",  // Actions
-];
-
-function QuotationColGroup() {
-  return (
-    <colgroup>
-      {QUOTATION_COL_WIDTHS.map((w, i) => (
-        <col key={i} style={w ? { width: w } : undefined} />
-      ))}
-    </colgroup>
-  );
-}
-
 export function QuotationsList({
   quotations,
   clients,
@@ -120,7 +100,7 @@ export function QuotationsList({
   quotations: Quotation[];
   clients: Pick<Client, "id" | "name">[];
   /** Page title + actions JSX rendered as the first row of the
-   *  single sticky chrome at the top of the list. */
+   *  list header. */
   header?: React.ReactNode;
 }) {
   const [search, setSearch] = useState("");
@@ -223,7 +203,7 @@ export function QuotationsList({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 -mt-4 sm:-mt-8 mb-2 px-4 sm:px-6 py-3 bg-background border-b border-border flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         {header}
         {(showSearch || showFiltersButton) && (
           <div className="flex items-center gap-2">
@@ -322,27 +302,6 @@ export function QuotationsList({
             </div>
           </div>
         )}
-
-        {/* Column header row, item 4 in the sticky stack. Desktop
-            only; mobile uses cards. Shares column widths with the
-            data table below via table-fixed + QuotationColGroup. */}
-        {filtered.length > 0 && (
-          <div className="hidden md:block -mb-3">
-            <table className="w-full table-fixed text-sm">
-              <QuotationColGroup />
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Valid until</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-            </table>
-          </div>
-        )}
       </div>
 
       {/* Mobile bottom sheet, inline radio sections, no nested
@@ -411,12 +370,19 @@ export function QuotationsList({
         </Card>
       ) : (
         <>
-          {/* Desktop (md+): the thead lives in the sticky chrome
-              above; we render only the data rows here in a table
-              that shares column widths via QuotationColGroup. */}
+          {/* Desktop (md+): table; row click opens PDF in new tab */}
           <div className="hidden md:block rounded-xl bg-card shadow-card overflow-hidden">
-            <table className="w-full table-fixed text-sm">
-              <QuotationColGroup />
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Number</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Valid until</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="w-[60px]"></TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
                 {filtered.map((q) => (
                   <DesktopQuotationRow
@@ -429,7 +395,7 @@ export function QuotationsList({
                   />
                 ))}
               </TableBody>
-            </table>
+            </Table>
           </div>
 
           {/* Mobile (<md): rich summary cards */}

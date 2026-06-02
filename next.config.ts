@@ -26,8 +26,9 @@ const SUPABASE_HOST = (() => {
 //   connect-src             self + Supabase REST/Storage/Auth + Vercel
 //                           speed-insights / analytics
 //   font-src                self + Google Fonts (Inter + JetBrains Mono)
-//   frame-ancestors none    no one can iframe the app, equivalent to
-//                           X-Frame-Options DENY
+//   frame-ancestors 'self'  only our own pages may iframe the app, so
+//                           the in-app invoice and PDF viewers work
+//                           while other origins still cannot frame us
 //   base-uri 'self'         no DOM <base href=...> hijack
 //   form-action 'self'      no off-site form posts
 //   object-src 'none'       no <object>/<embed>
@@ -41,7 +42,7 @@ function csp(): string {
     `img-src 'self' data: blob: ${supabase} https://*.vercel-insights.com`,
     `connect-src 'self' ${supabase} ${supabaseWs} https://*.vercel-insights.com https://va.vercel-scripts.com`,
     `font-src 'self' data: https://fonts.gstatic.com`,
-    `frame-ancestors 'none'`,
+    `frame-ancestors 'self'`,
     `base-uri 'self'`,
     `form-action 'self'`,
     `object-src 'none'`,
@@ -76,9 +77,11 @@ const nextConfig: NextConfig = {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
           },
-          // No one frames us, modern equivalent encoded in CSP
-          // frame-ancestors plus the legacy header for older browsers.
-          { key: "X-Frame-Options", value: "DENY" },
+          // Only our own origin may frame us, so the in-app invoice
+          // and PDF viewers render in an iframe. Other origins still
+          // cannot. CSP frame-ancestors 'self' is the modern form;
+          // this legacy header covers older browsers.
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
           // Browser must respect declared content-type, no sniffing.
           { key: "X-Content-Type-Options", value: "nosniff" },
           // Sends path + origin to same-origin, only origin

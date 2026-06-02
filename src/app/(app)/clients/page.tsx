@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireMembership } from "@/lib/auth";
 import {
+  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -12,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ListSticky } from "@/components/ui/list-sticky";
+import { ListHeader } from "@/components/ui/list-header";
 import { PageHeader } from "@/components/ui/page-header";
 import { SamplePreview } from "@/components/ui/sample-preview";
 import { ClientsSampleRows } from "@/components/ui/sample-rows";
@@ -22,27 +23,6 @@ import { AddClientButton } from "./add-client-button";
 import { ClientRowActions } from "./client-row-actions";
 
 export const metadata = { title: "Clients" };
-
-/** Shared column widths between the sticky column header (in the
- *  ListSticky chrome) and the data table below. null = auto. */
-const CLIENT_COL_WIDTHS: (string | null)[] = [
-  null,    // Name (auto, fills remaining)
-  "120px", // State
-  "160px", // GSTIN
-  "140px", // Contact
-  "95px",  // GST
-  "80px",  // Actions
-];
-
-function ClientColGroup() {
-  return (
-    <colgroup>
-      {CLIENT_COL_WIDTHS.map((w, i) => (
-        <col key={i} style={w ? { width: w } : undefined} />
-      ))}
-    </colgroup>
-  );
-}
 
 type ClientGroup = "regular" | "quick" | "all";
 
@@ -94,7 +74,7 @@ export default async function ClientsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <ListSticky>
+      <ListHeader>
         <PageHeader
           title="Clients"
           description="The companies you bill. We use their state to work out the GST."
@@ -149,28 +129,7 @@ export default async function ClientsPage({
             })}
           </div>
         )}
-
-        {/* Column header row, item 4 in the sticky stack on
-            desktop. Shares column widths with the data table
-            below via table-fixed + ClientColGroup. */}
-        {list.length > 0 && (
-          <div className="hidden md:block -mb-3">
-            <table className="w-full table-fixed text-sm">
-              <ClientColGroup />
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>State</TableHead>
-                  <TableHead>GSTIN</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead className="text-center">GST</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-            </table>
-          </div>
-        )}
-      </ListSticky>
+      </ListHeader>
 
       {error && (
         <p className="text-sm text-destructive">Failed to load: {error.message}</p>
@@ -205,11 +164,19 @@ export default async function ClientsPage({
 
       {list.length > 0 && (
         <>
-          {/* Desktop table, thead lives in the sticky chrome
-              above. Shared widths via ClientColGroup. */}
+          {/* Desktop table */}
           <div className="hidden md:block rounded-xl bg-card shadow-card overflow-hidden">
-            <table className="w-full table-fixed text-sm">
-              <ClientColGroup />
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>State</TableHead>
+                  <TableHead>GSTIN</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead className="text-center">GST</TableHead>
+                  <TableHead className="w-[100px] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
                 {list.map((c) => (
                   <TableRow key={c.id}>
@@ -243,7 +210,7 @@ export default async function ClientsPage({
                   </TableRow>
                 ))}
               </TableBody>
-            </table>
+            </Table>
           </div>
 
           {/* Mobile cards */}

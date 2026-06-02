@@ -5,6 +5,7 @@ import { SamplePreview } from "@/components/ui/sample-preview";
 import { VehiclesSampleRows } from "@/components/ui/sample-rows";
 import { requireMembership } from "@/lib/auth";
 import {
+  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -14,34 +15,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ListSticky } from "@/components/ui/list-sticky";
+import { ListHeader } from "@/components/ui/list-header";
 import { PageHeader } from "@/components/ui/page-header";
 import type { Vehicle } from "@/lib/supabase/types";
 import { AddVehicleButton } from "./add-vehicle-button";
 import { VehicleRowActions } from "./vehicle-row-actions";
 
 export const metadata = { title: "Vehicles" };
-
-/** Shared column widths between the sticky column header and the
- *  data table below. null = auto, fills remaining space. */
-const VEHICLE_COL_WIDTHS: (string | null)[] = [
-  "180px", // Number (HR 26 ED 9083 in mono)
-  "120px", // Type
-  "130px", // Ownership badge
-  null,    // Vendor (auto)
-  "90px",  // Active
-  "80px",  // Actions
-];
-
-function VehicleColGroup() {
-  return (
-    <colgroup>
-      {VEHICLE_COL_WIDTHS.map((w, i) => (
-        <col key={i} style={w ? { width: w } : undefined} />
-      ))}
-    </colgroup>
-  );
-}
 
 export default async function VehiclesPage() {
   const { supabase, membership } = await requireMembership();
@@ -57,7 +37,7 @@ export default async function VehiclesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <ListSticky>
+      <ListHeader>
         <PageHeader
           title="Vehicles"
           description="Your cars, both your own and attached vendor cars."
@@ -71,28 +51,7 @@ export default async function VehiclesPage() {
           </Link>
           <AddVehicleButton muted={isEmpty} />
         </PageHeader>
-
-        {/* Column header row, item 4 in the sticky stack on
-            desktop. Shares column widths with the data table
-            below via table-fixed + VehicleColGroup. */}
-        {vehicles && vehicles.length > 0 && (
-          <div className="hidden md:block -mb-3">
-            <table className="w-full table-fixed text-sm">
-              <VehicleColGroup />
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Ownership</TableHead>
-                  <TableHead>Vendor</TableHead>
-                  <TableHead className="text-center">Active</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-            </table>
-          </div>
-        )}
-      </ListSticky>
+      </ListHeader>
 
       {error && (
         <p className="text-sm text-destructive">Failed to load: {error.message}</p>
@@ -115,11 +74,19 @@ export default async function VehiclesPage() {
 
       {vehicles && vehicles.length > 0 && (
         <>
-          {/* Desktop table, thead is in the sticky chrome above.
-              Shared widths via VehicleColGroup. */}
+          {/* Desktop table */}
           <div className="hidden md:block rounded-xl bg-card shadow-card overflow-hidden">
-            <table className="w-full table-fixed text-sm">
-              <VehicleColGroup />
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Number</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Ownership</TableHead>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead className="text-center">Active</TableHead>
+                  <TableHead className="w-[100px] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
                 {vehicles.map((v) => (
                   <TableRow key={v.id}>
@@ -150,7 +117,7 @@ export default async function VehiclesPage() {
                   </TableRow>
                 ))}
               </TableBody>
-            </table>
+            </Table>
           </div>
 
           {/* Mobile cards */}

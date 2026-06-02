@@ -7,14 +7,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -182,9 +175,10 @@ export default async function DashboardPage() {
       {isFresh && <SeedBanner />}
       <SetupChecklist status={setupStatus} />
 
-      {/* The four metric boxes, the only fully colour-filled blocks
-          in the app. One column on mobile, two by two on medium,
-          four across on wide desktop. Equal heights via auto-rows-fr. */}
+      {/* Four metric boxes: crisp white cards on the neutral
+          background. Colour appears only in the small icon chip.
+          One column on mobile, two by two on medium, four across on
+          wide desktop. Equal heights via auto-rows-fr. */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-3 sm:gap-4">
         <StatCard
           label="Unbilled trips"
@@ -192,7 +186,8 @@ export default async function DashboardPage() {
           hint="Trips not yet on a bill."
           href="/trips"
           icon={Route}
-          bg="#534AB7"
+          chipBg="#EDE9FE"
+          chipFg="#6D28D9"
         />
         <StatCard
           label="Outstanding"
@@ -206,7 +201,8 @@ export default async function DashboardPage() {
           }
           href="/invoices"
           icon={Clock}
-          bg="#993C1D"
+          chipBg="#FEF3C7"
+          chipFg="#B45309"
         />
         <StatCard
           label="Billed this month"
@@ -214,14 +210,16 @@ export default async function DashboardPage() {
           hint={`Since ${fmtDate(monthStart)}.`}
           href="/invoices"
           icon={ReceiptIndianRupee}
-          bg="#0F6E56"
+          chipBg="#D1FAE5"
+          chipFg="#047857"
         />
         <StatCard
           label="Clients and cars"
           value={clientsAndCars}
           hint="Active records in your account."
           icon={Users}
-          bg="#185FA5"
+          chipBg="#DBEAFE"
+          chipFg="#1D4ED8"
         />
       </div>
 
@@ -331,42 +329,40 @@ function StatCard({
   hint,
   href,
   icon: Icon,
-  bg,
+  chipBg,
+  chipFg,
 }: {
   label: string;
   value: string;
   hint: string;
   href?: string;
   icon: LucideIcon;
-  /** Solid fill for the whole box. White text rides on top, so these
-   *  stay rich and dark enough to keep contrast high. */
-  bg: string;
+  /** Light tint for the small icon chip. */
+  chipBg: string;
+  /** Darker icon colour, paired with chipBg. */
+  chipFg: string;
 }) {
-  // Fully colour-filled tile, flat (no gradient, no shadow). Compact:
-  // the label and a translucent-white icon chip share the top row,
-  // then the number and sub-line stack tight below. Tight gaps keep
-  // the box short, not airy.
+  // Crisp white card on the neutral background: hairline border, large
+  // radius, flat (no gradient). Colour lives only in the small icon
+  // chip. Compact padding keeps the box short: chip, then a
+  // letterspaced label, the number at a readable size, and a muted
+  // sub-line.
   const box = (
-    <div
-      className="h-full flex flex-col gap-1.5 rounded-2xl p-4 text-white"
-      style={{ backgroundColor: bg }}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-[11px] uppercase tracking-[0.08em] font-medium text-white/90 pt-0.5">
-          {label}
-        </span>
-        <span
-          aria-hidden
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-          style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
-        >
-          <Icon className="h-4 w-4" />
-        </span>
-      </div>
-      <p className="text-xl sm:text-2xl font-medium tracking-tight truncate">
+    <div className="h-full flex flex-col rounded-xl border-[0.5px] border-border bg-card p-4">
+      <span
+        aria-hidden
+        className="inline-flex h-9 w-9 items-center justify-center rounded-lg mb-3"
+        style={{ backgroundColor: chipBg, color: chipFg }}
+      >
+        <Icon className="h-[18px] w-[18px]" />
+      </span>
+      <p className="text-[11px] uppercase tracking-[0.06em] font-medium text-muted-foreground">
+        {label}
+      </p>
+      <p className="text-[22px] leading-tight font-medium tracking-tight text-foreground truncate mt-0.5">
         {value}
       </p>
-      <p className="text-xs text-white/85">{hint}</p>
+      <p className="text-xs text-muted-foreground mt-1">{hint}</p>
     </div>
   );
   return href ? (

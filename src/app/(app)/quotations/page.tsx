@@ -3,7 +3,7 @@ import { FileSignature, Plus } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ListSticky } from "@/components/ui/list-sticky";
+import { ListHeader } from "@/components/ui/list-header";
 import { PageHeader } from "@/components/ui/page-header";
 import { SamplePreview } from "@/components/ui/sample-preview";
 import { QuotationsSampleRows } from "@/components/ui/sample-rows";
@@ -68,7 +68,7 @@ export default async function QuotationsPage() {
     <div className="flex flex-col gap-4">
       {showingSamples && (
         <>
-          <ListSticky>{header}</ListSticky>
+          <ListHeader>{header}</ListHeader>
           <SamplePreview
             icon={<FileSignature className="h-4 w-4" />}
             iconChipBg="#E6F1FB"
@@ -84,7 +84,7 @@ export default async function QuotationsPage() {
 
       {showingCalmEmpty && (
         <>
-          <ListSticky>{header}</ListSticky>
+          <ListHeader>{header}</ListHeader>
           <Card>
             <CardContent className="py-12 text-center text-sm text-muted-foreground">
               No quotations here.

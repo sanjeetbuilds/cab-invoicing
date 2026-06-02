@@ -28,7 +28,7 @@ const MODE_LABELS: Record<TripMode, string> = {
   package: "Package",
 };
 import { formatINR } from "@/lib/format";
-import { ListSticky } from "@/components/ui/list-sticky";
+import { ListHeader } from "@/components/ui/list-header";
 import { PageHeader } from "@/components/ui/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { AddRateCardButton } from "./add-rate-card-button";
@@ -71,7 +71,7 @@ export default async function RateCardsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <ListSticky>
+      <ListHeader>
         <PageHeader
           title="Rate cards"
           description="Your prices for each client. They update when a client accepts a quotation."
@@ -88,7 +88,7 @@ export default async function RateCardsPage() {
             variant={showingSamples ? "outline" : "default"}
           />
         </PageHeader>
-      </ListSticky>
+      </ListHeader>
 
       {clientList.length === 0 && (
         <Card>
