@@ -161,13 +161,11 @@ export function TripForm({
 
   // Guard recentDefaults: only seed values that still resolve to a
   // real record. A stale recentDefaults pointing to a deleted
-  // vehicle (or to a car type / client that is no longer in the
-  // current options) would silently break the trip form.
-  const safeRecentClient =
-    recentDefaults?.client_id &&
-    clients.some((c) => c.id === recentDefaults.client_id)
-      ? recentDefaults.client_id
-      : "";
+  // vehicle would silently break the trip form. NOTE: client_id is
+  // deliberately NOT seeded from recentDefaults, every new trip
+  // should make the user pick the client themselves so they never
+  // log a trip against the wrong company by inheriting yesterday's
+  // pick.
   const safeRecentVehicle =
     recentDefaults?.vehicle_id &&
     vehicles.some((v) => v.id === recentDefaults.vehicle_id)
@@ -194,7 +192,7 @@ export function TripForm({
       // day. Editing an existing trip uses its own stored values. Every
       // seed below has already been validated against the current
       // options, no stale rows can sneak in.
-      client_id: trip?.client_id ?? safeRecentClient,
+      client_id: trip?.client_id ?? "",
       vehicle_id: trip?.vehicle_id ?? safeRecentVehicle,
       car_type: trip?.car_type ?? safeRecentCarType,
       mode: trip?.mode ?? recentDefaults?.mode ?? "local",
@@ -388,23 +386,6 @@ export function TripForm({
       onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col gap-4"
     >
-      {/* Sticky Trip total bar. Spans the full width of the main
-          scroll area (breaks out of the form's gap-4 column via
-          negative margin), sits opaquely above scrolling cards
-          thanks to bg-card + z-30, and is separated from the
-          content below by a hairline bottom border so nothing
-          appears to merge into it as it sticks. */}
-      {activeRate && preview && (
-        <div className="sticky top-12 sm:top-14 z-30 -mx-4 sm:-mx-6 -mt-4 sm:-mt-8 mb-2 bg-card border-b border-border px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-          <span className="text-[11px] uppercase tracking-wider text-muted-foreground leading-none">
-            Trip total
-          </span>
-          <span className="font-mono text-lg font-semibold tabular-nums leading-none">
-            {formatINR(preview.total)}
-          </span>
-        </div>
-      )}
-
       {/* Top: dates + client */}
       <Card>
         <CardContent className="grid gap-4 md:grid-cols-3">
@@ -927,6 +908,19 @@ export function TripForm({
         formId="trip-form"
         dirty={isDirty}
         pending={pending}
+        alwaysShow
+        leading={
+          activeRate && preview ? (
+            <div className="flex items-baseline gap-2 min-w-0 whitespace-nowrap">
+              <span className="text-xs text-muted-foreground shrink-0">
+                Trip total
+              </span>
+              <span className="font-mono text-sm sm:text-base font-semibold tabular-nums truncate">
+                {formatINR(preview.total)}
+              </span>
+            </div>
+          ) : undefined
+        }
         onCancel={() => router.push("/trips")}
         saveLabel={editing ? "Save changes" : "Log trip"}
       />

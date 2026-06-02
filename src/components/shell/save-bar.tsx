@@ -38,6 +38,8 @@ export function SaveBar({
   formId,
   onSave,
   onCancel,
+  leading,
+  alwaysShow = false,
   dirty = true,
   canSave = true,
   pending = false,
@@ -49,6 +51,19 @@ export function SaveBar({
   formId?: string;
   onSave?: () => void;
   onCancel?: () => void;
+  /**
+   * Optional left-side content rendered in the bar. Used by the trip
+   * form to show the running Trip total on the left while Cancel
+   * and Save group on the right. When unset the bar falls back to
+   * the original Cancel-left / Save-right two-column layout.
+   */
+  leading?: React.ReactNode;
+  /**
+   * If true, the bar renders regardless of dirty state. Used on the
+   * trip form so the running Trip total in `leading` stays visible
+   * at all times. dirty still drives beforeunload + discard prompt.
+   */
+  alwaysShow?: boolean;
   /** True when the form has unsaved changes. The bar hides when false. */
   dirty?: boolean;
   canSave?: boolean;
@@ -60,8 +75,9 @@ export function SaveBar({
 }) {
   // Only render the bar (and register with the shell context) when
   // there's something to save or a save is in flight. While clean we
-  // stay out of the DOM so BottomNav can keep its slot.
-  const visible = dirty || pending;
+  // stay out of the DOM so BottomNav can keep its slot. alwaysShow
+  // opts a form into a persistent bar.
+  const visible = alwaysShow || dirty || pending;
   if (!visible) return null;
 
   return (
@@ -69,6 +85,7 @@ export function SaveBar({
       formId={formId}
       onSave={onSave}
       onCancel={onCancel}
+      leading={leading}
       dirty={dirty}
       canSave={canSave}
       pending={pending}
@@ -84,6 +101,7 @@ function SaveBarBody({
   formId,
   onSave,
   onCancel,
+  leading,
   dirty,
   canSave,
   pending,
@@ -95,6 +113,7 @@ function SaveBarBody({
   formId?: string;
   onSave?: () => void;
   onCancel?: () => void;
+  leading?: React.ReactNode;
   dirty: boolean;
   canSave: boolean;
   pending: boolean;
@@ -144,28 +163,49 @@ function SaveBarBody({
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="mx-auto max-w-screen-2xl flex items-center justify-between gap-3 px-4 sm:px-6 py-3">
-          {!hideCancel && onCancel ? (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleCancelClick}
-              disabled={pending}
-            >
-              {cancelLabel}
-            </Button>
-          ) : (
-            <span />
-          )}
+          {/* Left slot.
+              - When `leading` is provided (e.g. trip total), it sits
+                on the far left and Cancel slides over next to Save.
+              - Otherwise Cancel keeps the historical left position so
+                every other form looks the way it did before. */}
+          <div className="flex items-center gap-3 min-w-0 flex-shrink">
+            {leading
+              ? leading
+              : !hideCancel && onCancel
+                ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={handleCancelClick}
+                      disabled={pending}
+                    >
+                      {cancelLabel}
+                    </Button>
+                  )
+                : null}
+          </div>
 
-          <Button
-            type={formId ? "submit" : "button"}
-            form={formId}
-            onClick={formId ? undefined : onSave}
-            disabled={disabled}
-          >
-            {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {pending ? savingLabel : saveLabel}
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            {leading && !hideCancel && onCancel && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleCancelClick}
+                disabled={pending}
+              >
+                {cancelLabel}
+              </Button>
+            )}
+            <Button
+              type={formId ? "submit" : "button"}
+              form={formId}
+              onClick={formId ? undefined : onSave}
+              disabled={disabled}
+            >
+              {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {pending ? savingLabel : saveLabel}
+            </Button>
+          </div>
         </div>
       </div>
 

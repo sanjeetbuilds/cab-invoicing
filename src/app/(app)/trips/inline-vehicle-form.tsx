@@ -86,14 +86,10 @@ export function InlineVehicleForm({
       toast.error("Vehicle number is required.");
       return;
     }
-    // Sometimes the user only has the last 4 digits (the visible part on
-    // the cab). Allow it but flag the missing structure, easier to amend
-    // later than block the trip-entry flow.
-    if (/^\d{1,4}$/.test(number.replace(/\s+/g, ""))) {
-      toast.warning(
-        "Vehicle number looks incomplete. Use full format HR 26 ED 9083 for cleaner records.",
-      );
-    }
+    // Short numbers (just the last 4 digits) are normal in this
+    // business. We accept them and save quietly, no warning toast.
+    // A small helper line under the input nudges operators toward
+    // the full format for cleaner records, without blocking.
     setPending(true);
     const fd = new FormData();
     fd.set("number", number);
@@ -156,6 +152,9 @@ export function InlineVehicleForm({
               })
             }
           />
+          <p className="text-xs text-muted-foreground">
+            Short numbers are fine. A full number like HR 26 ED 9083 keeps records tidy.
+          </p>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="iv-type">Type *</Label>

@@ -119,6 +119,9 @@ export function VehicleForm({ vehicle }: { vehicle?: Vehicle | null }) {
             {errors.number && (
               <p className="text-sm text-destructive">{errors.number.message}</p>
             )}
+            <p className="text-xs text-muted-foreground">
+              Short numbers are fine. A full number like HR 26 ED 9083 keeps records tidy.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
