@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Check,
-  Copy,
-  FileText,
   Filter,
   MoreVertical,
   RotateCcw,
@@ -531,13 +529,6 @@ function DesktopInvoiceRow({
     }
   }
 
-  function copyNumber() {
-    navigator.clipboard
-      .writeText(fullNumber)
-      .then(() => toast.success(`Copied ${fullNumber}`))
-      .catch(() => toast.error("Copy failed."));
-  }
-
   return (
     <>
       <TableRow
@@ -590,10 +581,6 @@ function DesktopInvoiceRow({
                   Mark unpaid
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={copyNumber}>
-                <Copy className="h-4 w-4" />
-                Copy invoice number
-              </DropdownMenuItem>
               {!draft && !reversed && (
                 <DropdownMenuItem
                   variant="destructive"
@@ -769,13 +756,6 @@ function MobileInvoiceCard({
     }
   }
 
-  function copyNumber() {
-    navigator.clipboard
-      .writeText(fullNumber)
-      .then(() => toast.success(`Copied ${fullNumber}`))
-      .catch(() => toast.error("Copy failed."));
-  }
-
   return (
     <>
       <Card>
@@ -823,63 +803,10 @@ function MobileInvoiceCard({
             </p>
           </button>
 
-          {/* Action row, Share is primary because the most common job is
-              sending the invoice to the client. Open PDF stays as a
-              secondary outline button for previewing first. */}
-          <div className="flex items-center gap-2 border-t border-border pt-3">
-            <button
-              type="button"
-              onClick={shareInvoicePdf}
-              className="flex-1 inline-flex items-center justify-center gap-2 h-10 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-hover"
-            >
-              <Share2 className="h-4 w-4" />
-              Share PDF
-            </button>
-            <button
-              type="button"
-              onClick={openPdf}
-              aria-label="Open PDF"
-              title="Open PDF"
-              className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
-            >
-              <FileText className="h-4 w-4" />
-            </button>
-            {draft && (
-              <button
-                type="button"
-                onClick={() => setConfirmIssue(true)}
-                disabled={pending}
-                aria-label="Issue invoice"
-                title="Issue invoice"
-                className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            )}
-            {!draft && !reversed && !paid && (
-              <button
-                type="button"
-                onClick={() => setConfirmPaid("mark")}
-                disabled={pending}
-                aria-label="Mark paid"
-                title="Mark paid"
-                className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
-              >
-                <Check className="h-4 w-4" />
-              </button>
-            )}
-            {!draft && !reversed && paid && (
-              <button
-                type="button"
-                onClick={() => setConfirmPaid("unmark")}
-                disabled={pending}
-                aria-label="Mark unpaid"
-                title="Mark unpaid"
-                className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
-              >
-                <Undo2 className="h-4 w-4" />
-              </button>
-            )}
+          {/* Action row. Same actions as the desktop row, in the same
+              place: one three-dot menu. Tapping the summary above opens
+              the invoice, so the menu holds share / status / lifecycle. */}
+          <div className="flex items-center justify-end border-t border-border pt-3">
             <DropdownMenu>
               <DropdownMenuTrigger
                 aria-label="More actions"
@@ -888,10 +815,28 @@ function MobileInvoiceCard({
                 <MoreVertical className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[220px]">
-                <DropdownMenuItem onClick={copyNumber}>
-                  <Copy className="h-4 w-4" />
-                  Copy invoice number
+                <DropdownMenuItem onClick={shareInvoicePdf}>
+                  <Share2 className="h-4 w-4" />
+                  Share PDF
                 </DropdownMenuItem>
+                {draft && (
+                  <DropdownMenuItem onClick={() => setConfirmIssue(true)}>
+                    <Send className="h-4 w-4" />
+                    Issue invoice
+                  </DropdownMenuItem>
+                )}
+                {!draft && !reversed && !paid && (
+                  <DropdownMenuItem onClick={() => setConfirmPaid("mark")}>
+                    <Check className="h-4 w-4" />
+                    Mark paid
+                  </DropdownMenuItem>
+                )}
+                {!draft && !reversed && paid && (
+                  <DropdownMenuItem onClick={() => setConfirmPaid("unmark")}>
+                    <Undo2 className="h-4 w-4" />
+                    Mark unpaid
+                  </DropdownMenuItem>
+                )}
                 {!draft && !reversed && (
                   <DropdownMenuItem
                     variant="destructive"

@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Download, Loader2, Share2 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import * as pdfjsLib from "pdfjs-dist";
 
 import { cn } from "@/lib/utils";
 import { sharePdf, downloadPdf } from "@/lib/share-pdf";
@@ -12,12 +13,30 @@ import { sharePdf, downloadPdf } from "@/lib/share-pdf";
  * In-shell PDF viewer used by /invoices/[id] and /quotations/[id]. The
  * goal is to keep the user inside the app shell: no target="_blank", no
  * raw API redirect. The header carries a back arrow + the document
- * number + a share button; the PDF renders in an iframe below.
+ * number + download + share; the document renders full width below.
+ *
+ * We paint the PDF pages onto our own <canvas> with pdf.js instead of
+ * dropping the file into an <iframe>. An iframe hands rendering to the
+ * browser's built-in PDF viewer, which adds a left thumbnail rail and
+ * its own toolbar, and on some setups the framed document is "refused
+ * to connect". Painting the pages ourselves means full width, no
+ * thumbnail rail, no chrome, and nothing that can be blocked.
  *
  * Web Share API handles the file (filename preserved) on mobile; the
  * sharePdf helper falls back to a download with the same filename on
  * desktop or where Share isn't available.
  */
+
+// pdf.js parses on a web worker. Point it at the worker that ships with
+// the package; it bundles to a same-origin asset so CSP 'self' covers
+// it and there is no CDN dependency.
+if (typeof window !== "undefined") {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url,
+  ).toString();
+}
+
 export function PdfViewerShell({
   pdfUrl,
   filename,
@@ -80,7 +99,7 @@ export function PdfViewerShell({
   }
 
   return (
-    // Escape the parent main's padding so the iframe goes edge-to-edge.
+    // Escape the parent main's padding so the document goes edge-to-edge.
     <div
       className="-mx-4 sm:-mx-6 -mt-4 sm:-mt-8 flex flex-col"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
@@ -143,34 +162,198 @@ export function PdfViewerShell({
         </div>
       </header>
 
-      {/* PDF body. The iframe fills the viewport between the sticky
-          sub-header and the bottom-nav (mobile) / page bottom
-          (desktop). 100dvh tracks the dynamic viewport so the iframe
-          doesn't jump when the mobile browser chrome collapses. */}
-      <iframe
-        src={pdfUrl}
+      {/* Document body. Pages are painted to canvas at the viewport
+          width and scroll between the sticky sub-header and the
+          bottom-nav (mobile) / page bottom (desktop). 100dvh tracks the
+          dynamic viewport so it doesn't jump when the mobile browser
+          chrome collapses. */}
+      <PdfCanvas
+        key={pdfUrl}
+        pdfUrl={pdfUrl}
         title={title}
-        className={cn(
-          "w-full border-0 bg-muted",
-          // Mobile: 10rem reserved for top-bar + sub-header + bottom-nav.
-          // Desktop: 6rem reserved for top-bar + sub-header (no bottom-nav).
-          "h-[calc(100dvh-10rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]",
-          "lg:h-[calc(100dvh-6rem-env(safe-area-inset-top))]",
-        )}
+        onDownload={handleDownload}
       />
+    </div>
+  );
+}
 
-      {/* Inline download fallback for browsers (e.g. some Android
-          builds) where iframe PDFs don't render, share button is
-          always there too, but a plain link is a clearer escape hatch. */}
-      <noscript>
-        <a
-          href={pdfUrl}
-          download={filename}
-          className="block py-3 text-center text-sm text-primary underline"
+// Largest CSS width we paint a page at. A4 at 96dpi is ~794px, so this
+// keeps a page close to life size on desktop and lets it fill the width
+// on phones.
+const MAX_PAGE_WIDTH = 820;
+
+type LoadStatus = "loading" | "ready" | "error";
+
+function PdfCanvas({
+  pdfUrl,
+  title,
+  onDownload,
+}: {
+  pdfUrl: string;
+  title: string;
+  onDownload: () => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const docRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null);
+  const tasksRef = useRef<Map<number, pdfjsLib.RenderTask>>(new Map());
+  const seqRef = useRef(0);
+  const widthRef = useRef(0);
+  const [pageCount, setPageCount] = useState(0);
+  const [status, setStatus] = useState<LoadStatus>("loading");
+
+  // Load the document once. The parent keys this component on pdfUrl,
+  // so a different document remounts fresh rather than mutating state
+  // here. Same-origin fetch carries the session cookie so the authed
+  // PDF endpoint serves it.
+  useEffect(() => {
+    const tasks = tasksRef.current;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(pdfUrl);
+        if (!res.ok) throw new Error(`PDF request failed (${res.status}).`);
+        const data = await res.arrayBuffer();
+        if (cancelled) return;
+        const pdf = await pdfjsLib.getDocument({ data }).promise;
+        if (cancelled) {
+          pdf.destroy();
+          return;
+        }
+        docRef.current = pdf;
+        setPageCount(pdf.numPages);
+        setStatus("ready");
+      } catch {
+        if (!cancelled) setStatus("error");
+      }
+    })();
+    return () => {
+      cancelled = true;
+      tasks.forEach((t) => t.cancel());
+      tasks.clear();
+      docRef.current?.destroy();
+      docRef.current = null;
+    };
+  }, [pdfUrl]);
+
+  // Paint every page at the current width. A fresh call bumps the
+  // sequence so an in-flight pass bails, and we cancel any render still
+  // running on a canvas before re-using it (pdf.js forbids two renders
+  // on one canvas at once).
+  const renderAll = useCallback(async () => {
+    const pdf = docRef.current;
+    const container = containerRef.current;
+    if (!pdf || !container) return;
+    const cssWidth = Math.min(container.clientWidth, MAX_PAGE_WIDTH);
+    if (cssWidth <= 0) return;
+    widthRef.current = cssWidth;
+    const seq = ++seqRef.current;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    for (let n = 1; n <= pdf.numPages; n++) {
+      if (seq !== seqRef.current) return;
+      const canvas = container.querySelector<HTMLCanvasElement>(
+        `canvas[data-page="${n}"]`,
+      );
+      if (!canvas) continue;
+      const page = await pdf.getPage(n);
+      if (seq !== seqRef.current) return;
+
+      const base = page.getViewport({ scale: 1 });
+      const viewport = page.getViewport({ scale: (cssWidth / base.width) * dpr });
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+      canvas.style.width = `${cssWidth}px`;
+      canvas.style.height = `${Math.round(viewport.height / dpr)}px`;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) continue;
+
+      tasksRef.current.get(n)?.cancel();
+      const task = page.render({ canvas, canvasContext: ctx, viewport });
+      tasksRef.current.set(n, task);
+      try {
+        await task.promise;
+      } catch {
+        // RenderingCancelledException when superseded, safe to ignore.
+      } finally {
+        if (tasksRef.current.get(n) === task) tasksRef.current.delete(n);
+      }
+    }
+  }, []);
+
+  // Render once ready, then re-render only when the available width
+  // actually changes (rotate / resize). Guarding on width stops the
+  // ResizeObserver looping on the height growth its own paint causes.
+  useEffect(() => {
+    if (status !== "ready" || pageCount === 0) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    renderAll();
+
+    let frame = 0;
+    const ro = new ResizeObserver((entries) => {
+      const w = Math.min(entries[0].contentRect.width, MAX_PAGE_WIDTH);
+      if (Math.abs(w - widthRef.current) < 1) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => renderAll());
+    });
+    ro.observe(container);
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [status, pageCount, renderAll]);
+
+  return (
+    <div
+      className={cn(
+        "w-full overflow-auto bg-muted",
+        // Mobile: 10rem reserved for top-bar + sub-header + bottom-nav.
+        // Desktop: 6rem reserved for top-bar + sub-header (no bottom-nav).
+        "h-[calc(100dvh-10rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]",
+        "lg:h-[calc(100dvh-6rem-env(safe-area-inset-top))]",
+      )}
+    >
+      <div className="mx-auto w-full max-w-[820px] px-3 py-4">
+        {status === "loading" && (
+          <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Loading invoice…
+          </div>
+        )}
+
+        {status === "error" && (
+          <div className="flex flex-col items-center gap-3 py-16 text-center text-sm text-muted-foreground">
+            <p>Could not show the invoice here.</p>
+            <button
+              type="button"
+              onClick={onDownload}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 h-10 font-medium text-primary-foreground hover:bg-primary-hover"
+            >
+              <Download className="h-4 w-4" />
+              Download PDF
+            </button>
+          </div>
+        )}
+
+        <div
+          ref={containerRef}
+          className={cn(
+            "flex flex-col items-center gap-4",
+            status !== "ready" && "hidden",
+          )}
         >
-          Download {filename}
-        </a>
-      </noscript>
+          {Array.from({ length: pageCount }, (_, i) => (
+            <canvas
+              key={i}
+              data-page={i + 1}
+              aria-label={`${title} page ${i + 1}`}
+              className="block w-full rounded-sm bg-white shadow-card"
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
