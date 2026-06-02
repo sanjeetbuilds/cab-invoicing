@@ -51,15 +51,32 @@ const COLORS = {
 
 const PT = (mm: number) => (mm / 25.4) * 72;
 
-// Per-page budgets in row units (one InvoiceLine = one row). Conservative
-// so the fixed bottom footer + totals + carry row on the last page don't
-// overlap. Reserve ~4 rows on every non-last page for the
-// Page subtotal / Carried forward block so it lands on the same page as
-// the trips it summarises, otherwise wrap={false} pushes it to a fresh
-// page, leaving an empty page in the middle of the invoice.
-const FIRST_PAGE_BUDGET = 26; // header + parties band + carry row
-const NEXT_PAGE_BUDGET = 40;  // brought-fwd row + carry row
-const LAST_PAGE_TOTALS_RESERVE = 12; // ~rows worth of totals space
+// Pagination uses a "cost" budget tuned to the real A4 layout, measured by
+// rendering invoices of growing size and watching where a page actually
+// overflows. Cost is not a plain line count: each trip group also carries a
+// little vertical padding (groupBlock paddingTop + paddingBottom + divider),
+// so a group costs its lines plus a fixed GROUP_OVERHEAD. Measured single
+// page capacity with the totals block is about 39 cost units; we sit safely
+// under that.
+//
+// Page 1 loses the header band and column header, so it holds less than a
+// later page, which only loses the column header and the brought-forward
+// row. The last page also needs room for the totals block, handled by
+// TOTALS_RESERVE in paginateGroups.
+const GROUP_OVERHEAD = 2; // padding around each trip group, in cost units
+const FIRST_PAGE_BUDGET = 33; // page 1 line area (header + parties eat space)
+const NEXT_PAGE_BUDGET = 45; // later pages (no parties band)
+// Cost the Total / GST / Net Amount / In Words block needs on the last page.
+// Kept generous so the totals stay with their lines; when the last page is
+// too full we move trailing groups to a fresh page instead of orphaning the
+// totals. TotalsBlock also has wrap={false} as a final natural-overflow
+// safety net.
+const TOTALS_RESERVE = 6;
+
+/** Cost of one page's worth of groups: their lines plus per-group padding. */
+function groupsCost(groups: LineGroup[]): number {
+  return groups.reduce((s, g) => s + g.lines.length + GROUP_OVERHEAD, 0);
+}
 
 const styles = StyleSheet.create({
   page: {
@@ -253,7 +270,7 @@ function fmtDate(iso: string | null | undefined): string {
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
 }
 
-function groupLines(lines: InvoiceLine[]): LineGroup[] {
+export function groupLines(lines: InvoiceLine[]): LineGroup[] {
   const groups: LineGroup[] = [];
   let current: LineGroup | null = null;
   for (const line of lines) {
@@ -287,33 +304,50 @@ function sumLines(lines: InvoiceLine[]): number {
 
 /**
  * Pack groups into pages. Page 1 has a smaller budget (header + parties
- * eat space); subsequent pages have a bigger budget. The last page also
- * needs to reserve room for the Total / GST / Net Amount block; we pre-check
- * whether the natural last page can fit those and push to a new page if not.
+ * eat space); subsequent pages have a bigger budget.
+ *
+ * The totals block lives on the last page with its lines. When the last
+ * page is too full to also hold the totals, we move trailing trip groups
+ * onto a fresh page so the totals travel with real lines, never on a page
+ * of their own. This means a normal single-page invoice keeps its lines
+ * and totals on ONE page, and carried / brought forward only appear when
+ * line items truly span more than one page.
  */
-function paginateGroups(groups: LineGroup[]): LineGroup[][] {
+export function paginateGroups(groups: LineGroup[]): LineGroup[][] {
   const pages: LineGroup[][] = [];
   let current: LineGroup[] = [];
-  let currentRows = 0;
+  let currentCost = 0;
   for (const g of groups) {
     const budget = pages.length === 0 ? FIRST_PAGE_BUDGET : NEXT_PAGE_BUDGET;
-    if (currentRows + g.lines.length > budget && current.length > 0) {
+    const cost = g.lines.length + GROUP_OVERHEAD;
+    if (currentCost + cost > budget && current.length > 0) {
       pages.push(current);
       current = [];
-      currentRows = 0;
+      currentCost = 0;
     }
     current.push(g);
-    currentRows += g.lines.length;
+    currentCost += cost;
   }
   if (current.length > 0) pages.push(current);
 
-  // If the last page is "too full" for the totals block, add an empty page.
+  // Make room for the totals block on the last page. Only move groups when
+  // the last page genuinely cannot fit the totals alongside them, and never
+  // strand the totals on a page with no lines (keep at least one group with
+  // them).
   if (pages.length > 0) {
-    const lastIdx = pages.length - 1;
-    const lastBudget = lastIdx === 0 ? FIRST_PAGE_BUDGET : NEXT_PAGE_BUDGET;
-    const lastUsed = pages[lastIdx].reduce((s, g) => s + g.lines.length, 0);
-    if (lastUsed + LAST_PAGE_TOTALS_RESERVE > lastBudget) {
-      pages.push([]);
+    let lastIdx = pages.length - 1;
+    let lastBudget = lastIdx === 0 ? FIRST_PAGE_BUDGET : NEXT_PAGE_BUDGET;
+    let lastCost = groupsCost(pages[lastIdx]);
+    while (
+      lastCost + TOTALS_RESERVE > lastBudget &&
+      pages[lastIdx].length > 1
+    ) {
+      const moved = pages[lastIdx].pop();
+      if (!moved) break;
+      pages.push([moved]);
+      lastIdx = pages.length - 1;
+      lastBudget = NEXT_PAGE_BUDGET; // a moved page is never page 1
+      lastCost = groupsCost(pages[lastIdx]);
     }
   }
   return pages;
