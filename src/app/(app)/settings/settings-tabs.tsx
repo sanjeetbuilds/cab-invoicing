@@ -7,7 +7,6 @@ import { BrandingForm } from "./branding-form";
 import { NumberingForm } from "./numbering-form";
 import { TermsForm } from "./terms-form";
 import { TeamSection } from "./team-section";
-import { ReplayTourSection } from "./replay-tour";
 import type { TeamMemberRow } from "./page";
 
 export function SettingsTabs({
@@ -20,18 +19,23 @@ export function SettingsTabs({
   members: TeamMemberRow[];
 }) {
   return (
+    // One tab, one concern: Company holds details only, Branding holds
+    // the style + logo + invoice header preview, the others are
+    // unchanged. Replay tour lives on the More page now.
     <Tabs defaultValue="company">
       <TabsList className="w-full sm:w-fit">
         <TabsTrigger value="company">Company</TabsTrigger>
+        <TabsTrigger value="branding">Branding</TabsTrigger>
         <TabsTrigger value="numbering">Numbering</TabsTrigger>
         <TabsTrigger value="terms">Terms</TabsTrigger>
         <TabsTrigger value="team">Team</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="company" className="pt-4 flex flex-col gap-6">
+      <TabsContent value="company" className="pt-4">
         <CompanyForm company={company} />
+      </TabsContent>
+      <TabsContent value="branding" className="pt-4">
         <BrandingForm company={company} />
-        <ReplayTourSection />
       </TabsContent>
       <TabsContent value="numbering" className="pt-4">
         <NumberingForm company={company} />

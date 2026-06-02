@@ -4,6 +4,7 @@ import { requireMembership } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { SECONDARY } from "@/components/shell/nav-items";
+import { ReplayTourSection } from "../settings/replay-tour";
 
 export const metadata = { title: "More" };
 
@@ -13,6 +14,10 @@ export default async function MorePage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title="More" description="Other tools and settings." />
+
+      {/* Help: replay tour lives here, not inside Company settings,
+          since it is a help action and not a company setting. */}
+      <ReplayTourSection />
 
       <Card>
         <CardContent className="-mx-4 -my-4 sm:-mx-6 sm:-my-6 px-0 py-0">

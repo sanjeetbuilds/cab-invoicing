@@ -67,7 +67,7 @@ export default async function SettingsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Settings"
-        description="Company info, numbering, terms, and team."
+        description="Company info, branding, numbering, terms, and team."
       />
       <SettingsTabs
         company={company}
