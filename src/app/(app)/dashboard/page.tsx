@@ -181,9 +181,9 @@ export default async function DashboardPage() {
 
       {/* Four metric boxes: crisp white cards on the neutral
           background. Colour appears only in the small icon chip.
-          One column on mobile, two by two on medium, four across on
-          wide desktop. Equal heights via auto-rows-fr. */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-3 sm:gap-4">
+          Always a 2 by 2 grid so the boxes stay compact and do not
+          stretch wide on desktop. Equal heights via auto-rows-fr. */}
+      <div className="grid grid-cols-2 auto-rows-fr gap-3 sm:gap-4">
         <StatCard
           label="Unbilled trips"
           value={String(unbilledCount)}
