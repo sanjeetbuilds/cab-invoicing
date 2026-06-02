@@ -28,8 +28,17 @@ export type IssueInvoiceResult =
   | { ok: true; invoice_id: string; invoice_number: number }
   | { ok: false; error: string };
 
-export async function issueInvoiceAction(
+/**
+ * Build an invoice from existing trips and save it, either issued
+ * ("unpaid") or as a "draft". Both paths reserve a number, freeze the
+ * lines, and mark the trips invoiced so the same trips cannot be billed
+ * twice. The only difference is the status, which decides later
+ * behaviour: a draft can be deleted and its number returned to the
+ * pool, an issued invoice keeps its number forever.
+ */
+async function createInvoiceFromTrips(
   raw: IssueInvoiceInput,
+  invoiceStatus: "draft" | "unpaid",
 ): Promise<IssueInvoiceResult> {
   const parsed = IssueInvoiceSchema.safeParse(raw);
   if (!parsed.success) {
@@ -147,7 +156,7 @@ export async function issueInvoiceAction(
       toll_label: draft.toll_label,
       net_amount: draft.net_amount,
       amount_in_words: draft.amount_in_words,
-      status: "unpaid",
+      status: invoiceStatus,
       created_by: ctx.userId,
     })
     .select("id")
@@ -196,6 +205,95 @@ export async function issueInvoiceAction(
   return { ok: true, invoice_id, invoice_number };
 }
 
+/** Issue an invoice straight away: the number is locked permanently. */
+export async function issueInvoiceAction(
+  raw: IssueInvoiceInput,
+): Promise<IssueInvoiceResult> {
+  return createInvoiceFromTrips(raw, "unpaid");
+}
+
+/** Save an invoice as a draft: it can be deleted later and its number
+ *  returned to the pool. */
+export async function saveDraftInvoiceAction(
+  raw: IssueInvoiceInput,
+): Promise<IssueInvoiceResult> {
+  return createInvoiceFromTrips(raw, "draft");
+}
+
+const IdSchema = z.object({ id: z.string().uuid() });
+type IdInput = z.input<typeof IdSchema>;
+type SimpleResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Finalise a draft into an issued invoice. The number it already holds
+ * becomes permanent, so it is never reused even if the invoice is later
+ * undone. Only a draft can be issued this way.
+ */
+export async function issueDraftAction(raw: IdInput): Promise<SimpleResult> {
+  const parsed = IdSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: "Invalid invoice." };
+
+  const ctx = await requireWriter();
+  if (!ctx.ok) return ctx;
+
+  const { data: current, error: readErr } = await ctx.admin
+    .from("invoices")
+    .select("status")
+    .eq("id", parsed.data.id)
+    .eq("company_id", ctx.companyId)
+    .maybeSingle<{ status: string }>();
+  if (readErr) return { ok: false, error: readErr.message };
+  if (!current) return { ok: false, error: "Invoice not found." };
+  if (current.status !== "draft") {
+    return { ok: false, error: "Only a draft can be issued." };
+  }
+
+  const { error: updErr } = await ctx.admin
+    .from("invoices")
+    .update({ status: "unpaid" })
+    .eq("id", parsed.data.id)
+    .eq("company_id", ctx.companyId);
+  if (updErr) return { ok: false, error: updErr.message };
+
+  revalidatePath("/invoices");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+export type DeleteDraftResult =
+  | { ok: true; freed_number: number | null }
+  | { ok: false; error: string };
+
+/**
+ * Delete a draft invoice. The trips it held are freed for billing again,
+ * and the number is returned to the pool when it was the most recent one
+ * allocated. Issued invoices cannot be deleted here.
+ */
+export async function deleteDraftAction(
+  raw: IdInput,
+): Promise<DeleteDraftResult> {
+  const parsed = IdSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: "Invalid invoice." };
+
+  const ctx = await requireWriter();
+  if (!ctx.ok) return ctx;
+
+  // Run through the user-scoped client so auth.uid() resolves inside the
+  // SECURITY DEFINER function, the admin client carries no session.
+  const userSb = await createUserClient();
+  const { data, error } = await userSb.rpc("delete_draft_invoice", {
+    p_company_id: ctx.companyId,
+    p_invoice_id: parsed.data.id,
+  });
+  if (error) return { ok: false, error: error.message };
+
+  const freed = data == null ? null : Number(data);
+  revalidatePath("/invoices");
+  revalidatePath("/trips");
+  revalidatePath("/dashboard");
+  return { ok: true, freed_number: Number.isFinite(freed) ? freed : null };
+}
+
 const MarkPaidSchema = z.object({
   id: z.string().uuid(),
   paid: z.boolean(),
@@ -226,6 +324,9 @@ export async function markInvoicePaidAction(
   if (!existing) return { ok: false, error: "Invoice not found." };
   if (existing.status === "reversed") {
     return { ok: false, error: "Undone invoices cannot be marked paid." };
+  }
+  if (existing.status === "draft") {
+    return { ok: false, error: "Issue the draft first, then mark it paid." };
   }
 
   const nextStatus = parsed.data.paid ? "paid" : "unpaid";
@@ -276,6 +377,9 @@ export async function reverseInvoiceAction(
   if (!existing) return { ok: false, error: "Invoice not found." };
   if (existing.status === "reversed") {
     return { ok: false, error: "Already undone." };
+  }
+  if (existing.status === "draft") {
+    return { ok: false, error: "Drafts are deleted, not undone." };
   }
 
   const { error: invErr } = await ctx.admin

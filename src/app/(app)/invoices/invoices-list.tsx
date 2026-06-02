@@ -11,7 +11,9 @@ import {
   MoreVertical,
   RotateCcw,
   Search,
+  Send,
   Share2,
+  Trash2,
   Undo2,
 } from "lucide-react";
 
@@ -66,12 +68,18 @@ import {
   visibleStatusPills,
 } from "@/lib/list-controls";
 import type { Client, Invoice } from "@/lib/supabase/types";
-import { markInvoicePaidAction, reverseInvoiceAction } from "./actions";
+import {
+  deleteDraftAction,
+  issueDraftAction,
+  markInvoicePaidAction,
+  reverseInvoiceAction,
+} from "./actions";
 
-type StatusFilter = "all" | "unpaid" | "paid" | "reversed";
+type StatusFilter = "all" | "draft" | "unpaid" | "paid" | "reversed";
 
 const STATUS_PILLS: { value: StatusFilter; label: string }[] = [
   { value: "all", label: "All" },
+  { value: "draft", label: "Draft" },
   { value: "unpaid", label: "Unpaid" },
   { value: "paid", label: "Paid" },
   { value: "reversed", label: "Undone" },
@@ -416,6 +424,8 @@ function DesktopInvoiceRow({
     null,
   );
   const [confirmReverse, setConfirmReverse] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmIssue, setConfirmIssue] = useState(false);
 
   const fullNumber = `${prefix}${invoice.invoice_number}`;
   const pdfUrl = `/api/invoices/${invoice.id}/pdf`;
@@ -423,6 +433,7 @@ function DesktopInvoiceRow({
   const downloadName = invoiceFilename(fullNumber, invoice.client_name);
   const reversed = invoice.status === "reversed";
   const paid = invoice.status === "paid";
+  const draft = invoice.status === "draft";
 
   function openPdf() {
     // Same-tab navigation to the in-shell PDF viewer keeps the user
@@ -485,6 +496,38 @@ function DesktopInvoiceRow({
     }
   }
 
+  async function onDeleteDraft() {
+    setPending(true);
+    const result = await deleteDraftAction({ id: invoice.id });
+    setPending(false);
+    if (result.ok) {
+      hapticDestructive();
+      toast.success(
+        result.freed_number != null
+          ? `Draft deleted. Number ${prefix}${result.freed_number} is free to use again.`
+          : "Draft deleted.",
+      );
+      setConfirmDelete(false);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  async function onIssueDraft() {
+    setPending(true);
+    const result = await issueDraftAction({ id: invoice.id });
+    setPending(false);
+    if (result.ok) {
+      hapticSuccess();
+      toast.success(`Invoice ${fullNumber} issued.`);
+      setConfirmIssue(false);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
   function copyNumber() {
     navigator.clipboard
       .writeText(fullNumber)
@@ -526,13 +569,19 @@ function DesktopInvoiceRow({
                 <Share2 className="h-4 w-4" />
                 Share PDF
               </DropdownMenuItem>
-              {!reversed && !paid && (
+              {draft && (
+                <DropdownMenuItem onClick={() => setConfirmIssue(true)}>
+                  <Send className="h-4 w-4" />
+                  Issue invoice
+                </DropdownMenuItem>
+              )}
+              {!draft && !reversed && !paid && (
                 <DropdownMenuItem onClick={() => setConfirmPaid("mark")}>
                   <Check className="h-4 w-4" />
                   Mark paid
                 </DropdownMenuItem>
               )}
-              {!reversed && paid && (
+              {!draft && !reversed && paid && (
                 <DropdownMenuItem onClick={() => setConfirmPaid("unmark")}>
                   <Undo2 className="h-4 w-4" />
                   Mark unpaid
@@ -542,7 +591,16 @@ function DesktopInvoiceRow({
                 <Copy className="h-4 w-4" />
                 Copy invoice number
               </DropdownMenuItem>
-              {!reversed && (
+              {draft && (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete draft
+                </DropdownMenuItem>
+              )}
+              {!draft && !reversed && (
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={() => setConfirmReverse(true)}
@@ -573,6 +631,22 @@ function DesktopInvoiceRow({
         onCancel={() => setConfirmReverse(false)}
         onConfirm={onReverse}
       />
+      <DeleteDraftDialog
+        open={confirmDelete}
+        invoice={invoice}
+        fullNumber={fullNumber}
+        pending={pending}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={onDeleteDraft}
+      />
+      <IssueDraftDialog
+        open={confirmIssue}
+        invoice={invoice}
+        fullNumber={fullNumber}
+        pending={pending}
+        onCancel={() => setConfirmIssue(false)}
+        onConfirm={onIssueDraft}
+      />
     </>
   );
 }
@@ -592,6 +666,8 @@ function MobileInvoiceCard({
     null,
   );
   const [confirmReverse, setConfirmReverse] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmIssue, setConfirmIssue] = useState(false);
 
   const fullNumber = `${prefix}${invoice.invoice_number}`;
   const pdfUrl = `/api/invoices/${invoice.id}/pdf`;
@@ -599,6 +675,7 @@ function MobileInvoiceCard({
   const downloadName = invoiceFilename(fullNumber, invoice.client_name);
   const reversed = invoice.status === "reversed";
   const paid = invoice.status === "paid";
+  const draft = invoice.status === "draft";
 
   function openPdf() {
     // Same-tab navigation, see DesktopInvoiceRow above.
@@ -647,6 +724,38 @@ function MobileInvoiceCard({
       hapticDestructive();
       toast.success(`${fullNumber} undone.`);
       setConfirmReverse(false);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  async function onDeleteDraft() {
+    setPending(true);
+    const result = await deleteDraftAction({ id: invoice.id });
+    setPending(false);
+    if (result.ok) {
+      hapticDestructive();
+      toast.success(
+        result.freed_number != null
+          ? `Draft deleted. Number ${prefix}${result.freed_number} is free to use again.`
+          : "Draft deleted.",
+      );
+      setConfirmDelete(false);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  async function onIssueDraft() {
+    setPending(true);
+    const result = await issueDraftAction({ id: invoice.id });
+    setPending(false);
+    if (result.ok) {
+      hapticSuccess();
+      toast.success(`Invoice ${fullNumber} issued.`);
+      setConfirmIssue(false);
       router.refresh();
     } else {
       toast.error(result.error);
@@ -728,7 +837,19 @@ function MobileInvoiceCard({
             >
               <FileText className="h-4 w-4" />
             </button>
-            {!reversed && !paid && (
+            {draft && (
+              <button
+                type="button"
+                onClick={() => setConfirmIssue(true)}
+                disabled={pending}
+                aria-label="Issue invoice"
+                title="Issue invoice"
+                className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            )}
+            {!draft && !reversed && !paid && (
               <button
                 type="button"
                 onClick={() => setConfirmPaid("mark")}
@@ -740,7 +861,7 @@ function MobileInvoiceCard({
                 <Check className="h-4 w-4" />
               </button>
             )}
-            {!reversed && paid && (
+            {!draft && !reversed && paid && (
               <button
                 type="button"
                 onClick={() => setConfirmPaid("unmark")}
@@ -764,7 +885,16 @@ function MobileInvoiceCard({
                   <Copy className="h-4 w-4" />
                   Copy invoice number
                 </DropdownMenuItem>
-                {!reversed && (
+                {draft && (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => setConfirmDelete(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete draft
+                  </DropdownMenuItem>
+                )}
+                {!draft && !reversed && (
                   <DropdownMenuItem
                     variant="destructive"
                     onClick={() => setConfirmReverse(true)}
@@ -795,6 +925,22 @@ function MobileInvoiceCard({
         pending={pending}
         onCancel={() => setConfirmReverse(false)}
         onConfirm={onReverse}
+      />
+      <DeleteDraftDialog
+        open={confirmDelete}
+        invoice={invoice}
+        fullNumber={fullNumber}
+        pending={pending}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={onDeleteDraft}
+      />
+      <IssueDraftDialog
+        open={confirmIssue}
+        invoice={invoice}
+        fullNumber={fullNumber}
+        pending={pending}
+        onCancel={() => setConfirmIssue(false)}
+        onConfirm={onIssueDraft}
       />
     </>
   );
@@ -876,6 +1022,82 @@ function ReverseDialog({
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} disabled={pending}>
             {pending ? "Undoing…" : "Undo"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function DeleteDraftDialog({
+  open,
+  invoice,
+  fullNumber,
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  invoice: Invoice;
+  fullNumber: string;
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this draft?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Draft <strong>{fullNumber}</strong> for{" "}
+            <strong>{invoice.client_name}</strong> will be deleted and its
+            trips will return to the open list. Its number will be free to use
+            again.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} disabled={pending}>
+            {pending ? "Deleting…" : "Delete draft"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function IssueDraftDialog({
+  open,
+  invoice,
+  fullNumber,
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  invoice: Invoice;
+  fullNumber: string;
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Issue this invoice?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Draft <strong>{fullNumber}</strong> for{" "}
+            <strong>{invoice.client_name}</strong> will be issued. Number{" "}
+            <strong>{fullNumber}</strong> then stays with this invoice for good
+            and is never reused, even if you undo it later.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} disabled={pending}>
+            {pending ? "Issuing…" : "Issue invoice"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

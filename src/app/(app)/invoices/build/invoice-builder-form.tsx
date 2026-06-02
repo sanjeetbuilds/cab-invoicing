@@ -17,7 +17,7 @@ import type {
 } from "@/lib/supabase/types";
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
 import { buildInvoiceDraft } from "@/lib/invoice-builder";
-import { issueInvoiceAction } from "../actions";
+import { issueInvoiceAction, saveDraftInvoiceAction } from "../actions";
 
 import { formatINR } from "@/lib/format";
 
@@ -55,6 +55,7 @@ export function InvoiceBuilderForm({
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   const sortedDates = trips.map((t) => t.date).sort();
   const [invoiceDate, setInvoiceDate] = useState(todayIso());
@@ -143,6 +144,36 @@ export function InvoiceBuilderForm({
       // Land on the in-shell PDF viewer so the user can preview /
       // share without leaving the app.
       router.push(`/invoices/${result.invoice_id}`);
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  async function onSaveDraft() {
+    if (selectedTrips.length === 0) {
+      toast.error("Pick at least one trip.");
+      return;
+    }
+    if (hasMissingRate) {
+      toast.error("Add rate cards for the flagged trips first.");
+      return;
+    }
+    setSavingDraft(true);
+    const result = await saveDraftInvoiceAction({
+      client_id: client.id,
+      invoice_date: invoiceDate,
+      period_from: periodFrom,
+      period_to: periodTo,
+      trip_ids: selectedTrips.map((t) => t.id),
+      toll_override: tollOverride,
+    });
+    setSavingDraft(false);
+
+    if (result.ok) {
+      toast.success(`Draft #${result.invoice_number} saved.`);
+      // Drafts live in the invoices list, where they can be issued or
+      // deleted. Send the user there to find it.
+      router.push("/invoices");
     } else {
       toast.error(result.error);
     }
@@ -366,6 +397,9 @@ export function InvoiceBuilderForm({
         onCancel={() => router.push("/trips")}
         saveLabel="Issue invoice"
         savingLabel="Issuing..."
+        secondaryLabel="Save as draft"
+        onSecondary={onSaveDraft}
+        secondaryPending={savingDraft}
       />
     </div>
   );

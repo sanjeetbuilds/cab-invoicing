@@ -47,6 +47,9 @@ export function SaveBar({
   savingLabel = "Saving...",
   cancelLabel = "Cancel",
   hideCancel = false,
+  secondaryLabel,
+  onSecondary,
+  secondaryPending = false,
 }: {
   formId?: string;
   onSave?: () => void;
@@ -72,6 +75,10 @@ export function SaveBar({
   savingLabel?: string;
   cancelLabel?: string;
   hideCancel?: boolean;
+  /** Optional second button left of Save, e.g. "Save as draft". */
+  secondaryLabel?: string;
+  onSecondary?: () => void;
+  secondaryPending?: boolean;
 }) {
   // Only render the bar (and register with the shell context) when
   // there's something to save or a save is in flight. While clean we
@@ -93,6 +100,9 @@ export function SaveBar({
       savingLabel={savingLabel}
       cancelLabel={cancelLabel}
       hideCancel={hideCancel}
+      secondaryLabel={secondaryLabel}
+      onSecondary={onSecondary}
+      secondaryPending={secondaryPending}
     />
   );
 }
@@ -109,6 +119,9 @@ function SaveBarBody({
   savingLabel,
   cancelLabel,
   hideCancel,
+  secondaryLabel,
+  onSecondary,
+  secondaryPending,
 }: {
   formId?: string;
   onSave?: () => void;
@@ -121,6 +134,9 @@ function SaveBarBody({
   savingLabel: string;
   cancelLabel: string;
   hideCancel: boolean;
+  secondaryLabel?: string;
+  onSecondary?: () => void;
+  secondaryPending?: boolean;
 }) {
   useRegisterSaveBar();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -196,11 +212,24 @@ function SaveBarBody({
                 {cancelLabel}
               </Button>
             )}
+            {secondaryLabel && onSecondary && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onSecondary}
+                disabled={pending || secondaryPending}
+              >
+                {secondaryPending && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {secondaryLabel}
+              </Button>
+            )}
             <Button
               type={formId ? "submit" : "button"}
               form={formId}
               onClick={formId ? undefined : onSave}
-              disabled={disabled}
+              disabled={disabled || secondaryPending}
             >
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
               {pending ? savingLabel : saveLabel}

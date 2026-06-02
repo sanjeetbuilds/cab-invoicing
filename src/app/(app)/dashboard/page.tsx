@@ -117,12 +117,16 @@ export default async function DashboardPage() {
       .select("net_amount")
       .eq("company_id", membership.company_id)
       .gte("invoice_date", monthStart)
-      .neq("status", "reversed")
+      // Only issued invoices count as billed. Drafts are not issued and
+      // reversed ones are undone, so both are left out.
+      .in("status", ["unpaid", "paid"])
       .returns<Pick<Invoice, "net_amount">[]>(),
     supabase
       .from("invoices")
       .select("*")
       .eq("company_id", membership.company_id)
+      // Drafts are not issued, so they stay out of the recent list.
+      .neq("status", "draft")
       .order("invoice_date", { ascending: false })
       .order("invoice_number", { ascending: false })
       .limit(5)
