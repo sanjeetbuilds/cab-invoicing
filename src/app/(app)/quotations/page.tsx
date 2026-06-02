@@ -3,6 +3,7 @@ import { FileSignature, Plus } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ListSticky } from "@/components/ui/list-sticky";
 import { PageHeader } from "@/components/ui/page-header";
 import { SamplePreview } from "@/components/ui/sample-preview";
 import { QuotationsSampleRows } from "@/components/ui/sample-rows";
@@ -46,47 +47,58 @@ export default async function QuotationsPage() {
   const showingSamples = isEmpty && isFirstTime;
   const showingCalmEmpty = isEmpty && !isFirstTime;
 
+  const header = (
+    <PageHeader
+      title="Quotations"
+      description="Send your prices to a client. When they accept, it saves as their rates."
+    >
+      <Link
+        href="/quotations/new"
+        className={buttonVariants({
+          variant: showingSamples ? "outline" : "default",
+        })}
+      >
+        <Plus className="h-4 w-4" />
+        New quotation
+      </Link>
+    </PageHeader>
+  );
+
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title="Quotations"
-        description="Send your prices to a client. When they accept, it saves as their rates."
-        bordered
-      >
-        <Link
-          href="/quotations/new"
-          className={buttonVariants({
-            variant: showingSamples ? "outline" : "default",
-          })}
-        >
-          <Plus className="h-4 w-4" />
-          New quotation
-        </Link>
-      </PageHeader>
-
       {showingSamples && (
-        <SamplePreview
-          icon={<FileSignature className="h-4 w-4" />}
-          iconChipBg="#E6F1FB"
-          iconChipFg="#0C447C"
-          title="This is where your quotations live."
-          body="Send your prices to a client. When they accept, it saves as their rates."
-          primary={{ label: "New quotation", href: "/quotations/new" }}
-        >
-          <QuotationsSampleRows />
-        </SamplePreview>
+        <>
+          <ListSticky>{header}</ListSticky>
+          <SamplePreview
+            icon={<FileSignature className="h-4 w-4" />}
+            iconChipBg="#E6F1FB"
+            iconChipFg="#0C447C"
+            title="This is where your quotations live."
+            body="Send your prices to a client. When they accept, it saves as their rates."
+            primary={{ label: "New quotation", href: "/quotations/new" }}
+          >
+            <QuotationsSampleRows />
+          </SamplePreview>
+        </>
       )}
 
       {showingCalmEmpty && (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            No quotations here.
-          </CardContent>
-        </Card>
+        <>
+          <ListSticky>{header}</ListSticky>
+          <Card>
+            <CardContent className="py-12 text-center text-sm text-muted-foreground">
+              No quotations here.
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {!isEmpty && (
-        <QuotationsList quotations={list} clients={clients ?? []} />
+        <QuotationsList
+          quotations={list}
+          clients={clients ?? []}
+          header={header}
+        />
       )}
     </div>
   );

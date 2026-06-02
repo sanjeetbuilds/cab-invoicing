@@ -189,21 +189,14 @@
     @apply border-border outline-ring/40;
   }
   body {
-    @apply text-foreground font-sans;
-    /* Very subtle indigo wash at the top fading to standard grey -
-       depth, not paint. Light theme only; the .dark override below
-       restores the solid dark surface. */
-    background:
-      linear-gradient(180deg, #f7f6ff 0%, #fafafa 40%) no-repeat;
-    background-color: #fafafa;
-    background-attachment: fixed;
+    @apply text-foreground font-sans bg-background;
+    /* One clean flat surface, light and dark theme. The interest
+       comes from cards, chips, headers, and spacing, never from
+       a busy background. */
     min-height: 100vh;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-  .dark body {
-    background: var(--background);
   }
   html {
     @apply font-sans;

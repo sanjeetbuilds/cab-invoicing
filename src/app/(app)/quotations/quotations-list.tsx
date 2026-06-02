@@ -95,9 +95,13 @@ function fmtDate(iso: string | null | undefined): string {
 export function QuotationsList({
   quotations,
   clients,
+  header,
 }: {
   quotations: Quotation[];
   clients: Pick<Client, "id" | "name">[];
+  /** Page title + actions JSX rendered as the first row of the
+   *  single sticky chrome at the top of the list. */
+  header?: React.ReactNode;
 }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -199,107 +203,106 @@ export function QuotationsList({
 
   return (
     <div className="flex flex-col gap-4">
-      {(showSearch || showFiltersButton || statusPills.length > 0) && (
-        <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background/95 backdrop-blur border-b border-border flex flex-col gap-3">
-          {(showSearch || showFiltersButton) && (
-            <div className="flex items-center gap-2">
-              {showSearch && (
-                <div className="relative flex-1 min-w-0">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search number or client…"
-                    className="pl-8"
-                  />
-                </div>
-              )}
-              {showFiltersButton && (
-                <button
-                  type="button"
-                  onClick={() => setShowFilters((v) => !v)}
-                  className={cn(
-                    "inline-flex items-center gap-2 rounded-lg border px-3 h-10 text-sm font-medium shrink-0",
-                    !showSearch && "ml-auto",
-                    showFilters || activeFilterCount > 0
-                      ? "bg-accent-soft text-accent-foreground border-accent-soft"
-                      : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
-                  )}
-                >
-                  <Filter className="h-4 w-4" />
-                  <span className="hidden sm:inline">Filters</span>
-                  {activeFilterCount > 0 && (
-                    <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </button>
-              )}
-            </div>
-          )}
-
-          {statusPills.length > 0 && (
-            <div className="flex gap-2 flex-wrap">
-              {statusPills.map((p) => (
-                <button
-                  key={p.value}
-                  type="button"
-                  onClick={() => setStatus(p.value)}
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors duration-150",
-                    status === p.value
-                      ? "bg-accent-soft text-accent-foreground border-accent-soft"
-                      : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
-                  )}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Desktop (md+): inline panel below the toolbar, mirrors the
-              mobile bottom-sheet content. */}
-          {showFilters && showFiltersButton && !isMobile && (
-            <div className="hidden md:flex flex-col gap-4 pt-1">
-              {showClientFilter && (
-                <ClientFilterList
-                  clientId={clientId}
-                  setClientId={setClientId}
-                  clients={clients}
+      <div className="sticky top-11 sm:top-12 z-20 -mx-4 sm:-mx-6 -mt-4 sm:-mt-8 mb-2 px-4 sm:px-6 py-3 bg-background border-b border-border flex flex-col gap-3">
+        {header}
+        {(showSearch || showFiltersButton) && (
+          <div className="flex items-center gap-2">
+            {showSearch && (
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search number or client…"
+                  className="pl-8"
                 />
-              )}
-              {showPeriodFilter && (
-                <PeriodFilterList
-                  preset={period}
-                  setPreset={setPeriod}
-                  customFrom={customFrom}
-                  setCustomFrom={setCustomFrom}
-                  customTo={customTo}
-                  setCustomTo={setCustomTo}
-                />
-              )}
-              <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearAll}
-                >
-                  Clear all filters
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => setShowFilters(false)}
-                >
-                  Apply filters
-                </Button>
               </div>
+            )}
+            {showFiltersButton && (
+              <button
+                type="button"
+                onClick={() => setShowFilters((v) => !v)}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-lg border px-3 h-10 text-sm font-medium shrink-0",
+                  !showSearch && "ml-auto",
+                  showFilters || activeFilterCount > 0
+                    ? "bg-accent-soft text-accent-foreground border-accent-soft"
+                    : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <Filter className="h-4 w-4" />
+                <span className="hidden sm:inline">Filters</span>
+                {activeFilterCount > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
+        )}
+
+        {statusPills.length > 0 && (
+          <div className="flex gap-2 flex-wrap">
+            {statusPills.map((p) => (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => setStatus(p.value)}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors duration-150",
+                  status === p.value
+                    ? "bg-accent-soft text-accent-foreground border-accent-soft"
+                    : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+                )}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Desktop (md+): inline panel below the toolbar, mirrors
+            the mobile bottom-sheet content. */}
+        {showFilters && showFiltersButton && !isMobile && (
+          <div className="hidden md:flex flex-col gap-4 pt-1">
+            {showClientFilter && (
+              <ClientFilterList
+                clientId={clientId}
+                setClientId={setClientId}
+                clients={clients}
+              />
+            )}
+            {showPeriodFilter && (
+              <PeriodFilterList
+                preset={period}
+                setPreset={setPeriod}
+                customFrom={customFrom}
+                setCustomFrom={setCustomFrom}
+                customTo={customTo}
+                setCustomTo={setCustomTo}
+              />
+            )}
+            <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearAll}
+              >
+                Clear all filters
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setShowFilters(false)}
+              >
+                Apply filters
+              </Button>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* Mobile bottom sheet, inline radio sections, no nested
           dropdowns. Apply commits and closes; Clear resets to default. */}

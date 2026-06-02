@@ -24,11 +24,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import type { Company, Invoice } from "@/lib/supabase/types";
 import { formatINR } from "@/lib/format";
-import { PageHeader } from "@/components/ui/page-header";
-import { FitText } from "@/components/ui/fit-text";
 import { cn } from "@/lib/utils";
 import { SeedBanner } from "../seed/seed-banner";
 import { SetupChecklist, type SetupStatus } from "./setup-checklist";
@@ -48,6 +45,31 @@ function firstOfThisMonthIso(): string {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   return `${yyyy}-${mm}-01`;
+}
+
+/** Friendly long date for the welcome strip, e.g. "Monday, 2 June 2026". */
+function fmtToday(): string {
+  return new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/** Rupee amount with Indian grouping and a clean trailing zero rule,
+ *  ₹2,14,500 when the number is whole, ₹58,082.50 when there is a
+ *  paise tail. Used in the metric cards so big amounts read warmly
+ *  without forcing .00 on every clean number. */
+function formatINRClean(n: number): string {
+  if (!Number.isFinite(n) || n === 0) return "₹0";
+  const hasFraction = Math.round(n * 100) % 100 !== 0;
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: hasFraction ? 2 : 0,
+    maximumFractionDigits: hasFraction ? 2 : 0,
+  }).format(n);
 }
 
 export default async function DashboardPage() {
@@ -118,9 +140,9 @@ export default async function DashboardPage() {
       .returns<Invoice[]>(),
     supabase
       .from("companies")
-      .select("address, phone, gstin")
+      .select("name, address, phone, gstin")
       .eq("id", membership.company_id)
-      .maybeSingle<Pick<Company, "address" | "phone" | "gstin">>(),
+      .maybeSingle<Pick<Company, "name" | "address" | "phone" | "gstin">>(),
   ]);
 
   const setupStatus: SetupStatus = {
@@ -144,17 +166,28 @@ export default async function DashboardPage() {
 
   const isFresh = (clientCount ?? 0) === 0 && (vehicleCount ?? 0) === 0;
   const recent = recentInvoices ?? [];
+  const companyName = companyMeta?.name ?? "there";
+  const todayLabel = fmtToday();
+  const cc = clientCount ?? 0;
+  const vc = vehicleCount ?? 0;
+  const clientsAndCars = `${cc} client${cc === 1 ? "" : "s"}, ${vc} car${vc === 1 ? "" : "s"}`;
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Dashboard" description="Your business at a glance." />
+      {/* Welcome strip: anchors the page without a heavy header
+          banner. Title-style greeting, muted date below. */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+          Welcome back, {companyName}.
+        </h1>
+        <p className="text-sm text-muted-foreground">{todayLabel}</p>
+      </div>
 
       {isFresh && <SeedBanner />}
       <SetupChecklist status={setupStatus} />
 
-      {/* 4 stat tiles, 2-up on mobile, 4-up at lg+. auto-rows-fr +
-          h-full on the tiles equalises height across rows so a tile
-          with a one-line hint doesn't sit shorter than its neighbour. */}
+      {/* 4 stat tiles, 2-up on mobile, 4-up at lg+. Distinct tinted
+          chips per metric, white cards on the flat surface. */}
       <div className="grid grid-cols-2 auto-rows-fr gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           label="Unbilled trips"
@@ -162,12 +195,12 @@ export default async function DashboardPage() {
           hint="Trips not yet on a bill."
           href="/trips"
           icon={Route}
-          chipBg="#EEEDFE"
-          chipFg="#3C3489"
+          chipBg="#EDE9FE"
+          chipFg="#6D28D9"
         />
         <StatCard
           label="Outstanding"
-          value={outstanding > 0 ? formatINR(outstanding) : "-"}
+          value={outstanding > 0 ? formatINRClean(outstanding) : "₹0"}
           hint={
             unpaidInvoices && unpaidInvoices.length > 0
               ? `${unpaidInvoices.length} unpaid invoice${
@@ -177,115 +210,126 @@ export default async function DashboardPage() {
           }
           href="/invoices"
           icon={Clock}
-          chipBg="#FAEEDA"
-          chipFg="#633806"
+          chipBg="#FEF3C7"
+          chipFg="#B45309"
         />
         <StatCard
           label="Billed this month"
-          value={billedThisMonth > 0 ? formatINR(billedThisMonth) : "-"}
+          value={billedThisMonth > 0 ? formatINRClean(billedThisMonth) : "₹0"}
           hint={`Since ${fmtDate(monthStart)}.`}
           href="/invoices"
           icon={ReceiptIndianRupee}
-          chipBg="#E1F5EE"
-          chipFg="#085041"
+          chipBg="#D1FAE5"
+          chipFg="#047857"
         />
         <StatCard
           label="Clients and cars"
-          value={`${clientCount ?? 0} and ${vehicleCount ?? 0}`}
-          hint="Your active clients and cars."
+          value={clientsAndCars}
+          hint="Active records in your account."
           icon={Users}
-          chipBg="#E6F1FB"
-          chipFg="#0C447C"
+          chipBg="#DBEAFE"
+          chipFg="#1D4ED8"
         />
       </div>
 
       {/* Recent invoices, last 5. The only list on the dashboard. */}
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle>Recent invoices</CardTitle>
-            <CardDescription className="hidden sm:block">
-              Last 5 issued.
-            </CardDescription>
-          </div>
-          <CardAction>
-            <Link
-              href="/invoices"
-              className="text-sm font-medium text-primary hover:text-primary-hover"
-            >
-              See all →
-            </Link>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          {recent.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-3">
-              No invoices yet.{" "}
-              <Link
-                href="/invoices/build"
-                className="font-medium text-primary hover:text-primary-hover"
-              >
-                Make your first invoice.
-              </Link>
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recent.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-medium">
-                      <Link
-                        href={`/invoices/${inv.id}`}
-                        className="text-foreground hover:text-primary"
-                      >
-                        {inv.invoice_number}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="tabular-nums text-muted-foreground">
-                      {fmtDate(inv.invoice_date)}
-                    </TableCell>
-                    <TableCell>{inv.client_name}</TableCell>
-                    <TableCell className="text-right tabular-nums font-medium">
-                      {formatINR(Number(inv.net_amount))}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <StatusBadge status={inv.status} />
-                    </TableCell>
+      <section className="flex flex-col gap-3">
+        <SectionHeader
+          title="Recent invoices"
+          subtitle="The last five you issued."
+          actionHref="/invoices"
+          actionLabel="See all"
+        />
+        <Card>
+          <CardContent>
+            {recent.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-3">
+                No invoices yet.{" "}
+                <Link
+                  href="/invoices/build"
+                  className="font-medium text-primary hover:text-primary-hover"
+                >
+                  Make your first invoice.
+                </Link>
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Number</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {recent.map((inv) => (
+                    <TableRow key={inv.id}>
+                      <TableCell className="font-medium">
+                        <Link
+                          href={`/invoices/${inv.id}`}
+                          className="text-foreground hover:text-primary"
+                        >
+                          {inv.invoice_number}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="tabular-nums text-muted-foreground">
+                        {fmtDate(inv.invoice_date)}
+                      </TableCell>
+                      <TableCell>{inv.client_name}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">
+                        {formatINR(Number(inv.net_amount))}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <StatusBadge status={inv.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
 
-/** Renders a stat value with a smaller, lighter ₹ prefix when the
- *  value is a rupee amount. The ₹ sits at 75% of the digit size and
- *  font-normal so any subtle font-fallback mismatch is invisible. */
-function renderStatValue(value: string) {
-  if (value.startsWith("₹")) {
-    return (
-      <>
-        <span className="text-[0.75em] font-normal align-baseline mr-0.5">
-          ₹
-        </span>
-        {value.slice(1)}
-      </>
-    );
-  }
-  return value;
+/** Section header used between dashboard panels. Larger and more
+ *  confident than the older inline CardTitle, gives the page rhythm
+ *  by sitting outside the card. */
+function SectionHeader({
+  title,
+  subtitle,
+  actionHref,
+  actionLabel,
+}: {
+  title: string;
+  subtitle?: string;
+  actionHref?: string;
+  actionLabel?: string;
+}) {
+  return (
+    <div className="flex items-end justify-between gap-3 flex-wrap">
+      <div className="min-w-0">
+        <h2 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+        )}
+      </div>
+      {actionHref && actionLabel && (
+        <Link
+          href={actionHref}
+          className="text-sm font-medium text-primary hover:text-primary-hover shrink-0"
+        >
+          {actionLabel}
+        </Link>
+      )}
+    </div>
+  );
 }
 
 function StatCard({
@@ -302,15 +346,15 @@ function StatCard({
   hint: string;
   href?: string;
   icon: LucideIcon;
-  /** Hex fill for the small icon chip. Stays light enough that
-   *  the dark icon reads in both light and dark mode. */
+  /** Hex fill for the small icon chip. */
   chipBg: string;
   /** Hex foreground for the icon, paired with chipBg. */
   chipFg: string;
 }) {
-  // Layout per card: icon chip on top, big number, label, then a
-  // muted sub-line. Numbers and labels stay in the normal text
-  // colours, only the small chip carries the colour.
+  // Layout per card: icon chip on top, big number in the app's
+  // regular font, label, then a muted sub-line. Numbers and labels
+  // stay in the normal text colour. Only the chip carries the
+  // colour.
   const card = (
     <Card
       className={cn(
@@ -325,15 +369,8 @@ function StatCard({
       >
         <Icon className="h-[18px] w-[18px]" />
       </span>
-      <p className="overflow-hidden">
-        <FitText
-          text={value}
-          maxPx={24}
-          minPx={16}
-          className="font-mono font-semibold tabular-nums text-foreground"
-        >
-          {renderStatValue(value)}
-        </FitText>
+      <p className="text-lg sm:text-xl font-semibold tracking-tight text-foreground truncate">
+        {value}
       </p>
       <p className="text-[11px] uppercase tracking-[0.05em] text-muted-foreground font-medium mt-1">
         {label}

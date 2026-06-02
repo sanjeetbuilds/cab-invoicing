@@ -3,6 +3,7 @@ import { Plus, ReceiptIndianRupee, Zap } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ListSticky } from "@/components/ui/list-sticky";
 import { PageHeader } from "@/components/ui/page-header";
 import { SamplePreview } from "@/components/ui/sample-preview";
 import { InvoicesSampleRows } from "@/components/ui/sample-rows";
@@ -87,55 +88,71 @@ export default async function InvoicesPage() {
   const showingSamples = !error && isEmpty && isFirstTime;
   const showingCalmEmpty = !error && isEmpty && !isFirstTime;
 
+  const actions = (
+    <>
+      <Link
+        href="/invoices/quick"
+        className={buttonVariants({ variant: "outline" })}
+      >
+        <Zap className="h-4 w-4" />
+        Quick invoice
+      </Link>
+      <Link
+        href="/invoices/build"
+        className={buttonVariants({
+          variant: showingSamples ? "outline" : "default",
+        })}
+      >
+        <Plus className="h-4 w-4" />
+        Build invoice
+      </Link>
+    </>
+  );
+
+  const header = (
+    <PageHeader
+      title="Invoices"
+      description="Invoice numbers are never repeated."
+    >
+      {actions}
+    </PageHeader>
+  );
+
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title="Invoices"
-        description="Invoice numbers are never repeated."
-        bordered
-      >
-        <Link
-          href="/invoices/quick"
-          className={buttonVariants({ variant: "outline" })}
-        >
-          <Zap className="h-4 w-4" />
-          Quick invoice
-        </Link>
-        <Link
-          href="/invoices/build"
-          className={buttonVariants({
-            variant: showingSamples ? "outline" : "default",
-          })}
-        >
-          <Plus className="h-4 w-4" />
-          Build invoice
-        </Link>
-      </PageHeader>
-
       {error && (
-        <p className="text-sm text-destructive">Failed to load: {error.message}</p>
+        <>
+          <ListSticky>{header}</ListSticky>
+          <p className="text-sm text-destructive">Failed to load: {error.message}</p>
+        </>
       )}
 
       {showingSamples && (
-        <SamplePreview
-          icon={<ReceiptIndianRupee className="h-4 w-4" />}
-          iconChipBg="#E1F5EE"
-          iconChipFg="#085041"
-          title="This is where your invoices live."
-          body="Pick a client's unbilled trips and turn them into one bill."
-          primary={{ label: "Build invoice", href: "/invoices/build" }}
-          setupHint={{ step: 6, total: 6 }}
-        >
-          <InvoicesSampleRows />
-        </SamplePreview>
+        <>
+          <ListSticky>{header}</ListSticky>
+          <SamplePreview
+            icon={<ReceiptIndianRupee className="h-4 w-4" />}
+            iconChipBg="#E1F5EE"
+            iconChipFg="#085041"
+            title="This is where your invoices live."
+            body="Pick a client's unbilled trips and turn them into one bill."
+            primary={{ label: "Build invoice", href: "/invoices/build" }}
+            setupHint={{ step: 6, total: 6 }}
+          >
+            <InvoicesSampleRows />
+          </SamplePreview>
+        </>
       )}
 
       {showingCalmEmpty && (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            No invoices here.
-          </CardContent>
-        </Card>
+        <>
+          <ListSticky>{header}</ListSticky>
+          <Card>
+            <CardContent className="py-12 text-center text-sm text-muted-foreground">
+              No invoices here.
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {!error && !isEmpty && (
@@ -144,6 +161,7 @@ export default async function InvoicesPage() {
           clients={clients ?? []}
           prefix={prefix}
           dutiesByInvoice={Object.fromEntries(dutiesByInvoice)}
+          header={header}
         />
       )}
     </div>

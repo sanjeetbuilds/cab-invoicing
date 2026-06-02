@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ListSticky } from "@/components/ui/list-sticky";
 import { PageHeader } from "@/components/ui/page-header";
 import type { Vehicle } from "@/lib/supabase/types";
 import { AddVehicleButton } from "./add-vehicle-button";
@@ -36,20 +37,21 @@ export default async function VehiclesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Vehicles"
-        description="Your cars, both your own and attached vendor cars."
-        bordered
-      >
-        <Link
-          href="/bulk-import?scope=vehicles"
-          className={buttonVariants({ variant: "outline", size: "sm" })}
+      <ListSticky>
+        <PageHeader
+          title="Vehicles"
+          description="Your cars, both your own and attached vendor cars."
         >
-          <Upload className="h-4 w-4" />
-          Import
-        </Link>
-        <AddVehicleButton muted={isEmpty} />
-      </PageHeader>
+          <Link
+            href="/bulk-import?scope=vehicles"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <Upload className="h-4 w-4" />
+            Import
+          </Link>
+          <AddVehicleButton muted={isEmpty} />
+        </PageHeader>
+      </ListSticky>
 
       {error && (
         <p className="text-sm text-destructive">Failed to load: {error.message}</p>

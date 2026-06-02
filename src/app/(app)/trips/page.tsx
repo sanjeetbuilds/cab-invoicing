@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
+import { ListSticky } from "@/components/ui/list-sticky";
 import { PageHeader } from "@/components/ui/page-header";
 import { SamplePreview } from "@/components/ui/sample-preview";
 import { TripsSampleRows } from "@/components/ui/sample-rows";
@@ -176,23 +177,46 @@ export default async function TripsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Trips"
-        description="Your daily trips. Each trip becomes a line on a monthly bill."
-        bordered
-      >
-        <Link
-          href="/trips/bulk"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "sm" }),
-            "hidden lg:inline-flex",
-            noPrereqs ? "pointer-events-none opacity-50" : "",
-          )}
+      <ListSticky>
+        <PageHeader
+          title="Trips"
+          description="Your daily trips. Each trip becomes a line on a monthly bill."
         >
-          Bulk add
-        </Link>
-        <AddTripButton disabled={noPrereqs} muted={showingSamples} />
-      </PageHeader>
+          <Link
+            href="/trips/bulk"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "hidden lg:inline-flex",
+              noPrereqs ? "pointer-events-none opacity-50" : "",
+            )}
+          >
+            Bulk add
+          </Link>
+          <AddTripButton disabled={noPrereqs} muted={showingSamples} />
+        </PageHeader>
+
+        {showStatusPills && (
+          <div className="flex gap-2">
+            {FILTERS.map((f) => {
+              const active = f.value === status;
+              return (
+                <Link
+                  key={f.value}
+                  href={f.value === "uninvoiced" ? "/trips" : `/trips?status=${f.value}`}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150",
+                    active
+                      ? "bg-accent-soft text-accent-foreground border-accent-soft"
+                      : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {f.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </ListSticky>
 
       {noPrereqs && (
         <Card>
@@ -204,28 +228,6 @@ export default async function TripsPage({
             Then you can add trips.
           </CardContent>
         </Card>
-      )}
-
-      {showStatusPills && (
-        <div className="flex gap-2">
-          {FILTERS.map((f) => {
-            const active = f.value === status;
-            return (
-              <Link
-                key={f.value}
-                href={f.value === "uninvoiced" ? "/trips" : `/trips?status=${f.value}`}
-                className={cn(
-                  "rounded-full border px-3 py-2 text-sm font-medium transition-colors duration-150",
-                  active
-                    ? "bg-accent-soft text-accent-foreground border-accent-soft"
-                    : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
-                )}
-              >
-                {f.label}
-              </Link>
-            );
-          })}
-        </div>
       )}
 
       {tripsError && (

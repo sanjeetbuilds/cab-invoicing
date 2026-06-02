@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ListSticky } from "@/components/ui/list-sticky";
 import { PageHeader } from "@/components/ui/page-header";
 import { SamplePreview } from "@/components/ui/sample-preview";
 import { ClientsSampleRows } from "@/components/ui/sample-rows";
@@ -73,61 +74,62 @@ export default async function ClientsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Clients"
-        description="The companies you bill. We use their state to work out the GST."
-        bordered
-      >
-        <Link
-          href="/bulk-import?scope=clients"
-          className={buttonVariants({ variant: "outline", size: "sm" })}
+      <ListSticky>
+        <PageHeader
+          title="Clients"
+          description="The companies you bill. We use their state to work out the GST."
         >
-          <Upload className="h-4 w-4" />
-          Import
-        </Link>
-        <Link
-          href="/rate-cards"
-          className={buttonVariants({ variant: "outline", size: "sm" })}
-        >
-          <IndianRupee className="h-4 w-4" />
-          Bulk edit rates
-        </Link>
-        <AddClientButton muted={showingSamples} />
-      </PageHeader>
+          <Link
+            href="/bulk-import?scope=clients"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <Upload className="h-4 w-4" />
+            Import
+          </Link>
+          <Link
+            href="/rate-cards"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <IndianRupee className="h-4 w-4" />
+            Bulk edit rates
+          </Link>
+          <AddClientButton muted={showingSamples} />
+        </PageHeader>
 
-      {/* One-time customers can outnumber regular clients in a high-volume
-          retail shop. Tabs let the user keep the regular list calm by
-          default, with a one-tap toggle. */}
-      {(quickCount ?? 0) > 0 && (
-        <div className="flex gap-2">
-          {TABS.map((t) => {
-            const active = t.value === group;
-            const href =
-              t.value === "regular"
-                ? "/clients"
-                : `/clients?group=${t.value}`;
-            return (
-              <Link
-                key={t.value}
-                href={href}
-                className={cn(
-                  "rounded-full border px-3 py-2 text-sm font-medium transition-colors duration-150",
-                  active
-                    ? "bg-accent-soft text-accent-foreground border-accent-soft"
-                    : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
-                )}
-              >
-                {t.label}
-                {typeof t.count === "number" && t.count > 0 && (
-                  <span className="ml-2 text-xs opacity-70">
-                    ({t.count})
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      )}
+        {/* One-time customers can outnumber regular clients in a
+            high-volume retail shop. Tabs let the user keep the
+            regular list calm by default with a one-tap toggle. */}
+        {(quickCount ?? 0) > 0 && (
+          <div className="flex gap-2">
+            {TABS.map((t) => {
+              const active = t.value === group;
+              const href =
+                t.value === "regular"
+                  ? "/clients"
+                  : `/clients?group=${t.value}`;
+              return (
+                <Link
+                  key={t.value}
+                  href={href}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150",
+                    active
+                      ? "bg-accent-soft text-accent-foreground border-accent-soft"
+                      : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {t.label}
+                  {typeof t.count === "number" && t.count > 0 && (
+                    <span className="ml-2 text-xs opacity-70">
+                      ({t.count})
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </ListSticky>
 
       {error && (
         <p className="text-sm text-destructive">Failed to load: {error.message}</p>
