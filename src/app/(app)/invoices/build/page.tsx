@@ -62,15 +62,15 @@ export default async function BuildInvoicePage({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Build invoice</h1>
           <p className="text-sm text-muted-foreground">
-            Pick a client to invoice for. Only clients with uninvoiced trips
-            are listed.
+            Pick a client to bill. Only clients with trips waiting to be
+            billed are listed.
           </p>
         </div>
 
         {clients.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-sm text-muted-foreground">
-              No uninvoiced trips. Log some on the{" "}
+              No trips waiting to be billed. Log some on the{" "}
               <Link href="/trips" className="underline">Trips</Link> page first.
             </CardContent>
           </Card>

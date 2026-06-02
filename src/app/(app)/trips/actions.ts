@@ -145,7 +145,7 @@ export async function updateTripAction(
   if (readErr) return { ok: false, error: readErr.message };
   if (!existing) return { ok: false, error: "Trip not found." };
   if (existing.invoiced) {
-    return { ok: false, error: "Trip is invoiced, reverse the invoice first." };
+    return { ok: false, error: "This trip is on an invoice. Undo that invoice first." };
   }
 
   const { error } = await ctx.admin
@@ -173,7 +173,7 @@ export async function deleteTripAction(id: string): Promise<ActionResult> {
   if (readErr) return { ok: false, error: readErr.message };
   if (!existing) return { ok: false, error: "Trip not found." };
   if (existing.invoiced) {
-    return { ok: false, error: "Trip is invoiced, reverse the invoice first." };
+    return { ok: false, error: "This trip is on an invoice. Undo that invoice first." };
   }
 
   const { error } = await ctx.admin

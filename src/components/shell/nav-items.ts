@@ -19,7 +19,7 @@ export interface NavItem {
    * Whether to surface this in the mobile bottom nav AND the desktop
    * sidebar's primary section. Secondary items (mobile: false) appear
    * only inside the /more drawer. Daily destinations should be primary;
-   * occasional ones (Fleet, Settings) should be secondary.
+   * occasional ones (Vehicles, Settings) should be secondary.
    */
   mobile?: boolean;
 }
@@ -37,7 +37,7 @@ export const NAV_ITEMS: NavItem[] = [
   // mobile More drawer.
   { label: "Quotations",  href: "/quotations",  icon: FileSignature },
   { label: "Rate cards",  href: "/rate-cards",  icon: IndianRupee },
-  { label: "Fleet",       href: "/vehicles",    icon: Truck },
+  { label: "Vehicles",    href: "/vehicles",    icon: Truck },
   { label: "Bulk import", href: "/bulk-import", icon: Upload },
   { label: "Settings",    href: "/settings",    icon: Settings },
 ];

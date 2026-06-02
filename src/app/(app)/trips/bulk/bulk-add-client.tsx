@@ -420,7 +420,7 @@ export function BulkAddClient({
                           })
                         }
                         className="h-4 w-4 accent-foreground"
-                        title="Bill as slab (use local rate card)"
+                        title="Bill at the local rate"
                       />
                     ) : (
                       <span className="text-muted-foreground">-</span>

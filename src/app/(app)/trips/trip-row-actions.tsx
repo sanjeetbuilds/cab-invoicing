@@ -51,7 +51,7 @@ export function TripRowActions({ trip }: { trip: Trip }) {
           aria-disabled={locked}
           tabIndex={locked ? -1 : 0}
           aria-label="Edit trip"
-          title={locked ? "Invoiced, reverse the invoice first" : "Edit"}
+          title={locked ? "On an invoice. Undo it first." : "Edit"}
           className={cn(
             buttonVariants({ variant: "ghost", size: "icon-sm" }),
             locked && "pointer-events-none opacity-50",
@@ -65,7 +65,7 @@ export function TripRowActions({ trip }: { trip: Trip }) {
           onClick={() => setConfirmDelete(true)}
           disabled={locked}
           aria-label="Delete trip"
-          title={locked ? "Invoiced, reverse the invoice first" : "Delete"}
+          title={locked ? "On an invoice. Undo it first." : "Delete"}
         >
           <Trash2 className="h-4 w-4" />
         </Button>

@@ -225,7 +225,7 @@ export async function markInvoicePaidAction(
   if (readErr) return { ok: false, error: readErr.message };
   if (!existing) return { ok: false, error: "Invoice not found." };
   if (existing.status === "reversed") {
-    return { ok: false, error: "Reversed invoices can't be marked paid." };
+    return { ok: false, error: "Undone invoices cannot be marked paid." };
   }
 
   const nextStatus = parsed.data.paid ? "paid" : "unpaid";
@@ -275,7 +275,7 @@ export async function reverseInvoiceAction(
   if (readErr) return { ok: false, error: readErr.message };
   if (!existing) return { ok: false, error: "Invoice not found." };
   if (existing.status === "reversed") {
-    return { ok: false, error: "Already reversed." };
+    return { ok: false, error: "Already undone." };
   }
 
   const { error: invErr } = await ctx.admin

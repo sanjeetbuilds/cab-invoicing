@@ -21,7 +21,7 @@ export default async function NewClientPage() {
         </p>
         <PageHeader
           title="Add client"
-          description="Companies you bill. Their state decides whether GST is intra-state or inter-state."
+          description="The companies you bill. We use their state to work out the GST."
         />
       </div>
       <ClientForm />

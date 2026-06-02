@@ -72,7 +72,7 @@ export default async function RateCardsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Rate cards"
-        description="Per-client pricing. Updated when you accept a new quotation."
+        description="Your prices for each client. They update when a client accepts a quotation."
         bordered
       >
         <Link
@@ -106,8 +106,10 @@ export default async function RateCardsPage() {
       {clientList.length > 0 && cardList.length === 0 && (
         <SamplePreview
           icon={<IndianRupee className="h-4 w-4" />}
+          iconChipBg="#FAEEDA"
+          iconChipFg="#633806"
           title="This is where your rates live."
-          body="Set Local and Outstation rates per client. Each invoice uses the right rate automatically."
+          body="Your prices for each client. Add Local rates, Outstation rates, or fixed-price packages."
           primary={{ label: "Add rate card", href: "/rate-cards/new" }}
           importHref="/bulk-import?scope=rate_cards"
           setupHint={{ step: 4, total: 6 }}

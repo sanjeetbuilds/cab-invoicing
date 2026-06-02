@@ -75,7 +75,7 @@ export default async function ClientsPage({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Clients"
-        description="Companies you bill. State drives intra/inter-state GST."
+        description="The companies you bill. We use their state to work out the GST."
         bordered
       >
         <Link
@@ -136,8 +136,10 @@ export default async function ClientsPage({
       {showingSamples && (
         <SamplePreview
           icon={<Users className="h-4 w-4" />}
+          iconChipBg="#E6F1FB"
+          iconChipFg="#0C447C"
           title="This is where your clients live."
-          body="Add the companies you bill. State drives intra-state and inter-state GST."
+          body="Add the companies you bill. We use their state to work out the GST."
           primary={{ label: "Add your first client", href: "/clients/new" }}
           importHref="/bulk-import?scope=clients"
           setupHint={{ step: 2, total: 6 }}

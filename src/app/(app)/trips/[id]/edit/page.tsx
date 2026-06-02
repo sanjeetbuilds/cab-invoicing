@@ -60,7 +60,7 @@ export default async function EditTripPage({
             ← Trips
           </Link>
         </p>
-        <PageHeader title="Trip is locked" description="This trip is on an invoice. Reverse the invoice first to edit." />
+        <PageHeader title="Trip is locked" description="This trip is already on an invoice. Undo that invoice first to edit the trip." />
       </div>
     );
   }

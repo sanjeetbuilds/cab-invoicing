@@ -469,7 +469,7 @@ export function QuickInvoiceForm({
         <Card>
           <CardContent className="flex flex-col gap-4">
             <p className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
-              Trip / Duty
+              Trip
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -590,7 +590,7 @@ export function QuickInvoiceForm({
                   {/* Base, the slab line on the invoice. All three
                       values are editable parameters for this one trip. */}
                   <div className="rounded-md border border-border bg-muted/30 px-3 py-2 flex flex-col gap-2">
-                    <Label className="text-xs">Base (slab)</Label>
+                    <Label className="text-xs">Base rate</Label>
                     <div className="grid grid-cols-3 gap-3">
                       <Num label="Base rate ₹" value={baseRate} set={setBaseRate} />
                       <Num label="Base kms" value={baseKms} set={setBaseKms} />

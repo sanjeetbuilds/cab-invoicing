@@ -341,8 +341,7 @@ export function BrandingForm({ company }: { company: Company }) {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    PNG or JPG, up to 2 MB. Best results: transparent PNG,
-                    200 to 400 px wide. Saved when you click Save branding.
+                    PNG or JPG, up to 2 MB.
                   </p>
                 </div>
               </div>

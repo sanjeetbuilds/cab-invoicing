@@ -38,7 +38,7 @@ export default async function VehiclesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Vehicles"
-        description="Your fleet, own and attached cars."
+        description="Your cars, both your own and attached vendor cars."
         bordered
       >
         <Link
@@ -58,8 +58,10 @@ export default async function VehiclesPage() {
       {vehicles && vehicles.length === 0 && (
         <SamplePreview
           icon={<Truck className="h-4 w-4" />}
-          title="This is where your fleet lives."
-          body="Add the cars you use for trips. Every trip is linked to one vehicle."
+          iconChipBg="#F1EAFE"
+          iconChipFg="#4A2D7B"
+          title="This is where your vehicles live."
+          body="Add the cars you use for trips. Every trip is linked to one car."
           primary={{ label: "Add vehicle", href: "/vehicles/new" }}
           importHref="/bulk-import?scope=vehicles"
           setupHint={{ step: 3, total: 6 }}

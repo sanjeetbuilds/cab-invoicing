@@ -59,7 +59,7 @@ export default async function QuickInvoicePage() {
         </p>
         <PageHeader
           title="Quick invoice"
-          description="One-tap invoice for walk-in / retail customers. Rates typed inline, no rate-card lookup."
+          description="A fast bill for a one-time customer. Type the price yourself, no saved rate needed."
         />
       </div>
 

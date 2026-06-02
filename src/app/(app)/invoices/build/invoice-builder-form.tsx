@@ -202,7 +202,7 @@ export function InvoiceBuilderForm({
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {trips.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No uninvoiced trips.</p>
+              <p className="text-sm text-muted-foreground">No trips waiting to be billed.</p>
             ) : (
               trips.map((t) => {
                 const veh = vehicleById.get(t.vehicle_id);

@@ -50,7 +50,7 @@ export default async function QuotationsPage() {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Quotations"
-        description="Send rates to clients. Accepting one creates or updates their rate cards."
+        description="Send your prices to a client. When they accept, it saves as their rates."
         bordered
       >
         <Link
@@ -67,8 +67,10 @@ export default async function QuotationsPage() {
       {showingSamples && (
         <SamplePreview
           icon={<FileSignature className="h-4 w-4" />}
+          iconChipBg="#E6F1FB"
+          iconChipFg="#0C447C"
           title="This is where your quotations live."
-          body="Send rates to a client. Accepting one creates or updates their rate cards."
+          body="Send your prices to a client. When they accept, it saves as their rates."
           primary={{ label: "New quotation", href: "/quotations/new" }}
         >
           <QuotationsSampleRows />

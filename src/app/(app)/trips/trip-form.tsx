@@ -423,7 +423,7 @@ export function TripForm({
             <Label htmlFor="end_date">End date</Label>
             <Input id="end_date" type="date" {...register("end_date")} />
             <p className="text-xs text-muted-foreground">
-              Optional, only set for multi-day trips.
+              Only needed for a trip that runs more than one day.
             </p>
             {errors.end_date && (
               <p className="text-sm text-destructive">{errors.end_date.message}</p>
@@ -610,12 +610,13 @@ export function TripForm({
             <div className="sm:col-span-3 flex items-start justify-between rounded-lg border border-border px-3 py-3 gap-3">
               <div className="min-w-0 flex-1">
                 <Label htmlFor="billing_method" className="font-medium">
-                  Bill as slab (use local rate card)
+                  Bill at the local rate
                 </Label>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Default for outstation is per-km. Toggle on to bill this trip
-                  with the client&apos;s local rate card for{" "}
-                  <span className="font-medium">{carType}</span>: base + extras.
+                  Default for outstation is per km. Turn this on to bill at
+                  the client&apos;s local rate for{" "}
+                  <span className="font-medium">{carType}</span>, base plus
+                  extras.
                 </p>
               </div>
               <Switch
@@ -850,8 +851,8 @@ export function TripForm({
           ) : (
             <p className="text-sm text-muted-foreground">
               {clientId
-                ? "Set a rate card above to see the amount preview."
-                : "Pick a client and car type above to see the amount preview."}
+                ? "Add a rate above to see the amount."
+                : "Pick a client and car type above to see the amount."}
             </p>
           )}
         </CardContent>
@@ -1083,8 +1084,8 @@ function MissingRateNotice({
       </p>
       {slabBorrowsLocal && (
         <p className="text-xs text-muted-foreground">
-          Slab billing borrows the local rate card. Add a local rate for this
-          car or switch the trip back to per-km.
+          This trip is billing at the local rate. Add a local rate for this
+          car, or switch back to per km.
         </p>
       )}
       <div className="flex items-center gap-3">

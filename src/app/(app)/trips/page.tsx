@@ -14,7 +14,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { SamplePreview } from "@/components/ui/sample-preview";
 import { TripsSampleRows } from "@/components/ui/sample-rows";
-import { Car } from "lucide-react";
+import { Route } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   Client,
@@ -245,7 +245,9 @@ export default async function TripsPage({
 
       {showingSamples && (
         <SamplePreview
-          icon={<Car className="h-4 w-4" />}
+          icon={<Route className="h-4 w-4" />}
+          iconChipBg="#EEEDFE"
+          iconChipFg="#3C3489"
           title="This is where your trips live."
           body="Add each trip here. Trips become lines on the next bill."
           primary={{ label: "Log trip", href: "/trips/new" }}

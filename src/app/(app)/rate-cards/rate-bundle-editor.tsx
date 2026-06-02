@@ -406,7 +406,7 @@ export const RateBundleEditor = forwardRef<RateBundleEditorHandle, Props>(
 
         <Section
           title="Local rates"
-          subtitle="Optional. In-city duties billed as base + extras."
+          subtitle="Optional. For trips inside the city, billed as a base plus extras."
         >
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <NumberField label="Base rate ₹" value={local.base_rate} onChange={(v) => patchLocal("base_rate", v)} />
@@ -421,7 +421,7 @@ export const RateBundleEditor = forwardRef<RateBundleEditorHandle, Props>(
 
         <Section
           title="Outstation rates"
-          subtitle="Optional. Per-km duties outside the city."
+          subtitle="Optional. For trips outside the city, billed per km."
         >
           <div className="grid grid-cols-2 gap-3">
             <NumberField label="Per km ₹" value={outstation.per_km} onChange={(v) => patchOutstation("per_km", v)} />
@@ -431,7 +431,7 @@ export const RateBundleEditor = forwardRef<RateBundleEditorHandle, Props>(
 
         <Section
           title="Packages"
-          subtitle="Optional. Repeatable fixed-price plans. Name them as you like."
+          subtitle="Optional. Fixed-price plans like airport or railway drops. Name them yourself."
         >
           <div className="flex flex-col gap-3">
             {visiblePackages.length === 0 && (

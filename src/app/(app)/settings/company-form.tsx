@@ -163,7 +163,7 @@ export function CompanyForm({ company }: { company: Company }) {
               <p className="text-sm text-destructive">{errors.invoice_email.message}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Blank = use the account email above.
+              Leave blank to use your account email.
             </p>
           </div>
 
@@ -202,7 +202,7 @@ export function CompanyForm({ company }: { company: Company }) {
               <p className="text-sm text-destructive">{errors.state.message}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Drives intra- vs inter-state GST on invoices.
+              We use your state to work out the GST on invoices.
             </p>
           </div>
         </CardContent>

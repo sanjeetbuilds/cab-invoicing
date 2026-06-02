@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Receipt, Zap } from "lucide-react";
+import { Plus, ReceiptIndianRupee, Zap } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -118,7 +118,9 @@ export default async function InvoicesPage() {
 
       {showingSamples && (
         <SamplePreview
-          icon={<Receipt className="h-4 w-4" />}
+          icon={<ReceiptIndianRupee className="h-4 w-4" />}
+          iconChipBg="#E1F5EE"
+          iconChipFg="#085041"
           title="This is where your invoices live."
           body="Pick a client's unbilled trips and turn them into one bill."
           primary={{ label: "Build invoice", href: "/invoices/build" }}

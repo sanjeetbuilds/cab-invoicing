@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
  */
 export function SamplePreview({
   icon,
+  iconChipBg = "rgba(79,70,229,0.10)",
+  iconChipFg = "#4f46e5",
   title,
   body,
   primary,
@@ -31,6 +33,11 @@ export function SamplePreview({
   children,
 }: {
   icon?: ReactNode;
+  /** Hex or rgba background for the tinted icon chip. Defaults to
+   *  the indigo we have shipped for a while. */
+  iconChipBg?: string;
+  /** Hex foreground for the icon inside the chip. */
+  iconChipFg?: string;
   title: string;
   body: string;
   primary: { label: string; href: string };
@@ -86,7 +93,8 @@ export function SamplePreview({
           {icon && (
             <span
               aria-hidden
-              className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(79,70,229,0.10)] text-[#4f46e5]"
+              className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-full"
+              style={{ backgroundColor: iconChipBg, color: iconChipFg }}
             >
               {icon}
             </span>

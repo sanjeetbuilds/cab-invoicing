@@ -1,4 +1,11 @@
 import Link from "next/link";
+import {
+  Clock,
+  ReceiptIndianRupee,
+  Route,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import {
   Card,
@@ -152,8 +159,11 @@ export default async function DashboardPage() {
         <StatCard
           label="Unbilled trips"
           value={String(unbilledCount)}
-          hint="trips not yet on an invoice"
+          hint="Trips not yet on a bill."
           href="/trips"
+          icon={Route}
+          chipBg="#EEEDFE"
+          chipFg="#3C3489"
         />
         <StatCard
           label="Outstanding"
@@ -162,21 +172,30 @@ export default async function DashboardPage() {
             unpaidInvoices && unpaidInvoices.length > 0
               ? `${unpaidInvoices.length} unpaid invoice${
                   unpaidInvoices.length === 1 ? "" : "s"
-                }`
-              : "no unpaid invoices"
+                }.`
+              : "No unpaid invoices."
           }
           href="/invoices"
+          icon={Clock}
+          chipBg="#FAEEDA"
+          chipFg="#633806"
         />
         <StatCard
           label="Billed this month"
           value={billedThisMonth > 0 ? formatINR(billedThisMonth) : "-"}
-          hint={`since ${fmtDate(monthStart)}`}
+          hint={`Since ${fmtDate(monthStart)}.`}
           href="/invoices"
+          icon={ReceiptIndianRupee}
+          chipBg="#E1F5EE"
+          chipFg="#085041"
         />
         <StatCard
-          label="Clients · Vehicles"
-          value={`${clientCount ?? 0} · ${vehicleCount ?? 0}`}
-          hint="active clients you bill, your fleet"
+          label="Clients and cars"
+          value={`${clientCount ?? 0} and ${vehicleCount ?? 0}`}
+          hint="Your active clients and cars."
+          icon={Users}
+          chipBg="#E6F1FB"
+          chipFg="#0C447C"
         />
       </div>
 
@@ -274,27 +293,38 @@ function StatCard({
   value,
   hint,
   href,
+  icon: Icon,
+  chipBg,
+  chipFg,
 }: {
   label: string;
   value: string;
   hint: string;
   href?: string;
+  icon: LucideIcon;
+  /** Hex fill for the small icon chip. Stays light enough that
+   *  the dark icon reads in both light and dark mode. */
+  chipBg: string;
+  /** Hex foreground for the icon, paired with chipBg. */
+  chipFg: string;
 }) {
-  // Card fills the grid cell (h-full) and distributes its three
-  // children top/middle/bottom (justify-between) so all four tiles
-  // share an identical 140-px-or-more frame. FitText keeps the
-  // number on one line by shrinking ₹X,XX,XXX.00 from 24 px down
-  // to 16 px before it would otherwise wrap.
+  // Layout per card: icon chip on top, big number, label, then a
+  // muted sub-line. Numbers and labels stay in the normal text
+  // colours, only the small chip carries the colour.
   const card = (
     <Card
       className={cn(
-        "h-full min-h-[140px] gap-0 flex flex-col justify-between",
+        "h-full min-h-[150px] gap-0 flex flex-col",
         href && "hover:shadow-card-hover transition-shadow",
       )}
     >
-      <p className="text-[11px] uppercase tracking-[0.05em] text-muted-foreground font-medium">
-        {label}
-      </p>
+      <span
+        aria-hidden
+        className="inline-flex h-[38px] w-[38px] items-center justify-center rounded-full mb-3"
+        style={{ backgroundColor: chipBg, color: chipFg }}
+      >
+        <Icon className="h-[18px] w-[18px]" />
+      </span>
       <p className="overflow-hidden">
         <FitText
           text={value}
@@ -305,7 +335,10 @@ function StatCard({
           {renderStatValue(value)}
         </FitText>
       </p>
-      <p className="text-xs text-muted-foreground">{hint}</p>
+      <p className="text-[11px] uppercase tracking-[0.05em] text-muted-foreground font-medium mt-1">
+        {label}
+      </p>
+      <p className="text-xs text-muted-foreground mt-auto pt-2">{hint}</p>
     </Card>
   );
   return href ? (
@@ -324,7 +357,7 @@ function StatusBadge({ status }: { status: Invoice["status"] }) {
     case "unpaid":
       return <Badge variant="warning">Unpaid</Badge>;
     case "reversed":
-      return <Badge variant="ghost">Reversed</Badge>;
+      return <Badge variant="ghost">Undone</Badge>;
     case "draft":
       return <Badge variant="outline">Draft</Badge>;
   }

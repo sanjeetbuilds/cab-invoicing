@@ -74,7 +74,7 @@ const STATUS_PILLS: { value: StatusFilter; label: string }[] = [
   { value: "all", label: "All" },
   { value: "unpaid", label: "Unpaid" },
   { value: "paid", label: "Paid" },
-  { value: "reversed", label: "Reversed" },
+  { value: "reversed", label: "Undone" },
 ];
 
 function fmtDate(iso: string | null | undefined): string {
@@ -473,7 +473,7 @@ function DesktopInvoiceRow({
     setPending(false);
     if (result.ok) {
       hapticDestructive();
-      toast.success(`${fullNumber} reversed.`);
+      toast.success(`${fullNumber} undone.`);
       setConfirmReverse(false);
       router.refresh();
     } else {
@@ -544,7 +544,7 @@ function DesktopInvoiceRow({
                   onClick={() => setConfirmReverse(true)}
                 >
                   <RotateCcw className="h-4 w-4" />
-                  Reverse invoice
+                  Undo invoice
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -641,7 +641,7 @@ function MobileInvoiceCard({
     setPending(false);
     if (result.ok) {
       hapticDestructive();
-      toast.success(`${fullNumber} reversed.`);
+      toast.success(`${fullNumber} undone.`);
       setConfirmReverse(false);
       router.refresh();
     } else {
@@ -766,7 +766,7 @@ function MobileInvoiceCard({
                     onClick={() => setConfirmReverse(true)}
                   >
                     <RotateCcw className="h-4 w-4" />
-                    Reverse invoice
+                    Undo invoice
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -860,18 +860,18 @@ function ReverseDialog({
     <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Reverse this invoice?</AlertDialogTitle>
+          <AlertDialogTitle>Undo this invoice?</AlertDialogTitle>
           <AlertDialogDescription>
             Invoice <strong>{fullNumber}</strong> for{" "}
-            <strong>{invoice.client_name}</strong> will be marked reversed and
-            its trips will return to the open list so you can re-invoice them.
+            <strong>{invoice.client_name}</strong> will be marked undone and
+            its trips will return to the open list so you can bill them again.
             The invoice number stays reserved and is never reused.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} disabled={pending}>
-            {pending ? "Reversing…" : "Reverse"}
+            {pending ? "Undoing…" : "Undo"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -886,7 +886,7 @@ function StatusBadge({ status }: { status: Invoice["status"] }) {
     case "unpaid":
       return <Badge variant="warning">Unpaid</Badge>;
     case "reversed":
-      return <Badge variant="ghost">Reversed</Badge>;
+      return <Badge variant="ghost">Undone</Badge>;
     case "draft":
       return <Badge variant="outline">Draft</Badge>;
   }
