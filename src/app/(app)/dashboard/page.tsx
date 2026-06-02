@@ -26,7 +26,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { Company, Invoice } from "@/lib/supabase/types";
 import { formatINR } from "@/lib/format";
-import { cn } from "@/lib/utils";
 import { SeedBanner } from "../seed/seed-banner";
 import { SetupChecklist, type SetupStatus } from "./setup-checklist";
 
@@ -57,19 +56,16 @@ function fmtToday(): string {
   });
 }
 
-/** Rupee amount with Indian grouping and a clean trailing zero rule,
- *  ₹2,14,500 when the number is whole, ₹58,082.50 when there is a
- *  paise tail. Used in the metric cards so big amounts read warmly
- *  without forcing .00 on every clean number. */
-function formatINRClean(n: number): string {
-  if (!Number.isFinite(n) || n === 0) return "₹0";
-  const hasFraction = Math.round(n * 100) % 100 !== 0;
+/** Rupee amount with Indian grouping and two decimals always, e.g.
+ *  ₹58,082.50, ₹2,14,500.00, ₹0.00. The metric boxes show paise on
+ *  every figure so money reads consistently across the row. */
+function formatRupees(n: number): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
-    minimumFractionDigits: hasFraction ? 2 : 0,
-    maximumFractionDigits: hasFraction ? 2 : 0,
-  }).format(n);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(n) ? n : 0);
 }
 
 export default async function DashboardPage() {
@@ -186,21 +182,21 @@ export default async function DashboardPage() {
       {isFresh && <SeedBanner />}
       <SetupChecklist status={setupStatus} />
 
-      {/* 4 stat tiles, 2-up on mobile, 4-up at lg+. Distinct tinted
-          chips per metric, white cards on the flat surface. */}
-      <div className="grid grid-cols-2 auto-rows-fr gap-3 sm:gap-4 lg:grid-cols-4">
+      {/* The four metric boxes, the only fully colour-filled blocks
+          in the app. One column on mobile, two by two on medium,
+          four across on wide desktop. Equal heights via auto-rows-fr. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-rows-fr gap-3 sm:gap-4">
         <StatCard
           label="Unbilled trips"
           value={String(unbilledCount)}
           hint="Trips not yet on a bill."
           href="/trips"
           icon={Route}
-          chipBg="#EDE9FE"
-          chipFg="#6D28D9"
+          bg="#534AB7"
         />
         <StatCard
           label="Outstanding"
-          value={outstanding > 0 ? formatINRClean(outstanding) : "₹0"}
+          value={formatRupees(outstanding)}
           hint={
             unpaidInvoices && unpaidInvoices.length > 0
               ? `${unpaidInvoices.length} unpaid invoice${
@@ -210,25 +206,22 @@ export default async function DashboardPage() {
           }
           href="/invoices"
           icon={Clock}
-          chipBg="#FEF3C7"
-          chipFg="#B45309"
+          bg="#993C1D"
         />
         <StatCard
           label="Billed this month"
-          value={billedThisMonth > 0 ? formatINRClean(billedThisMonth) : "₹0"}
+          value={formatRupees(billedThisMonth)}
           hint={`Since ${fmtDate(monthStart)}.`}
           href="/invoices"
           icon={ReceiptIndianRupee}
-          chipBg="#D1FAE5"
-          chipFg="#047857"
+          bg="#0F6E56"
         />
         <StatCard
           label="Clients and cars"
           value={clientsAndCars}
           hint="Active records in your account."
           icon={Users}
-          chipBg="#DBEAFE"
-          chipFg="#1D4ED8"
+          bg="#185FA5"
         />
       </div>
 
@@ -338,52 +331,50 @@ function StatCard({
   hint,
   href,
   icon: Icon,
-  chipBg,
-  chipFg,
+  bg,
 }: {
   label: string;
   value: string;
   hint: string;
   href?: string;
   icon: LucideIcon;
-  /** Hex fill for the small icon chip. */
-  chipBg: string;
-  /** Hex foreground for the icon, paired with chipBg. */
-  chipFg: string;
+  /** Solid fill for the whole box. White text rides on top, so these
+   *  stay rich and dark enough to keep contrast high. */
+  bg: string;
 }) {
-  // Layout per card: icon chip on top, big number in the app's
-  // regular font, label, then a muted sub-line. Numbers and labels
-  // stay in the normal text colour. Only the chip carries the
-  // colour.
-  const card = (
-    <Card
-      className={cn(
-        "h-full min-h-[150px] gap-0 flex flex-col",
-        href && "hover:shadow-card-hover transition-shadow",
-      )}
+  // Fully colour-filled tile, flat (no gradient, no shadow). Compact:
+  // the label and a translucent-white icon chip share the top row,
+  // then the number and sub-line stack tight below. Tight gaps keep
+  // the box short, not airy.
+  const box = (
+    <div
+      className="h-full flex flex-col gap-1.5 rounded-2xl p-4 text-white"
+      style={{ backgroundColor: bg }}
     >
-      <span
-        aria-hidden
-        className="inline-flex h-[38px] w-[38px] items-center justify-center rounded-full mb-3"
-        style={{ backgroundColor: chipBg, color: chipFg }}
-      >
-        <Icon className="h-[18px] w-[18px]" />
-      </span>
-      <p className="text-lg sm:text-xl font-semibold tracking-tight text-foreground truncate">
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-[11px] uppercase tracking-[0.08em] font-medium text-white/90 pt-0.5">
+          {label}
+        </span>
+        <span
+          aria-hidden
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+          style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <p className="text-xl sm:text-2xl font-medium tracking-tight truncate">
         {value}
       </p>
-      <p className="text-[11px] uppercase tracking-[0.05em] text-muted-foreground font-medium mt-1">
-        {label}
-      </p>
-      <p className="text-xs text-muted-foreground mt-auto pt-2">{hint}</p>
-    </Card>
+      <p className="text-xs text-white/85">{hint}</p>
+    </div>
   );
   return href ? (
     <Link href={href} className="block h-full">
-      {card}
+      {box}
     </Link>
   ) : (
-    card
+    box
   );
 }
 
