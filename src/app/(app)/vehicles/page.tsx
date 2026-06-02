@@ -5,7 +5,6 @@ import { SamplePreview } from "@/components/ui/sample-preview";
 import { VehiclesSampleRows } from "@/components/ui/sample-rows";
 import { requireMembership } from "@/lib/auth";
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -22,6 +21,27 @@ import { AddVehicleButton } from "./add-vehicle-button";
 import { VehicleRowActions } from "./vehicle-row-actions";
 
 export const metadata = { title: "Vehicles" };
+
+/** Shared column widths between the sticky column header and the
+ *  data table below. null = auto, fills remaining space. */
+const VEHICLE_COL_WIDTHS: (string | null)[] = [
+  "180px", // Number (HR 26 ED 9083 in mono)
+  "120px", // Type
+  "130px", // Ownership badge
+  null,    // Vendor (auto)
+  "90px",  // Active
+  "80px",  // Actions
+];
+
+function VehicleColGroup() {
+  return (
+    <colgroup>
+      {VEHICLE_COL_WIDTHS.map((w, i) => (
+        <col key={i} style={w ? { width: w } : undefined} />
+      ))}
+    </colgroup>
+  );
+}
 
 export default async function VehiclesPage() {
   const { supabase, membership } = await requireMembership();
@@ -51,6 +71,27 @@ export default async function VehiclesPage() {
           </Link>
           <AddVehicleButton muted={isEmpty} />
         </PageHeader>
+
+        {/* Column header row, item 4 in the sticky stack on
+            desktop. Shares column widths with the data table
+            below via table-fixed + VehicleColGroup. */}
+        {vehicles && vehicles.length > 0 && (
+          <div className="hidden md:block -mb-3">
+            <table className="w-full table-fixed text-sm">
+              <VehicleColGroup />
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Number</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Ownership</TableHead>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead className="text-center">Active</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+            </table>
+          </div>
+        )}
       </ListSticky>
 
       {error && (
@@ -74,19 +115,11 @@ export default async function VehiclesPage() {
 
       {vehicles && vehicles.length > 0 && (
         <>
-          {/* Desktop table */}
+          {/* Desktop table, thead is in the sticky chrome above.
+              Shared widths via VehicleColGroup. */}
           <div className="hidden md:block rounded-xl bg-card shadow-card overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Ownership</TableHead>
-                  <TableHead>Vendor</TableHead>
-                  <TableHead className="text-center">Active</TableHead>
-                  <TableHead className="w-[100px] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
+            <table className="w-full table-fixed text-sm">
+              <VehicleColGroup />
               <TableBody>
                 {vehicles.map((v) => (
                   <TableRow key={v.id}>
@@ -117,7 +150,7 @@ export default async function VehiclesPage() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </table>
           </div>
 
           {/* Mobile cards */}

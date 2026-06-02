@@ -157,7 +157,7 @@ export default async function RateCardsPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Car · Mode · Plan</TableHead>
+                          <TableHead>Car, Mode, Plan</TableHead>
                           <TableHead className="text-right">Rate</TableHead>
                           <TableHead className="text-right">Driver TA</TableHead>
                           <TableHead className="w-[100px] text-right">Actions</TableHead>

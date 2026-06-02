@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { requireMembership } from "@/lib/auth";
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -23,6 +22,27 @@ import { AddClientButton } from "./add-client-button";
 import { ClientRowActions } from "./client-row-actions";
 
 export const metadata = { title: "Clients" };
+
+/** Shared column widths between the sticky column header (in the
+ *  ListSticky chrome) and the data table below. null = auto. */
+const CLIENT_COL_WIDTHS: (string | null)[] = [
+  null,    // Name (auto, fills remaining)
+  "120px", // State
+  "160px", // GSTIN
+  "140px", // Contact
+  "95px",  // GST
+  "80px",  // Actions
+];
+
+function ClientColGroup() {
+  return (
+    <colgroup>
+      {CLIENT_COL_WIDTHS.map((w, i) => (
+        <col key={i} style={w ? { width: w } : undefined} />
+      ))}
+    </colgroup>
+  );
+}
 
 type ClientGroup = "regular" | "quick" | "all";
 
@@ -129,6 +149,27 @@ export default async function ClientsPage({
             })}
           </div>
         )}
+
+        {/* Column header row, item 4 in the sticky stack on
+            desktop. Shares column widths with the data table
+            below via table-fixed + ClientColGroup. */}
+        {list.length > 0 && (
+          <div className="hidden md:block -mb-3">
+            <table className="w-full table-fixed text-sm">
+              <ClientColGroup />
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>State</TableHead>
+                  <TableHead>GSTIN</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead className="text-center">GST</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+            </table>
+          </div>
+        )}
       </ListSticky>
 
       {error && (
@@ -164,19 +205,11 @@ export default async function ClientsPage({
 
       {list.length > 0 && (
         <>
-          {/* Desktop table */}
+          {/* Desktop table, thead lives in the sticky chrome
+              above. Shared widths via ClientColGroup. */}
           <div className="hidden md:block rounded-xl bg-card shadow-card overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>State</TableHead>
-                  <TableHead>GSTIN</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead className="text-center">GST</TableHead>
-                  <TableHead className="w-[100px] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
+            <table className="w-full table-fixed text-sm">
+              <ClientColGroup />
               <TableBody>
                 {list.map((c) => (
                   <TableRow key={c.id}>
@@ -210,7 +243,7 @@ export default async function ClientsPage({
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </table>
           </div>
 
           {/* Mobile cards */}

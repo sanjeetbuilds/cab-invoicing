@@ -19,7 +19,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -76,6 +75,31 @@ const STATUS_PILLS: { value: StatusFilter; label: string }[] = [
   { value: "paid", label: "Paid" },
   { value: "reversed", label: "Undone" },
 ];
+
+/** Shared column widths between the sticky column header (in the
+ *  chrome) and the data table below. table-layout: fixed honours
+ *  these so both tables line up cell-for-cell. null = auto, fills
+ *  remaining space. */
+const INVOICE_COL_WIDTHS: (string | null)[] = [
+  "110px", // Invoice number
+  null,    // Client (auto, fills remaining space)
+  "85px",  // Date
+  "145px", // Period
+  "55px",  // Trips
+  "115px", // Amount
+  "100px", // Status
+  "55px",  // Actions
+];
+
+function InvoiceColGroup() {
+  return (
+    <colgroup>
+      {INVOICE_COL_WIDTHS.map((w, i) => (
+        <col key={i} style={w ? { width: w } : undefined} />
+      ))}
+    </colgroup>
+  );
+}
 
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return "-";
@@ -289,6 +313,29 @@ export function InvoicesList({
             </div>
           </div>
         )}
+
+        {/* Column header row, item 4 in the sticky stack. Desktop
+            only; mobile uses cards. Shares column widths with the
+            data table below via table-fixed + InvoiceColGroup. */}
+        {filtered.length > 0 && (
+          <div className="hidden md:block -mb-3">
+            <table className="w-full table-fixed text-sm">
+              <InvoiceColGroup />
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice #</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Period</TableHead>
+                  <TableHead className="text-right">Trips</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Mobile bottom sheet, inline radio sections, no nested
@@ -357,21 +404,15 @@ export function InvoicesList({
         </Card>
       ) : (
         <>
-          {/* Desktop (md+): clean table; row click opens PDF */}
+          {/* Desktop (md+): the thead lives in the sticky chrome
+              above; here we render only the data rows in a table
+              that shares the same column widths via
+              InvoiceColGroup. Plain <table> (not the wrapped
+              Table component) so the parent <main> stays the
+              scroll container for sticky to bind to. */}
           <div className="hidden md:block rounded-xl bg-card shadow-card overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Period</TableHead>
-                  <TableHead className="text-right">Trips</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="w-[60px]"></TableHead>
-                </TableRow>
-              </TableHeader>
+            <table className="w-full table-fixed text-sm">
+              <InvoiceColGroup />
               <TableBody>
                 {filtered.map((inv) => (
                   <DesktopInvoiceRow
@@ -382,7 +423,7 @@ export function InvoicesList({
                   />
                 ))}
               </TableBody>
-            </Table>
+            </table>
           </div>
 
           {/* Mobile (<md): rich summary cards, replace the detail page */}

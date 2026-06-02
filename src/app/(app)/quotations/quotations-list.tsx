@@ -20,7 +20,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -90,6 +89,27 @@ function fmtDate(iso: string | null | undefined): string {
   const [y, m, d] = iso.split("-");
   if (!y || !m || !d) return iso;
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
+}
+
+/** Shared column widths between the sticky column header and the
+ *  data table below. table-layout: fixed honours these. null = auto. */
+const QUOTATION_COL_WIDTHS: (string | null)[] = [
+  "110px", // Number
+  null,    // Client (auto)
+  "85px",  // Date
+  "100px", // Valid until
+  "110px", // Status
+  "55px",  // Actions
+];
+
+function QuotationColGroup() {
+  return (
+    <colgroup>
+      {QUOTATION_COL_WIDTHS.map((w, i) => (
+        <col key={i} style={w ? { width: w } : undefined} />
+      ))}
+    </colgroup>
+  );
 }
 
 export function QuotationsList({
@@ -302,6 +322,27 @@ export function QuotationsList({
             </div>
           </div>
         )}
+
+        {/* Column header row, item 4 in the sticky stack. Desktop
+            only; mobile uses cards. Shares column widths with the
+            data table below via table-fixed + QuotationColGroup. */}
+        {filtered.length > 0 && (
+          <div className="hidden md:block -mb-3">
+            <table className="w-full table-fixed text-sm">
+              <QuotationColGroup />
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Number</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Valid until</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Mobile bottom sheet, inline radio sections, no nested
@@ -370,19 +411,12 @@ export function QuotationsList({
         </Card>
       ) : (
         <>
-          {/* Desktop (md+): table; row click opens PDF in new tab */}
+          {/* Desktop (md+): the thead lives in the sticky chrome
+              above; we render only the data rows here in a table
+              that shares column widths via QuotationColGroup. */}
           <div className="hidden md:block rounded-xl bg-card shadow-card overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Valid until</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="w-[60px]"></TableHead>
-                </TableRow>
-              </TableHeader>
+            <table className="w-full table-fixed text-sm">
+              <QuotationColGroup />
               <TableBody>
                 {filtered.map((q) => (
                   <DesktopQuotationRow
@@ -395,7 +429,7 @@ export function QuotationsList({
                   />
                 ))}
               </TableBody>
-            </Table>
+            </table>
           </div>
 
           {/* Mobile (<md): rich summary cards */}

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { requireMembership } from "@/lib/auth";
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -30,6 +29,33 @@ import { AddTripButton } from "./add-trip-button";
 import { TripRowActions } from "./trip-row-actions";
 
 export const metadata = { title: "Trips" };
+
+/** Shared column widths between the sticky column header (in the
+ *  ListSticky chrome) and the data table below. Trips has nine
+ *  dense columns, so the column widths total beyond a typical md
+ *  width; both the chrome header and the data table wrap in
+ *  overflow-x-auto so a narrow viewport scrolls them together. */
+const TRIP_COL_WIDTHS: string[] = [
+  "75px",  // Date
+  "180px", // Client (no auto, both wrappers must scroll in sync)
+  "180px", // Vehicle
+  "85px",  // Mode
+  "95px",  // Kms / Hrs
+  "100px", // TA / Night
+  "110px", // Amount
+  "110px", // Status
+  "85px",  // Actions
+];
+
+function TripColGroup() {
+  return (
+    <colgroup>
+      {TRIP_COL_WIDTHS.map((w, i) => (
+        <col key={i} style={{ width: w }} />
+      ))}
+    </colgroup>
+  );
+}
 
 type StatusFilter = "all" | "uninvoiced" | "invoiced";
 
@@ -216,6 +242,33 @@ export default async function TripsPage({
             })}
           </div>
         )}
+
+        {/* Column header row, item 4 in the sticky stack on
+            desktop. Shares column widths with the data table
+            below via table-fixed + TripColGroup. Trips has nine
+            columns so the row may scroll horizontally on narrow
+            desktops, matched to the data table's overflow-x-auto
+            container below. */}
+        {tripList.length > 0 && (
+          <div className="hidden md:block -mb-3 overflow-x-auto">
+            <table className="table-fixed text-sm" style={{ width: "max-content", minWidth: "100%" }}>
+              <TripColGroup />
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Vehicle</TableHead>
+                  <TableHead>Mode</TableHead>
+                  <TableHead className="text-right">Kms / Hrs</TableHead>
+                  <TableHead className="text-center">TA / Night</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+            </table>
+          </div>
+        )}
       </ListSticky>
 
       {noPrereqs && (
@@ -273,22 +326,13 @@ export default async function TripsPage({
 
       {tripList.length > 0 && (
         <>
-          {/* Desktop table */}
-          <div className="hidden md:block rounded-md border bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Vehicle</TableHead>
-                  <TableHead>Mode</TableHead>
-                  <TableHead className="text-right">Kms / Hrs</TableHead>
-                  <TableHead className="text-center">TA / Night</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="w-[100px] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
+          {/* Desktop table, thead is in the sticky chrome above.
+              Shared widths via TripColGroup. Wrapper allows
+              horizontal scroll on narrow desktops because nine
+              columns rarely fit at md widths. */}
+          <div className="hidden md:block rounded-md border bg-card overflow-x-auto">
+            <table className="table-fixed text-sm" style={{ width: "max-content", minWidth: "100%" }}>
+              <TripColGroup />
               <TableBody>
                 {tripList.map((t) => {
                   const c = clientById.get(t.client_id);
@@ -380,7 +424,7 @@ export default async function TripsPage({
                   );
                 })}
               </TableBody>
-            </Table>
+            </table>
           </div>
 
           {/* Mobile cards */}
