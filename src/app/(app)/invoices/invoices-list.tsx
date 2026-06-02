@@ -69,7 +69,7 @@ import {
 } from "@/lib/list-controls";
 import type { Client, Invoice } from "@/lib/supabase/types";
 import {
-  deleteDraftAction,
+  deleteInvoiceAction,
   issueDraftAction,
   markInvoicePaidAction,
   reverseInvoiceAction,
@@ -434,6 +434,9 @@ function DesktopInvoiceRow({
   const reversed = invoice.status === "reversed";
   const paid = invoice.status === "paid";
   const draft = invoice.status === "draft";
+  // Drafts (never issued) and undone invoices can be deleted and their
+  // number freed. Active issued and paid invoices cannot.
+  const deletable = draft || reversed;
 
   function openPdf() {
     // Same-tab navigation to the in-shell PDF viewer keeps the user
@@ -496,16 +499,16 @@ function DesktopInvoiceRow({
     }
   }
 
-  async function onDeleteDraft() {
+  async function onDelete() {
     setPending(true);
-    const result = await deleteDraftAction({ id: invoice.id });
+    const result = await deleteInvoiceAction({ id: invoice.id });
     setPending(false);
     if (result.ok) {
       hapticDestructive();
       toast.success(
         result.freed_number != null
-          ? `Draft deleted. Number ${prefix}${result.freed_number} is free to use again.`
-          : "Draft deleted.",
+          ? `${draft ? "Draft" : "Invoice"} ${prefix}${result.freed_number} deleted. Its number is free to use again.`
+          : "Deleted.",
       );
       setConfirmDelete(false);
       router.refresh();
@@ -591,15 +594,6 @@ function DesktopInvoiceRow({
                 <Copy className="h-4 w-4" />
                 Copy invoice number
               </DropdownMenuItem>
-              {draft && (
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => setConfirmDelete(true)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete draft
-                </DropdownMenuItem>
-              )}
               {!draft && !reversed && (
                 <DropdownMenuItem
                   variant="destructive"
@@ -607,6 +601,15 @@ function DesktopInvoiceRow({
                 >
                   <RotateCcw className="h-4 w-4" />
                   Undo invoice
+                </DropdownMenuItem>
+              )}
+              {deletable && (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {draft ? "Delete draft" : "Delete invoice"}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -631,13 +634,14 @@ function DesktopInvoiceRow({
         onCancel={() => setConfirmReverse(false)}
         onConfirm={onReverse}
       />
-      <DeleteDraftDialog
+      <DeleteInvoiceDialog
         open={confirmDelete}
         invoice={invoice}
         fullNumber={fullNumber}
+        draft={draft}
         pending={pending}
         onCancel={() => setConfirmDelete(false)}
-        onConfirm={onDeleteDraft}
+        onConfirm={onDelete}
       />
       <IssueDraftDialog
         open={confirmIssue}
@@ -676,6 +680,9 @@ function MobileInvoiceCard({
   const reversed = invoice.status === "reversed";
   const paid = invoice.status === "paid";
   const draft = invoice.status === "draft";
+  // Drafts (never issued) and undone invoices can be deleted and their
+  // number freed. Active issued and paid invoices cannot.
+  const deletable = draft || reversed;
 
   function openPdf() {
     // Same-tab navigation, see DesktopInvoiceRow above.
@@ -730,16 +737,16 @@ function MobileInvoiceCard({
     }
   }
 
-  async function onDeleteDraft() {
+  async function onDelete() {
     setPending(true);
-    const result = await deleteDraftAction({ id: invoice.id });
+    const result = await deleteInvoiceAction({ id: invoice.id });
     setPending(false);
     if (result.ok) {
       hapticDestructive();
       toast.success(
         result.freed_number != null
-          ? `Draft deleted. Number ${prefix}${result.freed_number} is free to use again.`
-          : "Draft deleted.",
+          ? `${draft ? "Draft" : "Invoice"} ${prefix}${result.freed_number} deleted. Its number is free to use again.`
+          : "Deleted.",
       );
       setConfirmDelete(false);
       router.refresh();
@@ -885,15 +892,6 @@ function MobileInvoiceCard({
                   <Copy className="h-4 w-4" />
                   Copy invoice number
                 </DropdownMenuItem>
-                {draft && (
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => setConfirmDelete(true)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete draft
-                  </DropdownMenuItem>
-                )}
                 {!draft && !reversed && (
                   <DropdownMenuItem
                     variant="destructive"
@@ -901,6 +899,15 @@ function MobileInvoiceCard({
                   >
                     <RotateCcw className="h-4 w-4" />
                     Undo invoice
+                  </DropdownMenuItem>
+                )}
+                {deletable && (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => setConfirmDelete(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {draft ? "Delete draft" : "Delete invoice"}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -926,13 +933,14 @@ function MobileInvoiceCard({
         onCancel={() => setConfirmReverse(false)}
         onConfirm={onReverse}
       />
-      <DeleteDraftDialog
+      <DeleteInvoiceDialog
         open={confirmDelete}
         invoice={invoice}
         fullNumber={fullNumber}
+        draft={draft}
         pending={pending}
         onCancel={() => setConfirmDelete(false)}
-        onConfirm={onDeleteDraft}
+        onConfirm={onDelete}
       />
       <IssueDraftDialog
         open={confirmIssue}
@@ -1015,7 +1023,8 @@ function ReverseDialog({
             Invoice <strong>{fullNumber}</strong> for{" "}
             <strong>{invoice.client_name}</strong> will be marked undone and
             its trips will return to the open list so you can bill them again.
-            The invoice number stays reserved and is never reused.
+            The number stays with this invoice. To free the number for reuse,
+            delete the undone invoice.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -1029,10 +1038,11 @@ function ReverseDialog({
   );
 }
 
-function DeleteDraftDialog({
+function DeleteInvoiceDialog({
   open,
   invoice,
   fullNumber,
+  draft,
   pending,
   onCancel,
   onConfirm,
@@ -1040,6 +1050,7 @@ function DeleteDraftDialog({
   open: boolean;
   invoice: Invoice;
   fullNumber: string;
+  draft: boolean;
   pending: boolean;
   onCancel: () => void;
   onConfirm: () => void;
@@ -1048,18 +1059,21 @@ function DeleteDraftDialog({
     <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete this draft?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {draft ? "Delete draft" : "Delete invoice"} {fullNumber}?
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            Draft <strong>{fullNumber}</strong> for{" "}
-            <strong>{invoice.client_name}</strong> will be deleted and its
-            trips will return to the open list. Its number will be free to use
-            again.
+            {draft ? "Draft " : "Invoice "}
+            <strong>{fullNumber}</strong> for{" "}
+            <strong>{invoice.client_name}</strong> will be removed
+            {draft ? " and its trips will return to the open list" : ""}. Its
+            number will be free to use again. This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={pending}>Keep</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} disabled={pending}>
-            {pending ? "Deleting…" : "Delete draft"}
+            {pending ? "Deleting…" : "Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -1090,8 +1104,8 @@ function IssueDraftDialog({
           <AlertDialogDescription>
             Draft <strong>{fullNumber}</strong> for{" "}
             <strong>{invoice.client_name}</strong> will be issued. Number{" "}
-            <strong>{fullNumber}</strong> then stays with this invoice for good
-            and is never reused, even if you undo it later.
+            <strong>{fullNumber}</strong> then stays with this invoice. If you
+            undo and delete it later, the number can be used again.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

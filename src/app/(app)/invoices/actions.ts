@@ -20,6 +20,10 @@ const IssueInvoiceSchema = z.object({
   period_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   trip_ids: z.array(z.string().uuid()).min(1, "Pick at least one trip."),
   toll_override: z.number().nullable().optional(),
+  // The number to assign. null means auto (lowest freed, else next
+  // sequential). A set value must be a freed number or the next sequential
+  // one; the database rejects anything already in use.
+  requested_number: z.number().int().positive().nullable().optional(),
 });
 
 export type IssueInvoiceInput = z.input<typeof IssueInvoiceSchema>;
@@ -32,9 +36,11 @@ export type IssueInvoiceResult =
  * Build an invoice from existing trips and save it, either issued
  * ("unpaid") or as a "draft". Both paths reserve a number, freeze the
  * lines, and mark the trips invoiced so the same trips cannot be billed
- * twice. The only difference is the status, which decides later
- * behaviour: a draft can be deleted and its number returned to the
- * pool, an issued invoice keeps its number forever.
+ * twice. The number is chosen by the caller (a freed number to reuse,
+ * or the next sequential one) or auto-allocated. The only difference
+ * between the two paths is the status, which decides later behaviour: a
+ * draft can be deleted straight away, an issued invoice must be undone
+ * first, and either way deleting it frees its number for reuse.
  */
 async function createInvoiceFromTrips(
   raw: IssueInvoiceInput,
@@ -126,9 +132,21 @@ async function createInvoiceFromTrips(
   const userSb = await createUserClient();
   const { data: numberData, error: rpcErr } = await userSb.rpc(
     "allocate_invoice_number",
-    { p_company_id: ctx.companyId },
+    {
+      p_company_id: ctx.companyId,
+      p_requested: data.requested_number ?? null,
+    },
   );
-  if (rpcErr) return { ok: false, error: rpcErr.message };
+  if (rpcErr) {
+    // The number was free when the screen loaded but got taken meanwhile.
+    if (data.requested_number != null) {
+      return {
+        ok: false,
+        error: "That invoice number is no longer free. Please pick another.",
+      };
+    }
+    return { ok: false, error: rpcErr.message };
+  }
   const invoice_number = Number(numberData);
   if (!Number.isFinite(invoice_number)) {
     return { ok: false, error: "Failed to allocate invoice number." };
@@ -205,7 +223,7 @@ async function createInvoiceFromTrips(
   return { ok: true, invoice_id, invoice_number };
 }
 
-/** Issue an invoice straight away: the number is locked permanently. */
+/** Issue an invoice straight away. */
 export async function issueInvoiceAction(
   raw: IssueInvoiceInput,
 ): Promise<IssueInvoiceResult> {
@@ -260,18 +278,19 @@ export async function issueDraftAction(raw: IdInput): Promise<SimpleResult> {
   return { ok: true };
 }
 
-export type DeleteDraftResult =
+export type DeleteInvoiceResult =
   | { ok: true; freed_number: number | null }
   | { ok: false; error: string };
 
 /**
- * Delete a draft invoice. The trips it held are freed for billing again,
- * and the number is returned to the pool when it was the most recent one
- * allocated. Issued invoices cannot be deleted here.
+ * Delete a draft or an undone (reversed) invoice. The trips it held are
+ * freed for billing again, the invoice and its lines are removed, and its
+ * number goes into the company pool so a later invoice can reuse it. Active
+ * issued or paid invoices cannot be deleted here.
  */
-export async function deleteDraftAction(
+export async function deleteInvoiceAction(
   raw: IdInput,
-): Promise<DeleteDraftResult> {
+): Promise<DeleteInvoiceResult> {
   const parsed = IdSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, error: "Invalid invoice." };
 
@@ -281,7 +300,7 @@ export async function deleteDraftAction(
   // Run through the user-scoped client so auth.uid() resolves inside the
   // SECURITY DEFINER function, the admin client carries no session.
   const userSb = await createUserClient();
-  const { data, error } = await userSb.rpc("delete_draft_invoice", {
+  const { data, error } = await userSb.rpc("delete_invoice_and_free_number", {
     p_company_id: ctx.companyId,
     p_invoice_id: parsed.data.id,
   });

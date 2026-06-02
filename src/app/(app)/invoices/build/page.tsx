@@ -145,6 +145,15 @@ export default async function BuildInvoicePage({
     );
   }
 
+  // Freed numbers from deleted invoices, lowest first, so the builder can
+  // offer them for reuse alongside the next sequential number.
+  const { data: freedData } = await supabase.rpc("get_freed_invoice_numbers", {
+    p_company_id: membership.company_id,
+  });
+  const freedNumbers: number[] = Array.isArray(freedData)
+    ? freedData.map(Number).filter(Number.isFinite)
+    : [];
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -165,6 +174,9 @@ export default async function BuildInvoicePage({
         trips={trips}
         rateCards={rateCards ?? []}
         vehicles={vehicles ?? []}
+        nextNumber={company.next_invoice_number}
+        freedNumbers={freedNumbers}
+        prefix={company.invoice_prefix ?? ""}
       />
     </div>
   );

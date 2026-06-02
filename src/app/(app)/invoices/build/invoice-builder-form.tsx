@@ -8,6 +8,13 @@ import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type {
   Client,
   Company,
@@ -46,16 +53,30 @@ export function InvoiceBuilderForm({
   trips,
   rateCards,
   vehicles,
+  nextNumber,
+  freedNumbers,
+  prefix,
 }: {
   client: Client;
   company: Company;
   trips: Trip[];
   rateCards: RateCard[];
   vehicles: Pick<Vehicle, "id" | "number" | "type">[];
+  /** Next sequential invoice number for this company. */
+  nextNumber: number;
+  /** Freed numbers from deleted invoices, lowest first, free to reuse. */
+  freedNumbers: number[];
+  /** Invoice number prefix, for display only. */
+  prefix: string;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
+  // The number to assign. Default to the lowest available: the lowest freed
+  // number if any, otherwise the next sequential number. The value is a
+  // string for the Select; convert to a number on save.
+  const defaultNumber = freedNumbers[0] ?? nextNumber;
+  const [chosenNumber, setChosenNumber] = useState<string>(String(defaultNumber));
 
   const sortedDates = trips.map((t) => t.date).sort();
   const [invoiceDate, setInvoiceDate] = useState(todayIso());
@@ -136,6 +157,7 @@ export function InvoiceBuilderForm({
       period_to: periodTo,
       trip_ids: selectedTrips.map((t) => t.id),
       toll_override: tollOverride,
+      requested_number: Number(chosenNumber),
     });
     setPending(false);
 
@@ -166,6 +188,7 @@ export function InvoiceBuilderForm({
       period_to: periodTo,
       trip_ids: selectedTrips.map((t) => t.id),
       toll_override: tollOverride,
+      requested_number: Number(chosenNumber),
     });
     setSavingDraft(false);
 
@@ -336,6 +359,37 @@ export function InvoiceBuilderForm({
             <CardTitle className="text-base">Preview</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 text-sm">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="invoice_number">Invoice number</Label>
+              <Select value={chosenNumber} onValueChange={(v) => {
+                if (typeof v === "string") setChosenNumber(v);
+              }}>
+                <SelectTrigger id="invoice_number">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {freedNumbers.map((n) => (
+                    <SelectItem key={`freed-${n}`} value={String(n)}>
+                      {prefix}{n} (reuse freed)
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={String(nextNumber)}>
+                    {prefix}{nextNumber} (next new)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              {freedNumbers.length > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Freed numbers from deleted invoices can be used again. The
+                  lowest free number is picked by default.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  The next number in your series.
+                </p>
+              )}
+            </div>
+
             <Row label="Subtotal" value={formatINR(draft.subtotal)} />
 
             {draft.gst.mode === "RCM" && (

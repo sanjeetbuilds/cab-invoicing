@@ -112,7 +112,7 @@ export default async function InvoicesPage() {
   const header = (
     <PageHeader
       title="Invoices"
-      description="Invoice numbers are never repeated."
+      description="A number belongs to one invoice at a time. Delete an undone invoice to free its number for reuse."
     >
       {actions}
     </PageHeader>
