@@ -208,22 +208,15 @@ describe("buildInvoiceDraft", () => {
     expect(draft.net_amount).toBe(6936);
   });
 
-  it("toll override beats trip extra-charge sums", () => {
+  it("charges are taken from invoice build time, not from trips", () => {
     const trips = [
       trip({
         id: "a",
         client_id: haryanaClient.id,
         total_kms: 80,
         total_hours: 8,
+        // Old per-trip charge fields are ignored now.
         extra_charge_amount: 100,
-        charge_toll: true,
-      }),
-      trip({
-        id: "b",
-        client_id: haryanaClient.id,
-        total_kms: 80,
-        total_hours: 8,
-        extra_charge_amount: 50,
         charge_toll: true,
       }),
     ];
@@ -236,24 +229,27 @@ describe("buildInvoiceDraft", () => {
       }),
     ];
 
-    const sumDraft = buildInvoiceDraft({
+    // No charges passed: the trip's old toll is not summed in.
+    const noCharges = buildInvoiceDraft({
       trips,
       rateCards,
       vehicles: [vehicle],
       client: haryanaClient,
       company,
     });
-    expect(sumDraft.toll_total).toBe(150);
+    expect(noCharges.toll_total).toBe(0);
 
-    const overrideDraft = buildInvoiceDraft({
+    // Charges entered at invoice time drive the toll line and its label.
+    const withCharges = buildInvoiceDraft({
       trips,
       rateCards,
       vehicles: [vehicle],
       client: haryanaClient,
       company,
-      toll_override: 999,
+      charges: { amount: 250, toll: true, tax: false, parking: true },
     });
-    expect(overrideDraft.toll_total).toBe(999);
+    expect(withCharges.toll_total).toBe(250);
+    expect(withCharges.toll_label).toBe("Toll & Parking");
   });
 
   it("trips without a matching rate card are flagged, not silently dropped from awareness", () => {
@@ -325,25 +321,9 @@ describe("buildInvoiceDraft", () => {
     expect(draft.lines[2].date).toBe("22/4/26");
   });
 
-  it("toll_label reflects union of ticked boxes across selected trips", () => {
+  it("toll_label reflects the charge boxes ticked at invoice time", () => {
     const trips = [
-      trip({
-        id: "a",
-        client_id: haryanaClient.id,
-        total_kms: 80,
-        total_hours: 8,
-        extra_charge_amount: 100,
-        charge_toll: true,
-        charge_tax: true,
-      }),
-      trip({
-        id: "b",
-        client_id: haryanaClient.id,
-        total_kms: 80,
-        total_hours: 8,
-        extra_charge_amount: 50,
-        charge_parking: true,
-      }),
+      trip({ id: "a", client_id: haryanaClient.id, total_kms: 80, total_hours: 8 }),
     ];
     const rateCards = [
       rate({
@@ -360,41 +340,10 @@ describe("buildInvoiceDraft", () => {
       vehicles: [vehicle],
       client: haryanaClient,
       company,
+      charges: { amount: 150, toll: true, tax: true, parking: true },
     });
     expect(draft.toll_total).toBe(150);
     expect(draft.toll_label).toBe("Toll, Tax & Parking");
-  });
-
-  it("falls back to legacy `toll` column when extra_charge_amount is 0", () => {
-    const trips = [
-      trip({
-        id: "legacy",
-        client_id: haryanaClient.id,
-        total_kms: 80,
-        total_hours: 8,
-        toll: 75,
-        extra_charge_amount: 0,
-      }),
-    ];
-    const rateCards = [
-      rate({
-        client_id: haryanaClient.id,
-        base_rate: 1500,
-        base_kms: 80,
-        base_hours: 8,
-      }),
-    ];
-
-    const draft = buildInvoiceDraft({
-      trips,
-      rateCards,
-      vehicles: [vehicle],
-      client: haryanaClient,
-      company,
-    });
-    expect(draft.toll_total).toBe(75);
-    // No flags ticked → fallback label
-    expect(draft.toll_label).toBe("Toll & Parking");
   });
 
   it("outstation trip with billing_method='slab' looks up the LOCAL rate card", () => {

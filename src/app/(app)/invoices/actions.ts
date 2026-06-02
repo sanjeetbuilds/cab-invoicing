@@ -19,7 +19,15 @@ const IssueInvoiceSchema = z.object({
   period_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   period_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   trip_ids: z.array(z.string().uuid()).min(1, "Pick at least one trip."),
-  toll_override: z.number().nullable().optional(),
+  // Reimbursement charges entered at invoice build time, added after GST.
+  charges: z
+    .object({
+      amount: z.number().min(0).default(0),
+      toll: z.boolean().default(false),
+      tax: z.boolean().default(false),
+      parking: z.boolean().default(false),
+    })
+    .optional(),
   // The number to assign. null means auto (lowest freed, else next
   // sequential). A set value must be a freed number or the next sequential
   // one; the database rejects anything already in use.
@@ -116,7 +124,14 @@ async function createInvoiceFromTrips(
     vehicles: vehicles ?? [],
     client,
     company,
-    toll_override: data.toll_override ?? null,
+    charges: data.charges
+      ? {
+          amount: data.charges.amount,
+          toll: data.charges.toll,
+          tax: data.charges.tax,
+          parking: data.charges.parking,
+        }
+      : undefined,
   });
 
   if (draft.unmatched_trip_ids.length > 0) {

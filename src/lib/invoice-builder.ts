@@ -8,7 +8,7 @@ import type {
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
 import { gstFor, type GstResult } from "@/lib/gst";
 import { numberToWords } from "@/lib/number-to-words";
-import { chargeLabel, unionChargeFlags } from "@/lib/charges";
+import { chargeLabel } from "@/lib/charges";
 
 export interface InvoiceLineDraft {
   trip_id: string | null;
@@ -43,8 +43,17 @@ export interface BuildInvoiceInput {
   vehicles: Pick<Vehicle, "id" | "number" | "type">[];
   client: Pick<Client, "id" | "state" | "is_rcm">;
   company: Pick<Company, "state">;
-  /** Override the sum of trip extra charges with this value. */
-  toll_override?: number | null;
+  /**
+   * Reimbursement charges entered at invoice build time (toll, parking,
+   * any other), added after GST as a single line. The label is built from
+   * the ticked boxes. These are no longer read from trips.
+   */
+  charges?: {
+    amount: number;
+    toll: boolean;
+    tax: boolean;
+    parking: boolean;
+  };
 }
 
 function rateKey(
@@ -156,31 +165,18 @@ export function buildInvoiceDraft(input: BuildInvoiceInput): InvoiceDraft {
 
   const gst = gstFor(input.client, subtotal, input.company);
 
-  // Charges (toll / tax / parking), single amount per trip, dynamic label.
-  // Prefer the new extra_charge_amount; fall back to the legacy `toll`
-  // column so trips logged before the schema change still total correctly.
-  const tripChargeAmount = (t: Trip): number => {
-    const v = t.extra_charge_amount ?? 0;
-    if (v !== 0) return v;
-    return t.toll ?? 0;
-  };
-
-  const summedCharges = matchedTrips.reduce(
-    (sum, t) => sum + tripChargeAmount(t),
-    0,
+  // Reimbursement charges are entered at invoice build time (toll, parking,
+  // any other) and added after GST as one line. Not taken from trips.
+  const charges = input.charges;
+  const toll_total = round2(charges?.amount ?? 0);
+  const toll_label = chargeLabel(
+    {
+      toll: charges?.toll ?? false,
+      tax: charges?.tax ?? false,
+      parking: charges?.parking ?? false,
+    },
+    toll_total,
   );
-  const toll_total = round2(
-    input.toll_override != null ? input.toll_override : summedCharges,
-  );
-
-  const unionFlags = unionChargeFlags(
-    matchedTrips.map((t) => ({
-      toll: t.charge_toll ?? false,
-      tax: t.charge_tax ?? false,
-      parking: t.charge_parking ?? false,
-    })),
-  );
-  const toll_label = chargeLabel(unionFlags, toll_total);
 
   const net_amount = round2(
     subtotal + gst.cgst + gst.sgst + gst.igst + toll_total,

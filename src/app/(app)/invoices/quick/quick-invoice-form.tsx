@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { AlertTriangle } from "lucide-react";
 import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { VehiclePicker } from "@/components/pickers/vehicle-picker";
 import { InlineVehicleForm } from "../../trips/inline-vehicle-form";
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
@@ -337,9 +335,8 @@ export function QuickInvoiceForm({
     <form
       id="quick-invoice-form"
       onSubmit={onSubmit}
-      className="grid gap-4 lg:grid-cols-[1fr_360px] lg:items-start"
+      className="flex flex-col gap-4"
     >
-      <div className="flex flex-col gap-4 min-w-0">
         {/* Section 1: Customer */}
         <Card>
           <CardContent className="flex flex-col gap-4">
@@ -769,77 +766,6 @@ export function QuickInvoiceForm({
             )}
           </CardContent>
         </Card>
-      </div>
-
-      {/* Right column: live preview + submit */}
-      <Card className="lg:sticky lg:top-20 h-fit">
-        <CardContent className="flex flex-col gap-3">
-          <p className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
-            Live preview
-          </p>
-          {preview.subtotal === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Fill the trip details to see the amount.
-            </p>
-          ) : (
-            <>
-              <div className="flex flex-col gap-1 text-sm">
-                {preview.lines.map((l, i) => (
-                  <div key={i} className="flex justify-between gap-3">
-                    <span className="text-muted-foreground whitespace-pre-line truncate">
-                      {l.particulars}
-                    </span>
-                    <span className="font-mono tabular-nums shrink-0">
-                      {formatINR(l.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-border pt-2 flex flex-col gap-1 text-sm">
-                <Row label="Subtotal" value={formatINR(preview.subtotal)} />
-                {preview.gst.mode === "RCM" && (
-                  <>
-                    <Row label="CGST @ 2.5% Under RCM" value="-" muted />
-                    <Row label="SGST @ 2.5% Under RCM" value="-" muted />
-                  </>
-                )}
-                {preview.gst.mode === "CGST_SGST" && (
-                  <>
-                    <Row label="CGST @ 2.5%" value={formatINR(preview.gst.cgst)} />
-                    <Row label="SGST @ 2.5%" value={formatINR(preview.gst.sgst)} />
-                  </>
-                )}
-                {preview.gst.mode === "IGST" && (
-                  <Row label="IGST @ 5%" value={formatINR(preview.gst.igst)} />
-                )}
-                {preview.extras > 0 && (
-                  <Row label={liveExtrasLabel} value={formatINR(preview.extras)} />
-                )}
-              </div>
-              <div className="border-t border-border pt-2 flex justify-between font-semibold">
-                <span>Net Amount</span>
-                <span className="font-mono">{formatINR(preview.net)}</span>
-              </div>
-              {preview.inWords && (
-                <p className="text-xs text-muted-foreground">
-                  {preview.inWords}
-                </p>
-              )}
-            </>
-          )}
-
-          {existingId && (
-            <Badge variant="secondary" className="self-start">
-              Reusing existing customer
-            </Badge>
-          )}
-
-          <p className="text-xs text-muted-foreground">
-            Use the Issue invoice button at the bottom of the screen when
-            the totals look right.
-          </p>
-        </CardContent>
-      </Card>
       <SaveBarSpacer />
       <SaveBar
         formId="quick-invoice-form"
@@ -1020,21 +946,3 @@ function Check({
   );
 }
 
-function Row({
-  label,
-  value,
-  muted = false,
-}: {
-  label: string;
-  value: string;
-  muted?: boolean;
-}) {
-  return (
-    <div className="flex justify-between text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={muted ? "text-muted-foreground" : "font-mono"}>
-        {value}
-      </span>
-    </div>
-  );
-}

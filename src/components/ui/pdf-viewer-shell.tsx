@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Share2 } from "lucide-react";
+import { ArrowLeft, Download, Loader2, Share2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { sharePdf } from "@/lib/share-pdf";
+import { sharePdf, downloadPdf } from "@/lib/share-pdf";
 
 /**
  * In-shell PDF viewer used by /invoices/[id] and /quotations/[id]. The
@@ -35,6 +35,7 @@ export function PdfViewerShell({
 }) {
   const router = useRouter();
   const [sharing, setSharing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   function handleBack() {
     // PWA deep-links land here with no history. In that case explicit
@@ -61,6 +62,20 @@ export function PdfViewerShell({
       }
     } finally {
       setSharing(false);
+    }
+  }
+
+  async function handleDownload() {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      await downloadPdf({ url: pdfUrl, filename });
+      toast.success(`Downloaded ${filename}.`);
+    } catch (err) {
+      const e = err as Error;
+      toast.error(e.message || "Download failed.");
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -98,19 +113,34 @@ export function PdfViewerShell({
           {title}
         </h1>
 
-        <button
-          type="button"
-          onClick={handleShare}
-          disabled={sharing}
-          aria-label="Share PDF"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md text-[#4f46e5] hover:bg-muted disabled:opacity-60"
-        >
-          {sharing ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <Share2 className="h-5 w-5" />
-          )}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={downloading}
+            aria-label="Download PDF"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-[#4f46e5] hover:bg-muted disabled:opacity-60"
+          >
+            {downloading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Download className="h-5 w-5" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleShare}
+            disabled={sharing}
+            aria-label="Share PDF"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-[#4f46e5] hover:bg-muted disabled:opacity-60"
+          >
+            {sharing ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Share2 className="h-5 w-5" />
+            )}
+          </button>
+        </div>
       </header>
 
       {/* PDF body. The iframe fills the viewport between the sticky

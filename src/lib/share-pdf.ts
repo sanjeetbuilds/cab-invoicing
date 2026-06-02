@@ -52,3 +52,27 @@ export async function sharePdf(args: {
   setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   return "downloaded";
 }
+
+/**
+ * Download a server-rendered PDF directly with the chosen filename, on
+ * both desktop and mobile. Fetches the bytes and triggers a regular
+ * <a download> click, so it never depends on an embedded frame.
+ */
+export async function downloadPdf(args: {
+  url: string;
+  filename: string;
+}): Promise<void> {
+  const res = await fetch(args.url, { credentials: "same-origin" });
+  if (!res.ok) {
+    throw new Error(`PDF download failed (HTTP ${res.status}).`);
+  }
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = objectUrl;
+  a.download = args.filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+}

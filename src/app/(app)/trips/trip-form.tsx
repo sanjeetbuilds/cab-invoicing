@@ -6,8 +6,9 @@ import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ChevronDown } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
@@ -33,7 +34,6 @@ import type {
   Vehicle,
 } from "@/lib/supabase/types";
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
-import { chargeLabel } from "@/lib/charges";
 import { formatINR } from "@/lib/format";
 import { ClientPicker } from "@/components/pickers/client-picker";
 import { VehiclePicker } from "@/components/pickers/vehicle-picker";
@@ -42,7 +42,6 @@ import { InlineVehicleForm } from "./inline-vehicle-form";
 import { InlineRateCardForm } from "./inline-rate-card-form";
 
 const CAR_TYPES: CarType[] = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"];
-const decimalRegex = /^\d*\.?\d*$/;
 
 /** Sentinel value used inside the rate-plan Select to open the
  *  bundle editor instead of selecting a plan. */
@@ -84,15 +83,6 @@ const Schema = z
     total_hours: z.string().optional(),
     night_count: z.string().optional(),
     driver_ta: z.string().optional(),
-    extra_charge_amount: z
-      .string()
-      .optional()
-      .refine((v) => !v || decimalRegex.test(v), {
-        message: "Enter a decimal amount.",
-      }),
-    charge_toll: z.boolean(),
-    charge_tax: z.boolean(),
-    charge_parking: z.boolean(),
     notes: z.string().optional(),
     duty_slip_no: z.string().optional(),
   })
@@ -155,6 +145,9 @@ export function TripForm({
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [addingAnother, setAddingAnother] = useState(false);
+  // "More details" (duty slip + notes) is collapsed by default.
+  const [showMore, setShowMore] = useState(false);
   const editing = !!trip;
 
   // Track vehicles & rate cards in local state so inline-create flows
@@ -190,6 +183,7 @@ export function TripForm({
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors, isDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(Schema),
@@ -218,11 +212,6 @@ export function TripForm({
         ? String(trip.night_count ?? (trip.night ? 1 : 0))
         : "0",
       driver_ta: trip ? String(trip.driver_ta) : "0",
-      extra_charge_amount:
-        trip != null ? String(trip.extra_charge_amount || trip.toll || 0) : "0",
-      charge_toll: trip?.charge_toll ?? false,
-      charge_tax: trip?.charge_tax ?? false,
-      charge_parking: trip?.charge_parking ?? false,
       notes: trip?.notes ?? "",
       duty_slip_no: trip?.duty_slip_no ?? "",
     },
@@ -276,18 +265,6 @@ export function TripForm({
   const driverTaStr = watch("driver_ta");
 
   const nightCount = Math.max(0, Math.floor(toNum(nightCountStr)));
-  const extraChargeStr = watch("extra_charge_amount");
-  const chargeToll = watch("charge_toll");
-  const chargeTax = watch("charge_tax");
-  const chargeParking = watch("charge_parking");
-
-  const extraChargeAmount = toNum(extraChargeStr);
-  const anyTicked = chargeToll || chargeTax || chargeParking;
-  const showChargeWarning = extraChargeAmount > 0 && !anyTicked;
-  const liveChargeLabel = chargeLabel(
-    { toll: chargeToll, tax: chargeTax, parking: chargeParking },
-    extraChargeAmount,
-  );
 
   // For local/outstation, slab borrows the LOCAL rate card. For
   // transfer/package, lookup uses the trip's mode + plan_name.
@@ -364,8 +341,9 @@ export function TripForm({
     return { lines, total: tripTotal(lines) };
   }, [activeRate, carType, mode, effectiveMethod, totalKmsStr, totalHoursStr, nightCount, driverTaStr]);
 
-  async function onSubmit(values: FormValues) {
-    setPending(true);
+  async function onSubmit(values: FormValues, addAnother = false) {
+    if (addAnother) setAddingAnother(true);
+    else setPending(true);
     const fd = new FormData();
     fd.set("date", values.date);
     fd.set("end_date", values.end_date ?? "");
@@ -382,10 +360,6 @@ export function TripForm({
     fd.set("total_hours", values.total_hours ?? "0");
     fd.set("night_count", values.night_count ?? "0");
     fd.set("driver_ta", values.driver_ta ?? "0");
-    fd.set("extra_charge_amount", values.extra_charge_amount ?? "0");
-    fd.set("charge_toll", String(values.charge_toll));
-    fd.set("charge_tax", String(values.charge_tax));
-    fd.set("charge_parking", String(values.charge_parking));
     fd.set("notes", values.notes ?? "");
     fd.set("duty_slip_no", values.duty_slip_no ?? "");
 
@@ -394,19 +368,47 @@ export function TripForm({
       : await createTripAction(fd);
 
     if (result.ok) {
-      toast.success(editing ? "Trip updated." : "Trip logged.");
-      router.push("/trips");
-      router.refresh();
+      if (addAnother) {
+        // Keep the client, vehicle, car, mode, plan and date so the next
+        // trip in this run starts ready. Clear only the ride-specific
+        // fields. This context lives only here, a normal new trip opened
+        // afresh still starts blank.
+        reset({
+          date: values.date,
+          end_date: "",
+          client_id: values.client_id,
+          vehicle_id: values.vehicle_id,
+          car_type: values.car_type,
+          mode: values.mode,
+          plan_name: values.plan_name ?? "",
+          billing_method: values.billing_method,
+          total_kms: "",
+          total_hours: "",
+          night_count: "0",
+          driver_ta: "0",
+          notes: "",
+          duty_slip_no: "",
+        });
+        setAddingAnother(false);
+        toast.success("Trip logged. Add the next one.");
+      } else {
+        toast.success(editing ? "Trip updated." : "Trip logged.");
+        router.push("/trips");
+        router.refresh();
+      }
     } else {
       toast.error(result.error);
       setPending(false);
+      setAddingAnother(false);
     }
   }
+
+  const submitAddAnother = handleSubmit((values) => onSubmit(values, true));
 
   return (
     <form
       id="trip-form"
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit((values) => onSubmit(values, false))}
       className="flex flex-col gap-4"
     >
       {/* Top: dates + client */}
@@ -709,97 +711,25 @@ export function TripForm({
         </CardContent>
       </Card>
 
-      {/* Toll / Tax / Parking */}
-      <Card>
-        <CardContent className="flex flex-col gap-4">
-          {mode === "package" &&
-            activeRate &&
-            (activeRate.includes_toll ||
-              activeRate.includes_tax ||
-              activeRate.includes_parking) && (
-              <div className="flex items-start gap-2 rounded-md bg-warning-soft/60 p-2 text-xs text-warning-foreground">
-                <AlertTriangle className="h-4 w-4 mt-1 shrink-0" />
-                <span>
-                  This package includes{" "}
-                  {[
-                    activeRate.includes_toll && "toll",
-                    activeRate.includes_tax && "tax",
-                    activeRate.includes_parking && "parking",
-                  ]
-                    .filter(Boolean)
-                    .join(" / ")}
-                  . Charge extra only if outside the agreement.
-                </span>
-              </div>
+      {/* More details: duty slip + notes, collapsed by default. Toll,
+          tax and parking are no longer entered here; they are added at
+          invoice time. */}
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={() => setShowMore((v) => !v)}
+          className="flex items-center gap-2 self-start text-sm font-medium text-muted-foreground hover:text-foreground"
+          aria-expanded={showMore}
+        >
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 transition-transform",
+              showMore && "rotate-180",
             )}
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="extra_charge_amount">Toll / tax / parking amount</Label>
-            <Input
-              id="extra_charge_amount"
-              type="text"
-              inputMode="decimal"
-              placeholder="0.00"
-              {...register("extra_charge_amount", {
-                onChange: (e) => {
-                  const v = e.target.value;
-                  if (v !== "" && !decimalRegex.test(v)) {
-                    e.target.value = v.slice(0, -1);
-                  }
-                },
-              })}
-            />
-            {errors.extra_charge_amount && (
-              <p className="text-xs text-destructive">
-                {errors.extra_charge_amount.message}
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              One amount. Added to the invoice net after GST. Use the boxes
-              below to label what it covers.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-4">
-            <CheckboxLabel
-              id="charge_toll"
-              checked={chargeToll}
-              onChange={(v) => setValue("charge_toll", v)}
-              label="Toll"
-            />
-            <CheckboxLabel
-              id="charge_tax"
-              checked={chargeTax}
-              onChange={(v) => setValue("charge_tax", v)}
-              label="Tax"
-            />
-            <CheckboxLabel
-              id="charge_parking"
-              checked={chargeParking}
-              onChange={(v) => setValue("charge_parking", v)}
-              label="Parking"
-            />
-          </div>
-
-          {extraChargeAmount > 0 && anyTicked && (
-            <p className="text-xs text-muted-foreground">
-              Invoice will read:{" "}
-              <span className="font-medium">{liveChargeLabel}</span>
-            </p>
-          )}
-          {showChargeWarning && (
-            <div className="flex items-start gap-2 rounded-md bg-warning-soft p-2 text-xs text-warning-foreground">
-              <AlertTriangle className="h-4 w-4 mt-1 shrink-0" />
-              <span>
-                You entered an amount but didn&apos;t tick a box. The invoice
-                will default to{" "}
-                <strong>&ldquo;Toll &amp; Parking&rdquo;</strong>.
-              </span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Slip + notes */}
+          />
+          More details
+        </button>
+        {showMore && (
       <Card>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="flex flex-col gap-2">
@@ -812,6 +742,8 @@ export function TripForm({
           </div>
         </CardContent>
       </Card>
+        )}
+      </div>
 
       {/* Live preview. The missing-rate alert lives at the top of
           the form (rate-plan area), so this card only shows the
@@ -844,8 +776,8 @@ export function TripForm({
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                +{formatINR(extraChargeAmount)} ({liveChargeLabel}) added on the
-                invoice, not here.
+                Toll, parking and other charges are added at invoice time, not
+                here.
               </p>
             </div>
           ) : (
@@ -920,20 +852,15 @@ export function TripForm({
         dirty={isDirty}
         pending={pending}
         alwaysShow
-        leading={
-          activeRate && preview ? (
-            <div className="flex items-baseline gap-2 min-w-0 whitespace-nowrap">
-              <span className="text-xs text-muted-foreground shrink-0">
-                Trip total
-              </span>
-              <span className="font-mono text-sm sm:text-base font-semibold tabular-nums truncate">
-                {formatINR(preview.total)}
-              </span>
-            </div>
-          ) : undefined
-        }
         onCancel={() => router.push("/trips")}
         saveLabel={editing ? "Save changes" : "Log trip"}
+        {...(!editing
+          ? {
+              secondaryLabel: "Add another",
+              onSecondary: submitAddAnother,
+              secondaryPending: addingAnother,
+            }
+          : {})}
       />
     </form>
   );
@@ -1107,30 +1034,3 @@ function clientName(
   return clients.find((c) => c.id === id)?.name ?? "this client";
 }
 
-function CheckboxLabel({
-  id,
-  checked,
-  onChange,
-  label,
-}: {
-  id: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-}) {
-  return (
-    <label
-      htmlFor={id}
-      className="flex items-center gap-2 cursor-pointer select-none"
-    >
-      <input
-        id={id}
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4 accent-primary"
-      />
-      <span className="text-sm">{label}</span>
-    </label>
-  );
-}

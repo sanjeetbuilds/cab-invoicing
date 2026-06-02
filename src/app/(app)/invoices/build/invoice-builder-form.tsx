@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -33,11 +32,6 @@ const fmtTripDate = (iso: string) => {
   if (!y || !m || !d) return iso;
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
 };
-
-const tripCharge = (t: Trip) =>
-  (t.extra_charge_amount && t.extra_charge_amount > 0)
-    ? t.extra_charge_amount
-    : (t.toll ?? 0);
 
 const todayIso = () => {
   const d = new Date();
@@ -87,7 +81,11 @@ export function InvoiceBuilderForm({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     new Set(trips.map((t) => t.id)),
   );
-  const [tollOverrideStr, setTollOverrideStr] = useState("");
+  // Reimbursement charges entered here, added after GST on the invoice.
+  const [chargeAmountStr, setChargeAmountStr] = useState("");
+  const [chargeToll, setChargeToll] = useState(false);
+  const [chargeTax, setChargeTax] = useState(false);
+  const [chargeParking, setChargeParking] = useState(false);
 
   const rateByKey = useMemo(() => {
     const m = new Map<string, RateCard>();
@@ -105,12 +103,20 @@ export function InvoiceBuilderForm({
     [trips, selectedIds],
   );
 
-  const tollOverride = (() => {
-    if (tollOverrideStr.trim() === "") return null;
-    const n = Number(tollOverrideStr);
-    return Number.isFinite(n) ? n : null;
+  const chargeAmount = (() => {
+    const n = Number(chargeAmountStr);
+    return chargeAmountStr.trim() !== "" && Number.isFinite(n) ? n : 0;
   })();
+  const charges = {
+    amount: chargeAmount,
+    toll: chargeToll,
+    tax: chargeTax,
+    parking: chargeParking,
+  };
 
+  // The client-side draft only feeds the missing-rate guard, so charges
+  // (which never affect rate matching) are left out to avoid recomputing
+  // on every keystroke in the charges box.
   const draft = useMemo(
     () =>
       buildInvoiceDraft({
@@ -119,9 +125,8 @@ export function InvoiceBuilderForm({
         vehicles,
         client,
         company,
-        toll_override: tollOverride,
       }),
-    [selectedTrips, rateCards, vehicles, client, company, tollOverride],
+    [selectedTrips, rateCards, vehicles, client, company],
   );
 
   const hasMissingRate = draft.unmatched_trip_ids.length > 0;
@@ -156,7 +161,7 @@ export function InvoiceBuilderForm({
       period_from: periodFrom,
       period_to: periodTo,
       trip_ids: selectedTrips.map((t) => t.id),
-      toll_override: tollOverride,
+      charges,
       requested_number: Number(chosenNumber),
     });
     setPending(false);
@@ -187,7 +192,7 @@ export function InvoiceBuilderForm({
       period_from: periodFrom,
       period_to: periodTo,
       trip_ids: selectedTrips.map((t) => t.id),
-      toll_override: tollOverride,
+      charges,
       requested_number: Number(chosenNumber),
     });
     setSavingDraft(false);
@@ -203,9 +208,7 @@ export function InvoiceBuilderForm({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-      {/* Left: trip checklist + form */}
-      <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Invoice details</CardTitle>
@@ -316,7 +319,6 @@ export function InvoiceBuilderForm({
                           : `${t.total_kms}km outstation`}
                         {t.driver_ta > 0 ? ` · TA×${t.driver_ta}` : ""}
                         {t.night ? " · night" : ""}
-                        {tripCharge(t) > 0 ? ` · charges ${formatINR(tripCharge(t))}` : ""}
                       </p>
                     </div>
                   </label>
@@ -326,105 +328,72 @@ export function InvoiceBuilderForm({
           </CardContent>
         </Card>
 
+        {/* Charges (toll, parking, any other). Added after GST as a
+            reimbursement line, not taxed. */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Toll</CardTitle>
+            <CardTitle className="text-base">Charges</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <Label htmlFor="toll_override" className="text-xs">
-              Override sum of trip tolls (optional)
-            </Label>
-            <Input
-              id="toll_override"
-              type="number"
-              inputMode="decimal"
-              step="any"
-              placeholder={`Default: ${formatINR(
-                selectedTrips.reduce((s, t) => s + tripCharge(t), 0),
-              )}`}
-              value={tollOverrideStr}
-              onChange={(e) => setTollOverrideStr(e.target.value)}
-            />
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="charge_amount" className="text-xs">
+                Amount (toll, parking, other)
+              </Label>
+              <Input
+                id="charge_amount"
+                type="number"
+                inputMode="decimal"
+                step="any"
+                placeholder="0.00"
+                value={chargeAmountStr}
+                onChange={(e) => setChargeAmountStr(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <ChargeCheckbox id="bc_toll" checked={chargeToll} onChange={setChargeToll} label="Toll" />
+              <ChargeCheckbox id="bc_tax" checked={chargeTax} onChange={setChargeTax} label="Tax" />
+              <ChargeCheckbox id="bc_parking" checked={chargeParking} onChange={setChargeParking} label="Parking" />
+            </div>
             <p className="text-xs text-muted-foreground">
-              Tolls aren&apos;t taxed, they&apos;re added separately to the invoice net.
+              Added to the invoice net after GST. Tick the boxes to label what
+              it covers. Leave the amount blank for no charges.
             </p>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Right: live preview + issue button */}
-      <div className="flex flex-col gap-4 lg:sticky lg:top-4 self-start">
+        {/* Invoice number picker. */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Preview</CardTitle>
+            <CardTitle className="text-base">Invoice number</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3 text-sm">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="invoice_number">Invoice number</Label>
-              <Select value={chosenNumber} onValueChange={(v) => {
-                if (typeof v === "string") setChosenNumber(v);
-              }}>
-                <SelectTrigger id="invoice_number">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {freedNumbers.map((n) => (
-                    <SelectItem key={`freed-${n}`} value={String(n)}>
-                      {prefix}{n} (reuse freed)
-                    </SelectItem>
-                  ))}
-                  <SelectItem value={String(nextNumber)}>
-                    {prefix}{nextNumber} (next new)
+          <CardContent className="flex flex-col gap-2">
+            <Select value={chosenNumber} onValueChange={(v) => {
+              if (typeof v === "string") setChosenNumber(v);
+            }}>
+              <SelectTrigger id="invoice_number">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {freedNumbers.map((n) => (
+                  <SelectItem key={`freed-${n}`} value={String(n)}>
+                    {prefix}{n} (reuse freed)
                   </SelectItem>
-                </SelectContent>
-              </Select>
-              {freedNumbers.length > 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Freed numbers from deleted invoices can be used again. The
-                  lowest free number is picked by default.
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  The next number in your series.
-                </p>
-              )}
-            </div>
-
-            <Row label="Subtotal" value={formatINR(draft.subtotal)} />
-
-            {draft.gst.mode === "RCM" && (
+                ))}
+                <SelectItem value={String(nextNumber)}>
+                  {prefix}{nextNumber} (next new)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            {freedNumbers.length > 0 ? (
               <p className="text-xs text-muted-foreground">
-                RCM, no GST charged on this invoice.
+                Freed numbers from deleted invoices can be used again. The
+                lowest free number is picked by default.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                The next number in your series.
               </p>
             )}
-            {draft.gst.mode === "CGST_SGST" && (
-              <>
-                <Row label={draft.gst.labels.cgst ?? "CGST"} value={formatINR(draft.gst.cgst)} />
-                <Row label={draft.gst.labels.sgst ?? "SGST"} value={formatINR(draft.gst.sgst)} />
-              </>
-            )}
-            {draft.gst.mode === "IGST" && (
-              <Row label={draft.gst.labels.igst ?? "IGST"} value={formatINR(draft.gst.igst)} />
-            )}
-
-            <Row label={draft.toll_label} value={formatINR(draft.toll_total)} />
-
-            <div className="border-t pt-2 flex justify-between text-base font-medium">
-              <span>Net</span>
-              <span className="font-mono">{formatINR(draft.net_amount)}</span>
-            </div>
-
-            <p className="text-xs text-muted-foreground italic">
-              {draft.amount_in_words}
-            </p>
-
-            <div className="flex flex-wrap gap-1 mt-1">
-              <Badge variant="outline">{draft.gst.mode}</Badge>
-              {client.is_rcm && <Badge variant="secondary">RCM client</Badge>}
-              {client.state !== company.state && (
-                <Badge variant="outline">{client.state}</Badge>
-              )}
-            </div>
           </CardContent>
         </Card>
 
@@ -439,10 +408,9 @@ export function InvoiceBuilderForm({
         )}
 
         <p className="text-xs text-muted-foreground text-center">
-          Issuing reserves the next invoice number for {client.name}.
-          Use the Issue invoice button at the bottom of the screen.
+          Issuing reserves an invoice number for {client.name}. Use the Issue
+          invoice button at the bottom of the screen.
         </p>
-      </div>
       <SaveBarSpacer />
       <SaveBar
         onSave={onIssue}
@@ -459,11 +427,27 @@ export function InvoiceBuilderForm({
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function ChargeCheckbox({
+  id,
+  checked,
+  onChange,
+  label,
+}: {
+  id: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
   return (
-    <div className="flex justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-mono">{value}</span>
-    </div>
+    <label htmlFor={id} className="flex items-center gap-2 cursor-pointer select-none">
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 accent-primary"
+      />
+      <span className="text-sm">{label}</span>
+    </label>
   );
 }
