@@ -203,7 +203,7 @@ export function QuotationsList({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="sticky top-11 sm:top-12 z-20 -mx-4 sm:-mx-6 -mt-4 sm:-mt-8 mb-2 px-4 sm:px-6 py-3 bg-background border-b border-border flex flex-col gap-3">
+      <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 -mt-4 sm:-mt-8 mb-2 px-4 sm:px-6 py-3 bg-background border-b border-border flex flex-col gap-3">
         {header}
         {(showSearch || showFiltersButton) && (
           <div className="flex items-center gap-2">

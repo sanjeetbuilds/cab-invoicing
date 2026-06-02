@@ -25,7 +25,12 @@ export function ListSticky({
   return (
     <div
       className={cn(
-        "sticky top-11 sm:top-12 z-20",
+        // sticky inside <main>, which itself starts just below the
+        // TopBar. So top-0 here means "right under the TopBar".
+        // Anything larger leaves a gap where rows would show through.
+        "sticky top-0 z-20",
+        // Break out of main's padding so the bar spans full width and
+        // sits flush to the TopBar (no visible band above it).
         "-mx-4 sm:-mx-6 -mt-4 sm:-mt-8 mb-2 px-4 sm:px-6 py-3",
         "bg-background border-b border-border",
         "flex flex-col gap-3",
