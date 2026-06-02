@@ -152,10 +152,31 @@ export function TripForm({
   // can append new rows without re-rendering / losing the form.
   const [localVehicles, setLocalVehicles] = useState(vehicles);
   const [localRateCards, setLocalRateCards] = useState(rateCards);
-  const [addingVehicle, setAddingVehicle] = useState<null | string>(null);
+  // Open state + typed-number prefill for the vehicle editor sheet.
+  // Closing the sheet sets defaultNumber back to null.
+  const [vehicleEditorDefault, setVehicleEditorDefault] = useState<null | string>(null);
   // null = panel closed; "create" = adding a new rate; "edit" = editing
   // the currently-active rate. The same InlineRateCardForm handles both.
   const [rateEditor, setRateEditor] = useState<null | "create" | "edit">(null);
+
+  // Guard recentDefaults: only seed values that still resolve to a
+  // real record. A stale recentDefaults pointing to a deleted
+  // vehicle (or to a car type / client that is no longer in the
+  // current options) would silently break the trip form.
+  const safeRecentClient =
+    recentDefaults?.client_id &&
+    clients.some((c) => c.id === recentDefaults.client_id)
+      ? recentDefaults.client_id
+      : "";
+  const safeRecentVehicle =
+    recentDefaults?.vehicle_id &&
+    vehicles.some((v) => v.id === recentDefaults.vehicle_id)
+      ? recentDefaults.vehicle_id
+      : "";
+  const safeRecentCarType: CarType =
+    recentDefaults?.car_type && CAR_TYPES.includes(recentDefaults.car_type)
+      ? recentDefaults.car_type
+      : "Sonet";
 
   const {
     register,
@@ -170,10 +191,12 @@ export function TripForm({
       end_date: trip?.end_date ?? "",
       // For NEW trips, seed client + vehicle from the user's most recent
       // trip in the last week, most drivers log the same combo day after
-      // day. Editing an existing trip uses its own stored values.
-      client_id: trip?.client_id ?? recentDefaults?.client_id ?? "",
-      vehicle_id: trip?.vehicle_id ?? recentDefaults?.vehicle_id ?? "",
-      car_type: trip?.car_type ?? recentDefaults?.car_type ?? "Sonet",
+      // day. Editing an existing trip uses its own stored values. Every
+      // seed below has already been validated against the current
+      // options, no stale rows can sneak in.
+      client_id: trip?.client_id ?? safeRecentClient,
+      vehicle_id: trip?.vehicle_id ?? safeRecentVehicle,
+      car_type: trip?.car_type ?? safeRecentCarType,
       mode: trip?.mode ?? recentDefaults?.mode ?? "local",
       plan_name: trip?.plan_name ?? "",
       billing_method:
@@ -365,12 +388,14 @@ export function TripForm({
       onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col gap-4"
     >
-      {/* Sticky running total, chip pinned just under the top strip so
-          the user always sees the number while filling fields. Kept
-          inside the form's natural width (no negative margins) and given
-          symmetric vertical padding for clean alignment. */}
+      {/* Sticky Trip total bar. Spans the full width of the main
+          scroll area (breaks out of the form's gap-4 column via
+          negative margin), sits opaquely above scrolling cards
+          thanks to bg-card + z-30, and is separated from the
+          content below by a hairline bottom border so nothing
+          appears to merge into it as it sticks. */}
       {activeRate && preview && (
-        <div className="sticky top-12 sm:top-14 z-20 rounded-lg border border-border bg-card shadow-card px-4 py-3 flex items-center justify-between gap-3">
+        <div className="sticky top-12 sm:top-14 z-30 -mx-4 sm:-mx-6 -mt-4 sm:-mt-8 mb-2 bg-card border-b border-border px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <span className="text-[11px] uppercase tracking-wider text-muted-foreground leading-none">
             Trip total
           </span>
@@ -433,7 +458,7 @@ export function TripForm({
                   setValue("car_type", veh.type, { shouldValidate: true });
                 }
               }}
-              onAddNew={(typed) => setAddingVehicle(typed)}
+              onAddNew={(typed) => setVehicleEditorDefault(typed)}
             />
             {errors.vehicle_id && (
               <p className="text-sm text-destructive">{errors.vehicle_id.message}</p>
@@ -627,20 +652,25 @@ export function TripForm({
         </CardContent>
       </Card>
 
-      {addingVehicle !== null && (
-        <InlineVehicleForm
-          defaultNumber={addingVehicle}
-          onCancel={() => setAddingVehicle(null)}
-          onCreated={(v) => {
-            setLocalVehicles((prev) => [...prev, v]);
-            setValue("vehicle_id", v.id, { shouldValidate: true });
-            if (CAR_TYPES.includes(v.type)) {
-              setValue("car_type", v.type, { shouldValidate: true });
-            }
-            setAddingVehicle(null);
-          }}
-        />
-      )}
+      {/* Vehicle editor in the same Sheet pattern as the rate-card
+          editor. Portaled to document body so its content is NEVER
+          nested inside the outer trip <form>, which would make an
+          inner submit bubble out and lose the draft. */}
+      <InlineVehicleForm
+        open={vehicleEditorDefault !== null}
+        onOpenChange={(o) => {
+          if (!o) setVehicleEditorDefault(null);
+        }}
+        defaultNumber={vehicleEditorDefault ?? ""}
+        onSaved={(v) => {
+          setLocalVehicles((prev) => [...prev, v]);
+          setValue("vehicle_id", v.id, { shouldValidate: true });
+          if (CAR_TYPES.includes(v.type)) {
+            setValue("car_type", v.type, { shouldValidate: true });
+          }
+          setVehicleEditorDefault(null);
+        }}
+      />
 
       {/* Distances & quantities. Quantity-style fields (TA, Night) use
           the count × rate = amount layout so the math is visible at a

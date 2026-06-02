@@ -550,19 +550,20 @@ export function QuickInvoiceForm({
               />
             </div>
 
-            {addingVehicle !== null && (
-              <InlineVehicleForm
-                defaultNumber={addingVehicle}
-                defaultOwnership="attached"
-                onCancel={() => setAddingVehicle(null)}
-                onCreated={(v) => {
-                  setLocalVehicles((prev) => [...prev, v]);
-                  setVehicleId(v.id);
-                  if (CAR_TYPES.includes(v.type)) setCarType(v.type);
-                  setAddingVehicle(null);
-                }}
-              />
-            )}
+            <InlineVehicleForm
+              open={addingVehicle !== null}
+              onOpenChange={(o) => {
+                if (!o) setAddingVehicle(null);
+              }}
+              defaultNumber={addingVehicle ?? ""}
+              defaultOwnership="attached"
+              onSaved={(v) => {
+                setLocalVehicles((prev) => [...prev, v]);
+                setVehicleId(v.id);
+                if (CAR_TYPES.includes(v.type)) setCarType(v.type);
+                setAddingVehicle(null);
+              }}
+            />
 
             {/* Mode-specific RATE inputs. Quick Invoice has no rate card to
                 pull from, the user types the rates inline. The

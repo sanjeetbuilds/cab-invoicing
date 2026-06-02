@@ -48,6 +48,10 @@ export function VehiclePicker({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const [highlight, setHighlight] = useState(0);
+  // Collision-aware placement. "below" by default, flips to "above"
+  // when the trigger sits too low in the viewport for the dropdown
+  // to fit between it and the bottom action bar (SaveBar, z-40).
+  const [placement, setPlacement] = useState<"below" | "above">("below");
 
   // Close on outside click.
   useEffect(() => {
@@ -62,6 +66,24 @@ export function VehiclePicker({
     }
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
+  }, [open]);
+
+  // Measure available space when opening and pick the side that
+  // fits. ~360 px is the worst-case dropdown height (search row +
+  // max-h-64 list + Add button). 100 px reserve covers the sticky
+  // SaveBar at the bottom of the page.
+  useEffect(() => {
+    if (!open || !wrapperRef.current) return;
+    const rect = wrapperRef.current.getBoundingClientRect();
+    const dropdownEstHeight = 360;
+    const bottomReserve = 100;
+    const spaceBelow = window.innerHeight - rect.bottom - bottomReserve;
+    const spaceAbove = rect.top - 60;
+    if (spaceBelow >= dropdownEstHeight || spaceAbove < spaceBelow) {
+      setPlacement("below");
+    } else {
+      setPlacement("above");
+    }
   }, [open]);
 
   // Focus the search input when opened.
@@ -145,7 +167,14 @@ export function VehiclePicker({
 
       {open && (
         <div
-          className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-popover shadow-card-hover"
+          className={cn(
+            // z-[60] keeps the dropdown above the SaveBar (z-40)
+            // and the sticky Trip total bar (z-30) on the trip
+            // form. When there is not enough room below, the
+            // placement flip puts it above the trigger.
+            "absolute z-[60] w-full rounded-lg border border-border bg-popover shadow-card-hover",
+            placement === "above" ? "bottom-full mb-1" : "top-full mt-1",
+          )}
           role="listbox"
         >
           <div className="flex items-center gap-2 border-b border-border px-3 py-2">

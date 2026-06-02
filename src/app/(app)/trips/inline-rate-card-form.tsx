@@ -58,14 +58,17 @@ function initialState(existing: RateCard | null, mode: TripMode): RateCardFormSt
   };
 }
 
-const FORM_ID = "trip-rate-card-sheet-form";
-
 /**
  * Rate-card editor opened from inside the trip form. Renders as a
  * Sheet (bottom on mobile, right-side panel on desktop) so the
  * trip draft underneath stays mounted and intact. Save lives in the
  * sheet's sticky footer, so it stays visible above the soft
  * keyboard on mobile.
+ *
+ * Important: no inner <form> element. The outer trip page is one
+ * big <form>, and nested forms are invalid HTML, an inner submit
+ * bubbles up and submits the trip prematurely. All buttons here
+ * are type="button" and Save runs the action directly.
  */
 export function InlineRateCardForm({
   open,
@@ -110,8 +113,7 @@ export function InlineRateCardForm({
     setState((s) => ({ ...s, [key]: value }));
   }
 
-  async function onSave(e: React.FormEvent) {
-    e.preventDefault();
+  async function onSave() {
     if (isFixed && !state.plan_name.trim()) {
       toast.error("Plan name is required.");
       return;
@@ -181,13 +183,13 @@ export function InlineRateCardForm({
         </>
       }
       footer={
-        <Button type="submit" form={FORM_ID} disabled={pending}>
+        <Button type="button" onClick={onSave} disabled={pending}>
           {pending && <Loader2 className="h-4 w-4 animate-spin" />}
           {isEditing ? "Save changes" : "Save rate and apply"}
         </Button>
       }
     >
-      <form id={FORM_ID} onSubmit={onSave} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         {mode === "local" && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <Field
@@ -299,7 +301,7 @@ export function InlineRateCardForm({
             onChange={(v) => patch("driver_ta", v)}
           />
         </div>
-      </form>
+      </div>
     </Sheet>
   );
 }
