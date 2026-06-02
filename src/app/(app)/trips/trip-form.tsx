@@ -17,12 +17,12 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import type {
   BillingMethod,
   CarType,
@@ -44,12 +44,9 @@ import { InlineRateCardForm } from "./inline-rate-card-form";
 const CAR_TYPES: CarType[] = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"];
 const decimalRegex = /^\d*\.?\d*$/;
 
-const MODE_OPTIONS: { value: TripMode; label: string }[] = [
-  { value: "local", label: "Local" },
-  { value: "outstation", label: "Outstation" },
-  { value: "transfer", label: "Transfer" },
-  { value: "package", label: "Package" },
-];
+/** Sentinel value used inside the rate-plan Select to open the
+ *  bundle editor instead of selecting a plan. */
+const RATE_PICKER_ADD_VALUE = "__add__";
 
 function modeLabel(mode: TripMode): string {
   return mode === "local"
@@ -59,6 +56,18 @@ function modeLabel(mode: TripMode): string {
       : mode === "transfer"
         ? "Transfer"
         : "Package";
+}
+
+/** Human label for one rate plan in the trip-form picker.
+ *  Local and Outstation use their mode name. Transfer / Package
+ *  rows show the user-typed plan name plus the fixed price. */
+function planPickerLabel(r: RateCard): string {
+  if (r.mode === "local") return "Local";
+  if (r.mode === "outstation") return "Outstation";
+  const name =
+    r.plan_name?.trim() || (r.mode === "transfer" ? "Transfer" : "Package");
+  if (r.fixed_price == null) return name;
+  return `${name}, ${formatINR(r.fixed_price)}`;
 }
 
 const Schema = z
@@ -310,7 +319,7 @@ export function TripForm({
     const rows = localRateCards.filter(
       (r) => r.client_id === clientId && r.car_type === carType,
     );
-    // Sort: local → outstation → transfer plans → package plans
+    // Sort: local, outstation, transfer plans, package plans.
     const order: Record<TripMode, number> = {
       local: 0,
       outstation: 1,
@@ -322,6 +331,20 @@ export function TripForm({
       return (a.plan_name ?? "").localeCompare(b.plan_name ?? "");
     });
   }, [localRateCards, clientId, carType]);
+
+  // Value the rate-plan Select shows. We only present a selection
+  // when the trip's (mode, plan_name) actually matches one of the
+  // available plans, otherwise the trigger sits at its placeholder
+  // and the user picks explicitly. Avoids the trigger displaying a
+  // raw value that has no matching option.
+  const pickerSelectValue = useMemo(() => {
+    const key = `${mode}|${planName}`;
+    return availableRatePlans.some(
+      (r) => `${r.mode}|${r.plan_name ?? ""}` === key,
+    )
+      ? key
+      : undefined;
+  }, [availableRatePlans, mode, planName]);
 
   const preview = useMemo(() => {
     if (!activeRate) return null;
@@ -476,134 +499,110 @@ export function TripForm({
           <div className="md:col-span-3 flex flex-col gap-3">
             <Label htmlFor="mode">Rate plan *</Label>
 
-            {/* Neutral state: no client picked yet, no point alarming
-                the user about a missing rate they have not framed. */}
+            {/* Neutral state until a client is picked, no point
+                alarming the user about a missing rate they have
+                not framed yet. */}
             {!clientId && (
               <p className="text-sm text-muted-foreground">
                 Pick a client and car type to see the rate.
               </p>
             )}
 
-            {/* No plans exist for this client + car combo: surface a
-                mode picker so the user can choose what kind of rate
-                they need, then the named missing-rate message with
-                an Add CTA right here in the first fold. */}
-            {clientId && availableRatePlans.length === 0 && (
+            {clientId && (
               <>
-                <div className="flex flex-wrap gap-2" role="group" aria-label="Rate mode">
-                  {MODE_OPTIONS.map((opt) => {
-                    const active = mode === opt.value;
-                    return (
-                      <button
-                        type="button"
-                        key={opt.value}
-                        onClick={() => {
-                          setValue("mode", opt.value, { shouldValidate: true });
-                          setValue(
-                            "billing_method",
-                            opt.value === "outstation" ? "per_km" : "slab",
-                            { shouldValidate: true },
-                          );
-                          if (opt.value !== "transfer" && opt.value !== "package") {
-                            setValue("plan_name", "", { shouldValidate: true });
-                          }
-                        }}
-                        className={cn(
-                          "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150",
-                          active
-                            ? "bg-accent-soft text-accent-foreground border-accent-soft"
-                            : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
-                        )}
-                      >
-                        {opt.label}
-                      </button>
+                {/* Clean dropdown of every rate plan that exists for
+                    this (client, car) combo, with proper labels
+                    (Local, Outstation, or "Plan name, Rs price").
+                    The bottom item opens the bundle editor sheet so
+                    a missing plan is reachable without leaving the
+                    trip. */}
+                <Select
+                  value={pickerSelectValue}
+                  onValueChange={(v) => {
+                    if (typeof v !== "string") return;
+                    if (v === RATE_PICKER_ADD_VALUE) {
+                      setRateEditor("create");
+                      return;
+                    }
+                    const [pickedMode, pickedPlan] = v.split("|") as [
+                      TripMode,
+                      string,
+                    ];
+                    setValue("mode", pickedMode, { shouldValidate: true });
+                    setValue("plan_name", pickedPlan, { shouldValidate: true });
+                    setValue(
+                      "billing_method",
+                      pickedMode === "outstation" ? "per_km" : "slab",
+                      { shouldValidate: true },
                     );
-                  })}
-                </div>
-                <MissingRateNotice
-                  clientName={clientName(clients, clientId)}
-                  carType={carType}
-                  mode={mode}
-                  onAdd={() => setRateEditor("create")}
-                />
-              </>
-            )}
-
-            {/* Plans exist for this combo: the dropdown lets the user
-                switch between them. */}
-            {clientId && availableRatePlans.length > 0 && (
-              <Select
-                value={`${mode}|${planName}`}
-                onValueChange={(v) => {
-                  if (typeof v !== "string") return;
-                  const [pickedMode, pickedPlan] = v.split("|") as [
-                    TripMode,
-                    string,
-                  ];
-                  setValue("mode", pickedMode, { shouldValidate: true });
-                  setValue("plan_name", pickedPlan, { shouldValidate: true });
-                  if (pickedMode === "outstation") {
-                    setValue("billing_method", "per_km");
-                  } else {
-                    setValue("billing_method", "slab");
-                  }
-                }}
-              >
-                <SelectTrigger id="mode">
-                  <SelectValue placeholder="Pick a rate plan" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableRatePlans.map((r) => {
-                    const key = `${r.mode}|${r.plan_name ?? ""}`;
-                    const label =
-                      r.mode === "local"
-                        ? "Local"
-                        : r.mode === "outstation"
-                          ? "Outstation"
-                          : `${r.mode === "transfer" ? "Transfer" : "Package"} · ${r.plan_name ?? ""}`;
-                    return (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            )}
-
-            {errors.plan_name && (
-              <p className="text-xs text-destructive">
-                {errors.plan_name.message}
-              </p>
-            )}
-
-            {/* Active rate summary, or the same named missing-rate
-                notice when the selected plan does not match any
-                stored rate (e.g. outstation toggled to slab borrows
-                the local rate card, which may not exist yet). */}
-            {clientId && availableRatePlans.length > 0 && activeRate && (
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                <span className="font-medium text-foreground/80">
-                  Active rate card:
-                </span>{" "}
-                {rateCardSummary(activeRate)}{" "}
-                <button
-                  type="button"
-                  onClick={() => setRateEditor("edit")}
-                  className="text-primary hover:text-primary-hover font-medium underline-offset-2 hover:underline"
+                  }}
                 >
-                  Edit rate
-                </button>
-              </p>
-            )}
-            {clientId && availableRatePlans.length > 0 && !activeRate && (
-              <MissingRateNotice
-                clientName={clientName(clients, clientId)}
-                carType={carType}
-                mode={rateLookupMode}
-                slabBorrowsLocal={mode === "outstation" && effectiveMethod === "slab"}
-                onAdd={() => setRateEditor("create")}
-              />
+                  <SelectTrigger id="mode">
+                    <SelectValue placeholder="Pick a rate plan">
+                      {(value) => {
+                        if (typeof value !== "string" || !value) return null;
+                        const [m, p] = value.split("|") as [TripMode, string];
+                        const rate = availableRatePlans.find(
+                          (r) =>
+                            r.mode === m && (r.plan_name ?? "") === p,
+                        );
+                        return rate ? planPickerLabel(rate) : null;
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableRatePlans.map((r) => {
+                      const key = `${r.mode}|${r.plan_name ?? ""}`;
+                      return (
+                        <SelectItem key={key} value={key}>
+                          {planPickerLabel(r)}
+                        </SelectItem>
+                      );
+                    })}
+                    {availableRatePlans.length > 0 && <SelectSeparator />}
+                    <SelectItem value={RATE_PICKER_ADD_VALUE}>
+                      + Add a rate plan
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {errors.plan_name && (
+                  <p className="text-xs text-destructive">
+                    {errors.plan_name.message}
+                  </p>
+                )}
+
+                {/* When a rate is active, summarise it with an
+                    Edit rates link that opens the same bundle
+                    editor. When no rate is active, surface the
+                    named missing-rate notice with an Add CTA
+                    right in the first fold. */}
+                {activeRate ? (
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    <span className="font-medium text-foreground/80">
+                      Active rate card:
+                    </span>{" "}
+                    {rateCardSummary(activeRate)}{" "}
+                    <button
+                      type="button"
+                      onClick={() => setRateEditor("edit")}
+                      className="text-primary hover:text-primary-hover font-medium underline-offset-2 hover:underline"
+                    >
+                      Edit rates
+                    </button>
+                  </p>
+                ) : (
+                  <MissingRateNotice
+                    clientName={clientName(clients, clientId)}
+                    carType={carType}
+                    mode={rateLookupMode}
+                    slabBorrowsLocal={
+                      mode === "outstation" && effectiveMethod === "slab"
+                    }
+                    onAdd={() => setRateEditor("create")}
+                  />
+                )}
+              </>
             )}
           </div>
 
@@ -858,9 +857,10 @@ export function TripForm({
         </CardContent>
       </Card>
 
-      {/* Rate-card editor in a sheet. Sits outside the form layout
-          via portal, so opening or closing it never unmounts the
-          trip draft. */}
+      {/* Rate-bundle editor in a sheet. Sits outside the form
+          layout via portal, so opening or closing it never
+          unmounts the trip draft. The editor exposes all three
+          kinds (Local, Outstation, Packages) in one panel. */}
       {clientId && carType && (
         <InlineRateCardForm
           open={rateEditor !== null}
@@ -870,33 +870,43 @@ export function TripForm({
           clientId={clientId}
           clientName={clientName(clients, clientId)}
           carType={carType}
-          mode={rateLookupMode}
-          existing={rateEditor === "edit" ? activeRate : null}
-          onSaved={(rc) => {
+          existing={availableRatePlans}
+          onSaved={(result) => {
+            // Sync local rate-card cache: drop deleted ids, merge
+            // saved rows by id so updates replace originals.
             setLocalRateCards((prev) => {
-              // Replace any existing rate card with the same natural
-              // key, covers both create-new and edit-existing.
-              const filtered = prev.filter(
-                (r) =>
-                  !(
-                    r.client_id === rc.client_id &&
-                    r.car_type === rc.car_type &&
-                    r.mode === rc.mode &&
-                    (r.plan_name ?? "") === (rc.plan_name ?? "")
-                  ),
+              const removed = new Set(result.deletedIds);
+              const byId = new Map(
+                prev
+                  .filter((r) => !removed.has(r.id))
+                  .map((r) => [r.id, r] as const),
               );
-              return [...filtered, rc];
+              for (const r of result.saved) byId.set(r.id, r);
+              return Array.from(byId.values());
             });
-            // Apply the new rate to the trip in progress, the
-            // dropdown value tracks (mode, plan_name).
-            setValue("mode", rc.mode, { shouldValidate: true });
-            setValue("plan_name", rc.plan_name ?? "", {
-              shouldValidate: true,
-            });
-            if (rc.mode === "outstation") {
-              setValue("billing_method", "per_km", { shouldValidate: true });
-            } else {
-              setValue("billing_method", "slab", { shouldValidate: true });
+
+            // Apply one of the saved rates to the trip in
+            // progress. Prefer a row that matches the trip's
+            // current mode + plan_name. Else, if the user saved
+            // exactly one row, pick that. Otherwise leave the
+            // dropdown empty for the user to choose.
+            const exactMatch = result.saved.find(
+              (r) =>
+                r.mode === mode && (r.plan_name ?? "") === planName,
+            );
+            const toApply =
+              exactMatch ??
+              (result.saved.length === 1 ? result.saved[0] : undefined);
+            if (toApply) {
+              setValue("mode", toApply.mode, { shouldValidate: true });
+              setValue("plan_name", toApply.plan_name ?? "", {
+                shouldValidate: true,
+              });
+              setValue(
+                "billing_method",
+                toApply.mode === "outstation" ? "per_km" : "slab",
+                { shouldValidate: true },
+              );
             }
             setRateEditor(null);
           }}

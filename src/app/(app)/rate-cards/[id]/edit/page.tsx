@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireMembership } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/page-header";
 import type { Client, RateCard } from "@/lib/supabase/types";
-import { RateCardForm } from "../../rate-card-form";
+import { RateBundlePageForm } from "../../rate-bundle-page-form";
 
 export const metadata = { title: "Edit rate card" };
 
@@ -15,37 +15,33 @@ export default async function EditRateCardPage({
   const { supabase, membership } = await requireMembership();
   const { id } = await params;
 
-  const [{ data: rateCard }, { data: clients }, { data: planRows }] =
-    await Promise.all([
-      supabase
-        .from("rate_cards")
-        .select("*")
-        .eq("id", id)
-        .eq("company_id", membership.company_id)
-        .maybeSingle<RateCard>(),
-      supabase
-        .from("clients")
-        .select("id, name")
-        .eq("company_id", membership.company_id)
-        .order("name", { ascending: true })
-        .returns<Pick<Client, "id" | "name">[]>(),
-      supabase
-        .from("rate_cards")
-        .select("plan_name")
-        .eq("company_id", membership.company_id)
-        .not("plan_name", "is", null)
-        .returns<{ plan_name: string | null }[]>(),
-    ]);
+  // Resolve the row to its (client_id, car_type) so we can load the
+  // whole bundle for that combo. Editing one rate now means editing
+  // the whole client + car bundle in one panel.
+  const { data: anchor } = await supabase
+    .from("rate_cards")
+    .select("client_id, car_type")
+    .eq("id", id)
+    .eq("company_id", membership.company_id)
+    .maybeSingle<{ client_id: string; car_type: string }>();
 
-  if (!rateCard) notFound();
+  if (!anchor) notFound();
 
-  const planNameHistory = Array.from(
-    new Set(
-      (planRows ?? [])
-        .map((r) => r.plan_name?.trim())
-        .filter((v): v is string => Boolean(v)),
-    ),
-  ).sort();
+  const [{ data: bundle }, { data: client }] = await Promise.all([
+    supabase
+      .from("rate_cards")
+      .select("*")
+      .eq("company_id", membership.company_id)
+      .eq("client_id", anchor.client_id)
+      .eq("car_type", anchor.car_type)
+      .returns<RateCard[]>(),
+    supabase
+      .from("clients")
+      .select("name")
+      .eq("id", anchor.client_id)
+      .eq("company_id", membership.company_id)
+      .maybeSingle<Pick<Client, "name">>(),
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-2xl flex flex-col gap-6">
@@ -58,12 +54,16 @@ export default async function EditRateCardPage({
             ← Rate cards
           </Link>
         </p>
-        <PageHeader title="Edit rate card" description="Update pricing." />
+        <PageHeader
+          title="Edit rates"
+          description={`${client?.name ?? "Client"}, ${anchor.car_type}. Local, Outstation, and packages in one panel.`}
+        />
       </div>
-      <RateCardForm
-        rateCard={rateCard}
-        clients={clients ?? []}
-        planNameHistory={planNameHistory}
+      <RateBundlePageForm
+        clientId={anchor.client_id}
+        clientName={client?.name ?? undefined}
+        carType={anchor.car_type as RateCard["car_type"]}
+        existing={bundle ?? []}
       />
     </div>
   );
