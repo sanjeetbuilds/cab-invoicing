@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import type {
   BillingMethod,
   CarType,
@@ -42,6 +43,23 @@ import { InlineRateCardForm } from "./inline-rate-card-form";
 
 const CAR_TYPES: CarType[] = ["Dzire", "Sonet", "Crysta", "Innova", "Ertiga", "Other"];
 const decimalRegex = /^\d*\.?\d*$/;
+
+const MODE_OPTIONS: { value: TripMode; label: string }[] = [
+  { value: "local", label: "Local" },
+  { value: "outstation", label: "Outstation" },
+  { value: "transfer", label: "Transfer" },
+  { value: "package", label: "Package" },
+];
+
+function modeLabel(mode: TripMode): string {
+  return mode === "local"
+    ? "Local"
+    : mode === "outstation"
+      ? "Outstation"
+      : mode === "transfer"
+        ? "Transfer"
+        : "Package";
+}
 
 const Schema = z
   .object({
@@ -449,24 +467,65 @@ export function TripForm({
             />
           </div>
 
-          <div className="md:col-span-3 flex flex-col gap-2">
+          <div className="md:col-span-3 flex flex-col gap-3">
             <Label htmlFor="mode">Rate plan *</Label>
-            {availableRatePlans.length === 0 ? (
-              <div className="flex flex-col gap-2 rounded-md bg-warning-soft/60 p-3 text-sm">
-                <p className="text-foreground">
-                  No rate cards exist for{" "}
-                  <span className="font-medium">
-                    {clients.find((c) => c.id === clientId)?.name ??
-                      "this client"}
-                  </span>{" "}
-                  · <span className="font-medium">{carType}</span>.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Pick a client + car type first, then add a rate card below or
-                  on the Rate cards page.
-                </p>
-              </div>
-            ) : (
+
+            {/* Neutral state: no client picked yet, no point alarming
+                the user about a missing rate they have not framed. */}
+            {!clientId && (
+              <p className="text-sm text-muted-foreground">
+                Pick a client and car type to see the rate.
+              </p>
+            )}
+
+            {/* No plans exist for this client + car combo: surface a
+                mode picker so the user can choose what kind of rate
+                they need, then the named missing-rate message with
+                an Add CTA right here in the first fold. */}
+            {clientId && availableRatePlans.length === 0 && (
+              <>
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Rate mode">
+                  {MODE_OPTIONS.map((opt) => {
+                    const active = mode === opt.value;
+                    return (
+                      <button
+                        type="button"
+                        key={opt.value}
+                        onClick={() => {
+                          setValue("mode", opt.value, { shouldValidate: true });
+                          setValue(
+                            "billing_method",
+                            opt.value === "outstation" ? "per_km" : "slab",
+                            { shouldValidate: true },
+                          );
+                          if (opt.value !== "transfer" && opt.value !== "package") {
+                            setValue("plan_name", "", { shouldValidate: true });
+                          }
+                        }}
+                        className={cn(
+                          "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150",
+                          active
+                            ? "bg-accent-soft text-accent-foreground border-accent-soft"
+                            : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <MissingRateNotice
+                  clientName={clientName(clients, clientId)}
+                  carType={carType}
+                  mode={mode}
+                  onAdd={() => setRateEditor("create")}
+                />
+              </>
+            )}
+
+            {/* Plans exist for this combo: the dropdown lets the user
+                switch between them. */}
+            {clientId && availableRatePlans.length > 0 && (
               <Select
                 value={`${mode}|${planName}`}
                 onValueChange={(v) => {
@@ -505,13 +564,19 @@ export function TripForm({
                 </SelectContent>
               </Select>
             )}
+
             {errors.plan_name && (
               <p className="text-xs text-destructive">
                 {errors.plan_name.message}
               </p>
             )}
-            {activeRate && (
-              <p className="md:col-span-3 text-xs text-muted-foreground leading-relaxed">
+
+            {/* Active rate summary, or the same named missing-rate
+                notice when the selected plan does not match any
+                stored rate (e.g. outstation toggled to slab borrows
+                the local rate card, which may not exist yet). */}
+            {clientId && availableRatePlans.length > 0 && activeRate && (
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 <span className="font-medium text-foreground/80">
                   Active rate card:
                 </span>{" "}
@@ -521,9 +586,18 @@ export function TripForm({
                   onClick={() => setRateEditor("edit")}
                   className="text-primary hover:text-primary-hover font-medium underline-offset-2 hover:underline"
                 >
-                  Edit
+                  Edit rate
                 </button>
               </p>
+            )}
+            {clientId && availableRatePlans.length > 0 && !activeRate && (
+              <MissingRateNotice
+                clientName={clientName(clients, clientId)}
+                carType={carType}
+                mode={rateLookupMode}
+                slabBorrowsLocal={mode === "outstation" && effectiveMethod === "slab"}
+                onAdd={() => setRateEditor("create")}
+              />
             )}
           </div>
 
@@ -728,46 +802,16 @@ export function TripForm({
         </CardContent>
       </Card>
 
-      {/* Live preview */}
+      {/* Live preview. The missing-rate alert lives at the top of
+          the form (rate-plan area), so this card only shows the
+          amount preview when a rate is set, or a neutral hint
+          otherwise. No duplicate "no rate" message here. */}
       <Card className="bg-muted/30 border-dashed">
         <CardContent>
           <p className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground mb-2">
             Trip amount preview
           </p>
-          {!clientId || !carType || !mode ? (
-            <p className="text-sm text-muted-foreground">
-              Pick client, car, and mode to preview the amount.
-            </p>
-          ) : !activeRate ? (
-            <div className="flex flex-col gap-3 rounded-md bg-warning-soft/60 p-3 text-sm">
-              <p className="text-foreground">
-                No rate set for{" "}
-                <span className="font-medium">
-                  {clients.find((c) => c.id === clientId)?.name ?? "this client"}
-                </span>{" "}
-                ·{" "}
-                <span className="font-medium">{carType}</span> ·{" "}
-                <span className="font-medium">{rateLookupMode}</span>.
-              </p>
-              {mode === "outstation" && effectiveMethod === "slab" && (
-                <p className="text-xs text-muted-foreground">
-                  Slab billing borrows the local rate card, add a local rate
-                  for this car type or switch this trip back to per-km.
-                </p>
-              )}
-              {rateEditor !== "create" && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="self-start"
-                  onClick={() => setRateEditor("create")}
-                >
-                  + Add rate card
-                </Button>
-              )}
-            </div>
-          ) : preview ? (
+          {activeRate && preview ? (
             <div className="flex flex-col gap-1 text-sm">
               {preview.lines.map((l, i) => (
                 <div key={i} className="flex justify-between gap-3">
@@ -793,24 +837,34 @@ export function TripForm({
                 invoice, not here.
               </p>
             </div>
-          ) : null}
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {clientId
+                ? "Set a rate card above to see the amount preview."
+                : "Pick a client and car type above to see the amount preview."}
+            </p>
+          )}
         </CardContent>
       </Card>
 
-      {rateEditor !== null && clientId && carType && (
+      {/* Rate-card editor in a sheet. Sits outside the form layout
+          via portal, so opening or closing it never unmounts the
+          trip draft. */}
+      {clientId && carType && (
         <InlineRateCardForm
+          open={rateEditor !== null}
+          onOpenChange={(o) => {
+            if (!o) setRateEditor(null);
+          }}
           clientId={clientId}
-          clientName={
-            clients.find((c) => c.id === clientId)?.name ?? "this client"
-          }
+          clientName={clientName(clients, clientId)}
           carType={carType}
           mode={rateLookupMode}
           existing={rateEditor === "edit" ? activeRate : null}
-          onCancel={() => setRateEditor(null)}
-          onCreated={(rc) => {
+          onSaved={(rc) => {
             setLocalRateCards((prev) => {
-              // Replace any existing rate card with the same natural key
-              //, covers both create-new and edit-existing.
+              // Replace any existing rate card with the same natural
+              // key, covers both create-new and edit-existing.
               const filtered = prev.filter(
                 (r) =>
                   !(
@@ -822,6 +876,17 @@ export function TripForm({
               );
               return [...filtered, rc];
             });
+            // Apply the new rate to the trip in progress, the
+            // dropdown value tracks (mode, plan_name).
+            setValue("mode", rc.mode, { shouldValidate: true });
+            setValue("plan_name", rc.plan_name ?? "", {
+              shouldValidate: true,
+            });
+            if (rc.mode === "outstation") {
+              setValue("billing_method", "per_km", { shouldValidate: true });
+            } else {
+              setValue("billing_method", "slab", { shouldValidate: true });
+            }
             setRateEditor(null);
           }}
         />
@@ -954,6 +1019,57 @@ function CarTypeOverrideNote({
       </span>
     </div>
   );
+}
+
+/**
+ * Named missing-rate notice. Always names the client, car, and
+ * mode so the user knows exactly which rate is missing. Renders a
+ * primary Add CTA so the user does not have to scroll to find it.
+ */
+function MissingRateNotice({
+  clientName,
+  carType,
+  mode,
+  slabBorrowsLocal = false,
+  onAdd,
+}: {
+  clientName: string;
+  carType: CarType;
+  mode: TripMode;
+  slabBorrowsLocal?: boolean;
+  onAdd: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-md border border-warning/40 bg-warning-soft/60 p-3 text-sm">
+      <p className="text-foreground">
+        No rate card yet for{" "}
+        <span className="font-medium">{clientName}</span>,{" "}
+        <span className="font-medium">{carType}</span>,{" "}
+        <span className="font-medium">{modeLabel(mode)}</span>.
+      </p>
+      {slabBorrowsLocal && (
+        <p className="text-xs text-muted-foreground">
+          Slab billing borrows the local rate card. Add a local rate for this
+          car or switch the trip back to per-km.
+        </p>
+      )}
+      <div className="flex items-center gap-3">
+        <Button type="button" size="sm" onClick={onAdd}>
+          Add rate card
+        </Button>
+        <span className="text-xs text-muted-foreground">
+          Stays in this trip. Opens a side panel.
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function clientName(
+  clients: Pick<Client, "id" | "name">[],
+  id: string,
+): string {
+  return clients.find((c) => c.id === id)?.name ?? "this client";
 }
 
 function CheckboxLabel({

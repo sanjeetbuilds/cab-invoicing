@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Sheet } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import type { CarType, RateCard, TripMode } from "@/lib/supabase/types";
 import {
@@ -58,23 +58,34 @@ function initialState(existing: RateCard | null, mode: TripMode): RateCardFormSt
   };
 }
 
+const FORM_ID = "trip-rate-card-sheet-form";
+
+/**
+ * Rate-card editor opened from inside the trip form. Renders as a
+ * Sheet (bottom on mobile, right-side panel on desktop) so the
+ * trip draft underneath stays mounted and intact. Save lives in the
+ * sheet's sticky footer, so it stays visible above the soft
+ * keyboard on mobile.
+ */
 export function InlineRateCardForm({
+  open,
+  onOpenChange,
   clientId,
   clientName,
   carType,
   mode,
   existing,
-  onCancel,
-  onCreated,
+  onSaved,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   clientId: string;
   clientName: string;
   carType: CarType;
   mode: TripMode;
-  /** When provided, the panel acts as Edit: pre-fills + uses update RPC. */
+  /** When provided, the panel acts as Edit: pre-fills and uses the update RPC. */
   existing?: RateCard | null;
-  onCancel: () => void;
-  onCreated: (rateCard: RateCard) => void;
+  onSaved: (rateCard: RateCard) => void;
 }) {
   const [state, setState] = useState<RateCardFormState>(() =>
     initialState(existing ?? null, mode),
@@ -82,6 +93,15 @@ export function InlineRateCardForm({
   const [pending, setPending] = useState(false);
   const isFixed = mode === "transfer" || mode === "package";
   const isEditing = !!existing;
+
+  // Re-seed the form values every time the sheet opens, so a fresh
+  // open never carries stale values from a previous edit session.
+  useEffect(() => {
+    if (open) {
+      setState(initialState(existing ?? null, mode));
+      setPending(false);
+    }
+  }, [open, existing, mode]);
 
   function patch<K extends keyof RateCardFormState>(
     key: K,
@@ -141,168 +161,157 @@ export function InlineRateCardForm({
       return;
     }
     toast.success(
-      `Rate saved for ${clientName} · ${carType} · ${mode}.`,
+      `Rate saved for ${clientName}, ${carType}, ${modeLabel(mode)}.`,
     );
-    onCreated(lookup.rateCard);
+    onSaved(lookup.rateCard);
   }
 
-  const modeLabel =
-    mode === "local"
-      ? "Local"
-      : mode === "outstation"
-        ? "Outstation"
-        : mode === "transfer"
-          ? "Transfer"
-          : "Package";
-
   return (
-    <Card className="border-dashed border-accent-foreground/40 bg-accent-soft/30">
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              {isEditing ? "Edit rate card" : "Add rate card"}
-            </p>
-            {/* Locked context: this rate card is for THIS client/car/mode
-                only. User must cancel out and reopen to change scope. */}
-            <p className="text-xs text-muted-foreground mt-1">
-              <span className="font-medium">{clientName}</span> ·{" "}
-              <span className="font-medium">{carType}</span> ·{" "}
-              <span className="font-medium">{modeLabel}</span>
-            </p>
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEditing ? "Edit rate card" : "Add rate card"}
+      contextLine={
+        <>
+          <span className="font-medium text-foreground/80">{clientName}</span>
+          {" · "}
+          <span className="font-medium text-foreground/80">{carType}</span>
+          {" · "}
+          <span className="font-medium text-foreground/80">{modeLabel(mode)}</span>
+        </>
+      }
+      footer={
+        <Button type="submit" form={FORM_ID} disabled={pending}>
+          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+          {isEditing ? "Save changes" : "Save rate and apply"}
+        </Button>
+      }
+    >
+      <form id={FORM_ID} onSubmit={onSave} className="flex flex-col gap-4">
+        {mode === "local" && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <Field
+              label="Base rate ₹"
+              value={state.base_rate}
+              onChange={(v) => patch("base_rate", v)}
+            />
+            <Field
+              label="Base kms"
+              value={state.base_kms}
+              onChange={(v) => patch("base_kms", v)}
+            />
+            <Field
+              label="Base hours"
+              value={state.base_hours}
+              onChange={(v) => patch("base_hours", v)}
+            />
+            <Field
+              label="Extra km ₹"
+              value={state.extra_km}
+              onChange={(v) => patch("extra_km", v)}
+            />
+            <Field
+              label="Extra hour ₹"
+              value={state.extra_hour}
+              onChange={(v) => patch("extra_hour", v)}
+            />
+            <Field
+              label="Night ₹"
+              value={state.night}
+              onChange={(v) => patch("night", v)}
+            />
           </div>
-          <button
-            type="button"
-            className="text-xs text-muted-foreground hover:text-foreground"
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
-        </div>
+        )}
 
-        <form onSubmit={onSave} className="flex flex-col gap-4">
-          {mode === "local" && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <Field
-                label="Base rate ₹"
-                value={state.base_rate}
-                onChange={(v) => patch("base_rate", v)}
-              />
-              <Field
-                label="Base kms"
-                value={state.base_kms}
-                onChange={(v) => patch("base_kms", v)}
-              />
-              <Field
-                label="Base hours"
-                value={state.base_hours}
-                onChange={(v) => patch("base_hours", v)}
-              />
-              <Field
-                label="Extra km ₹"
-                value={state.extra_km}
-                onChange={(v) => patch("extra_km", v)}
-              />
-              <Field
-                label="Extra hour ₹"
-                value={state.extra_hour}
-                onChange={(v) => patch("extra_hour", v)}
-              />
-              <Field
-                label="Night ₹"
-                value={state.night}
-                onChange={(v) => patch("night", v)}
-              />
-            </div>
-          )}
+        {mode === "outstation" && (
+          <div className="grid grid-cols-2 gap-3">
+            <Field
+              label="Per km ₹"
+              value={state.per_km}
+              onChange={(v) => patch("per_km", v)}
+            />
+          </div>
+        )}
 
-          {mode === "outstation" && (
-            <div className="grid grid-cols-2 gap-3">
-              <Field
-                label="Per km ₹"
-                value={state.per_km}
-                onChange={(v) => patch("per_km", v)}
-              />
-            </div>
-          )}
-
-          {isFixed && (
-            <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs">Plan name *</Label>
-                  <Input
-                    value={state.plan_name}
-                    onChange={(e) => patch("plan_name", e.target.value)}
-                    placeholder={
-                      mode === "transfer"
-                        ? "e.g. Airport T3 Drop"
-                        : "e.g. Manali 3D2N"
-                    }
-                  />
-                </div>
-                <Field
-                  label="Fixed price ₹ *"
-                  value={state.fixed_price}
-                  onChange={(v) => patch("fixed_price", v)}
-                />
-              </div>
-              {mode === "package" && (
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs">Price includes</Label>
-                  <div className="flex flex-wrap gap-3">
-                    <Toggle
-                      checked={state.includes_toll}
-                      onChange={(v) => patch("includes_toll", v)}
-                      label="Toll"
-                    />
-                    <Toggle
-                      checked={state.includes_tax}
-                      onChange={(v) => patch("includes_tax", v)}
-                      label="Tax"
-                    />
-                    <Toggle
-                      checked={state.includes_parking}
-                      onChange={(v) => patch("includes_parking", v)}
-                      label="Parking"
-                    />
-                  </div>
-                </div>
-              )}
+        {isFixed && (
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col gap-2">
-                <Label className="text-xs">Notes</Label>
-                <Textarea
-                  rows={2}
-                  value={state.notes}
-                  onChange={(e) => patch("notes", e.target.value)}
+                <Label className="text-xs">Plan name *</Label>
+                <Input
+                  value={state.plan_name}
+                  onChange={(e) => patch("plan_name", e.target.value)}
                   placeholder={
-                    mode === "package"
-                      ? "Conditions, e.g. Up to 250km/day, extra km @ ₹15"
-                      : "Conditions, e.g. one-way only"
+                    mode === "transfer"
+                      ? "e.g. Airport T3 Drop"
+                      : "e.g. Manali 3D2N"
                   }
                 />
               </div>
+              <Field
+                label="Fixed price ₹ *"
+                value={state.fixed_price}
+                onChange={(v) => patch("fixed_price", v)}
+              />
             </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              label="Driver TA ₹ / day"
-              value={state.driver_ta}
-              onChange={(v) => patch("driver_ta", v)}
-            />
+            {mode === "package" && (
+              <div className="flex flex-col gap-2">
+                <Label className="text-xs">Price includes</Label>
+                <div className="flex flex-wrap gap-3">
+                  <Toggle
+                    checked={state.includes_toll}
+                    onChange={(v) => patch("includes_toll", v)}
+                    label="Toll"
+                  />
+                  <Toggle
+                    checked={state.includes_tax}
+                    onChange={(v) => patch("includes_tax", v)}
+                    label="Tax"
+                  />
+                  <Toggle
+                    checked={state.includes_parking}
+                    onChange={(v) => patch("includes_parking", v)}
+                    label="Parking"
+                  />
+                </div>
+              </div>
+            )}
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs">Notes</Label>
+              <Textarea
+                rows={2}
+                value={state.notes}
+                onChange={(e) => patch("notes", e.target.value)}
+                placeholder={
+                  mode === "package"
+                    ? "Conditions, e.g. Up to 250km/day, extra km @ ₹15"
+                    : "Conditions, e.g. one-way only"
+                }
+              />
+            </div>
           </div>
+        )}
 
-          <div className="flex justify-end">
-            <Button type="submit" disabled={pending}>
-              {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isEditing ? "Save changes" : "Save rate & continue"}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        <div className="grid grid-cols-2 gap-3">
+          <Field
+            label="Driver TA ₹ / day"
+            value={state.driver_ta}
+            onChange={(v) => patch("driver_ta", v)}
+          />
+        </div>
+      </form>
+    </Sheet>
   );
+}
+
+function modeLabel(mode: TripMode) {
+  return mode === "local"
+    ? "Local"
+    : mode === "outstation"
+      ? "Outstation"
+      : mode === "transfer"
+        ? "Transfer"
+        : "Package";
 }
 
 function Field({
