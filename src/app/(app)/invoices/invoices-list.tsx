@@ -564,10 +564,11 @@ function InvoiceListItem({
     duties === 1 ? "" : "s"
   }`;
 
-  // The three dot menu holds what is left once Share and Download are
-  // their own buttons: view, issue, mark paid or unpaid, delete or undo,
-  // as each fits. No copy invoice number. Same menu on card and row.
-  const menu = (
+  // The three dot menu holds whatever is not a button. On the mobile
+  // card Share and Download are both buttons, so withShare is false. On
+  // the desktop row only Download is a button, so Share moves into the
+  // menu with withShare true. No copy invoice number.
+  const buildMenu = (withShare: boolean) => (
     <DropdownMenu>
       <DropdownMenuTrigger aria-label="More invoice actions" className={MENU_BTN}>
         <MoreVertical className="h-4 w-4" />
@@ -577,6 +578,12 @@ function InvoiceListItem({
           <Eye className="h-4 w-4" />
           View
         </DropdownMenuItem>
+        {withShare && (
+          <DropdownMenuItem onClick={shareInvoicePdf}>
+            <Share2 className="h-4 w-4" />
+            Share
+          </DropdownMenuItem>
+        )}
         {draft && (
           <DropdownMenuItem onClick={() => setConfirmIssue(true)}>
             <Send className="h-4 w-4" />
@@ -656,9 +663,6 @@ function InvoiceListItem({
             <StatusPill status={invoice.status} />
           </div>
           <div className="relative z-10 flex shrink-0 items-center gap-2">
-            <button type="button" onClick={shareInvoicePdf} className={SHARE_BTN}>
-              {shareLabel}
-            </button>
             <button
               type="button"
               onClick={downloadInvoicePdf}
@@ -666,7 +670,7 @@ function InvoiceListItem({
             >
               {downloadLabel}
             </button>
-            {menu}
+            {buildMenu(true)}
           </div>
         </div>
         <Link
@@ -708,7 +712,7 @@ function InvoiceListItem({
           >
             {downloadLabel}
           </button>
-          {menu}
+          {buildMenu(false)}
         </div>
         <Link
           href={viewUrl}

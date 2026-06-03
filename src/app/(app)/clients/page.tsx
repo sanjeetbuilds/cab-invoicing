@@ -20,6 +20,7 @@ import { ClientsSampleRows } from "@/components/ui/sample-rows";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/lib/supabase/types";
 import { AddClientButton } from "./add-client-button";
+import { ClientsActionsMenu } from "./clients-actions-menu";
 import { ClientRowActions } from "./client-row-actions";
 
 export const metadata = { title: "Clients" };
@@ -79,21 +80,33 @@ export default async function ClientsPage({
           title="Clients"
           description="The companies you bill. We use their state to work out the GST."
         >
+          {/* Desktop keeps all three buttons. On a phone Import and Bulk
+              edit rates move into the overflow menu so Add client stays
+              the single primary on one line. */}
           <Link
             href="/bulk-import?scope=clients"
-            className={cn(buttonVariants({ variant: "outline" }), "h-10")}
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "h-10 hidden md:inline-flex",
+            )}
           >
             <Upload className="h-4 w-4" />
             Import
           </Link>
           <Link
             href="/rate-cards"
-            className={cn(buttonVariants({ variant: "outline" }), "h-10")}
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "h-10 hidden md:inline-flex",
+            )}
           >
             <IndianRupee className="h-4 w-4" />
             Bulk edit rates
           </Link>
           <AddClientButton muted={showingSamples} />
+          <div className="md:hidden">
+            <ClientsActionsMenu />
+          </div>
         </PageHeader>
 
         {/* One-time customers can outnumber regular clients in a
