@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SaveBar, SaveBarSpacer } from "@/components/shell/save-bar";
 import { Input } from "@/components/ui/input";
@@ -23,9 +24,13 @@ import type {
 } from "@/lib/supabase/types";
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
 import { buildInvoiceDraft } from "@/lib/invoice-builder";
+import { chargeLabel } from "@/lib/charges";
+import { numberToWords } from "@/lib/number-to-words";
 import { issueInvoiceAction, saveDraftInvoiceAction } from "../actions";
 
 import { formatINR } from "@/lib/format";
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 const fmtTripDate = (iso: string) => {
   const [y, m, d] = iso.split("-");
@@ -130,6 +135,26 @@ export function InvoiceBuilderForm({
   );
 
   const hasMissingRate = draft.unmatched_trip_ids.length > 0;
+
+  // Live totals for the summary. The draft above is built without charges
+  // (it only feeds the rate guard). Charges never touch the subtotal or
+  // GST, they add one untaxed line after GST, so we layer them on here
+  // with the exact same arithmetic buildInvoiceDraft uses on issue. This
+  // keeps the preview matching the issued invoice to the paisa without
+  // rebuilding every line on each charges keystroke.
+  const tollTotal = round2(chargeAmount);
+  const tollLabel = chargeLabel(
+    { toll: chargeToll, tax: chargeTax, parking: chargeParking },
+    tollTotal,
+  );
+  const netAmount = round2(
+    draft.subtotal +
+      draft.gst.cgst +
+      draft.gst.sgst +
+      draft.gst.igst +
+      tollTotal,
+  );
+  const amountInWords = `${numberToWords(Math.round(netAmount))} Only.`;
 
   function toggleTrip(id: string) {
     setSelectedIds((prev) => {
@@ -366,8 +391,64 @@ export function InvoiceBuilderForm({
 
         </div>
 
-        {/* Right: invoice number, warnings, help. Sticky on desktop. */}
+        {/* Right: live total, invoice number, warnings, help. Sticky on desktop. */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-4 self-start">
+        {/* Live total. Mirrors the issued-invoice arithmetic exactly:
+            trip subtotal, GST, then charges added untaxed. */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Total</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2 text-sm">
+            <Row label="Subtotal" value={formatINR(draft.subtotal)} />
+
+            {draft.gst.mode === "RCM" && (
+              <p className="text-xs text-muted-foreground">
+                RCM, no GST charged on this invoice.
+              </p>
+            )}
+            {draft.gst.mode === "CGST_SGST" && (
+              <>
+                <Row
+                  label={draft.gst.labels.cgst ?? "CGST"}
+                  value={formatINR(draft.gst.cgst)}
+                />
+                <Row
+                  label={draft.gst.labels.sgst ?? "SGST"}
+                  value={formatINR(draft.gst.sgst)}
+                />
+              </>
+            )}
+            {draft.gst.mode === "IGST" && (
+              <Row
+                label={draft.gst.labels.igst ?? "IGST"}
+                value={formatINR(draft.gst.igst)}
+              />
+            )}
+
+            {tollTotal > 0 && (
+              <Row label={tollLabel} value={formatINR(tollTotal)} />
+            )}
+
+            <div className="border-t pt-2 flex justify-between text-base font-medium">
+              <span>Net amount</span>
+              <span className="font-mono">{formatINR(netAmount)}</span>
+            </div>
+
+            <p className="text-xs text-muted-foreground italic">
+              {amountInWords}
+            </p>
+
+            <div className="flex flex-wrap gap-1 mt-1">
+              <Badge variant="outline">{draft.gst.mode}</Badge>
+              {client.is_rcm && <Badge variant="secondary">RCM client</Badge>}
+              {client.state !== company.state && (
+                <Badge variant="outline">{client.state}</Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Invoice number picker. */}
         <Card>
           <CardHeader>
@@ -458,5 +539,14 @@ function ChargeCheckbox({
       />
       <span className="text-sm">{label}</span>
     </label>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-3">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-mono">{value}</span>
+    </div>
   );
 }
