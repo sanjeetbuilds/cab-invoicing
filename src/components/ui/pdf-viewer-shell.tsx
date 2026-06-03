@@ -99,23 +99,11 @@ export function PdfViewerShell({
   }
 
   return (
-    // Escape the parent main's padding so the document goes edge-to-edge.
-    <div
-      className="-mx-4 sm:-mx-6 -mt-4 sm:-mt-8 flex flex-col"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-    >
-      {/* Sticky sub-header, sits directly below the app top-bar. */}
-      <header
-        className={cn(
-          "sticky z-20 px-3 sm:px-6 py-2 h-14",
-          "bg-card/95 backdrop-blur border-b border-border",
-          "flex items-center justify-between gap-2",
-        )}
-        style={{
-          // Top-bar is 44 px mobile / 48 px sm+, with safe-area-inset on top.
-          top: "calc(env(safe-area-inset-top) + 2.75rem)",
-        }}
-      >
+    <div className="flex flex-col gap-4">
+      {/* Solid top bar. Back on the left, the title, download and share
+          on the right. It sits in normal flow with a solid background,
+          so the invoice starts fully below it and never under it. */}
+      <header className="flex h-14 items-center justify-between gap-2 rounded-md border border-border bg-card px-2 sm:px-3">
         <button
           type="button"
           onClick={handleBack}
@@ -162,11 +150,9 @@ export function PdfViewerShell({
         </div>
       </header>
 
-      {/* Document body. Pages are painted to canvas at the viewport
-          width and scroll between the sticky sub-header and the
-          bottom-nav (mobile) / page bottom (desktop). 100dvh tracks the
-          dynamic viewport so it doesn't jump when the mobile browser
-          chrome collapses. */}
+      {/* Document body. Pages are painted to canvas at the content width
+          and flow with the normal page scroll, no inner scroll box and
+          no iframe, so nothing can be blocked or refused to connect. */}
       <PdfCanvas
         key={pdfUrl}
         pdfUrl={pdfUrl}
@@ -306,16 +292,10 @@ function PdfCanvas({
   }, [status, pageCount, renderAll]);
 
   return (
-    <div
-      className={cn(
-        "w-full overflow-auto bg-muted",
-        // Mobile: 10rem reserved for top-bar + sub-header + bottom-nav.
-        // Desktop: 6rem reserved for top-bar + sub-header (no bottom-nav).
-        "h-[calc(100dvh-10rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]",
-        "lg:h-[calc(100dvh-6rem-env(safe-area-inset-top))]",
-      )}
-    >
-      <div className="mx-auto w-full max-w-[820px] px-3 py-4">
+    // No fixed height and no overflow here. The pages flow in the normal
+    // page scroll, so there is one scrollbar for the whole page.
+    <div className="w-full">
+      <div className="mx-auto w-full max-w-[820px]">
         {status === "loading" && (
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
