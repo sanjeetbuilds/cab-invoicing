@@ -7,7 +7,7 @@ import { ListHeader } from "@/components/ui/list-header";
 import { PageHeader } from "@/components/ui/page-header";
 import { SamplePreview } from "@/components/ui/sample-preview";
 import { TripsSampleRows } from "@/components/ui/sample-rows";
-import { Route } from "lucide-react";
+import { Car, Route } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   Client,
@@ -145,10 +145,6 @@ export default async function TripsPage({
   );
 
   const noPrereqs = clientList.length === 0 || vehicleList.length === 0;
-  // Status pills earn their space only when there's at least one of each
-  //, otherwise switching tabs can't change what's shown.
-  const showStatusPills =
-    (invoicedCount ?? 0) > 0 && (uninvoicedCount ?? 0) > 0;
 
   // "Has ever logged a trip". The counts ignore the status filter,
   // so an operator with 100 invoiced trips and 0 uninvoiced still
@@ -157,6 +153,12 @@ export default async function TripsPage({
   const hasEverTrip =
     (invoicedCount ?? 0) > 0 || (uninvoicedCount ?? 0) > 0;
   const isFirstTime = !hasEverTrip;
+
+  // Show the status pills whenever any trip exists, so the owner can
+  // switch views even when the current filter is empty (for example all
+  // trips invoiced, so the default uninvoiced view is empty). They only
+  // hide when there is nothing at all, where the samples guide shows.
+  const showStatusPills = hasEverTrip;
 
   // Show the tutorial samples only for a true first-time operator,
   // never for an experienced one whose current filter happens to be
@@ -253,12 +255,27 @@ export default async function TripsPage({
 
       {showingCalmEmpty && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            {status === "uninvoiced"
-              ? "All caught up. No trips waiting to be billed."
-              : status === "invoiced"
-                ? "No invoiced trips here yet."
-                : "No trips here."}
+          <CardContent className="py-8 px-4 flex flex-col items-center gap-3 text-center">
+            {/* Tinted CTA icon chip, the same style as the other empty
+                states: a soft tint of the CTA colour with the icon in
+                the CTA colour. */}
+            <span
+              aria-hidden
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full"
+              style={{ backgroundColor: "rgba(79,70,229,0.10)", color: "#4f46e5" }}
+            >
+              <Car className="h-5 w-5" />
+            </span>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              {status === "uninvoiced"
+                ? "All caught up. No trips waiting to be billed."
+                : status === "invoiced"
+                  ? "No invoiced trips here yet."
+                  : "No trips here."}
+            </p>
+            <div className="pt-1">
+              <AddTripButton />
+            </div>
           </CardContent>
         </Card>
       )}
