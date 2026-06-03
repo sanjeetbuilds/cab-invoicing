@@ -1,8 +1,10 @@
 import Link from "next/link";
 import {
+  Building2,
+  Car,
+  Check,
   Clock,
-  ReceiptIndianRupee,
-  Route,
+  FileText,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -49,16 +51,12 @@ function fmtToday(): string {
   });
 }
 
-/** Rupee amount with Indian grouping and two decimals always, e.g.
- *  ₹58,082.50, ₹2,14,500.00, ₹0.00. The metric boxes show paise on
- *  every figure so money reads consistently across the row. */
-function formatRupees(n: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number.isFinite(n) ? n : 0);
+/** Rupee amount in Indian style with a leading rupee symbol, e.g.
+ *  ₹58,082.50, ₹2,14,500. Uses toLocaleString("en-IN") so grouping
+ *  follows the lakh and crore convention. */
+function formatRupee(n: number): string {
+  const v = Number.isFinite(n) ? n : 0;
+  return `₹${v.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 }
 
 export default async function DashboardPage() {
@@ -163,7 +161,6 @@ export default async function DashboardPage() {
   const todayLabel = fmtToday();
   const cc = clientCount ?? 0;
   const vc = vehicleCount ?? 0;
-  const clientsAndCars = `${cc} client${cc === 1 ? "" : "s"}, ${vc} car${vc === 1 ? "" : "s"}`;
 
   return (
     <div className="flex flex-col gap-6">
@@ -179,52 +176,41 @@ export default async function DashboardPage() {
       {isFresh && <SeedBanner />}
       <SetupChecklist status={setupStatus} />
 
-      {/* Four metric boxes: crisp white cards on the neutral
-          background. Colour appears only in the small icon chip.
-          Always a 2 by 2 grid so the boxes stay compact and do not
-          stretch wide on desktop. Equal heights via auto-rows-fr. */}
-      <div className="grid grid-cols-2 auto-rows-fr gap-3 sm:gap-4">
-        <StatCard
-          label="Unbilled trips"
-          value={String(unbilledCount)}
-          hint="Trips not yet on a bill."
+      {/* Four metric boxes. Two columns on phones, four in a row on
+          desktop. Flat tinted fills, dark text, a small solid icon
+          chip. No shadows, no gradients. */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <MetricBox
           href="/trips"
-          icon={Route}
-          chipBg="#EDE9FE"
-          chipFg="#6D28D9"
+          icon={FileText}
+          label="Unbilled"
+          value={unbilledCount.toLocaleString("en-IN")}
+          tint="#EEEDFE"
+          chip="#534AB7"
+          labelColor="#3C3489"
+          valueColor="#26215C"
         />
-        <StatCard
-          label="Outstanding"
-          value={formatRupees(outstanding)}
-          hint={
-            unpaidInvoices && unpaidInvoices.length > 0
-              ? `${unpaidInvoices.length} unpaid invoice${
-                  unpaidInvoices.length === 1 ? "" : "s"
-                }.`
-              : "No unpaid invoices."
-          }
+        <MetricBox
           href="/invoices"
           icon={Clock}
-          chipBg="#FEF3C7"
-          chipFg="#B45309"
+          label="Outstanding"
+          value={formatRupee(outstanding)}
+          tint="#FAECE7"
+          chip="#993C1D"
+          labelColor="#712B13"
+          valueColor="#4A1B0C"
         />
-        <StatCard
-          label="Billed this month"
-          value={formatRupees(billedThisMonth)}
-          hint={`Since ${fmtDate(monthStart)}.`}
+        <MetricBox
           href="/invoices"
-          icon={ReceiptIndianRupee}
-          chipBg="#D1FAE5"
-          chipFg="#047857"
+          icon={Check}
+          label="Billed this month"
+          value={formatRupee(billedThisMonth)}
+          tint="#E1F5EE"
+          chip="#0F6E56"
+          labelColor="#085041"
+          valueColor="#04342C"
         />
-        <StatCard
-          label="Clients and cars"
-          value={clientsAndCars}
-          hint="Active records in your account."
-          icon={Users}
-          chipBg="#DBEAFE"
-          chipFg="#1D4ED8"
-        />
+        <ClientsAndCarsBox clients={cc} cars={vc} />
       </div>
 
       {/* Recent invoices, last 5. The only list on the dashboard. */}
@@ -327,46 +313,53 @@ function SectionHeader({
   );
 }
 
-function StatCard({
-  label,
-  value,
-  hint,
+/** A single tinted metric box: solid icon chip top left, label under
+ *  it, value pinned to the bottom. Flat fill, no shadow, no gradient.
+ *  Only font-normal and font-medium are used. */
+function MetricBox({
   href,
   icon: Icon,
-  chipBg,
-  chipFg,
+  label,
+  value,
+  tint,
+  chip,
+  labelColor,
+  valueColor,
 }: {
-  label: string;
-  value: string;
-  hint: string;
   href?: string;
   icon: LucideIcon;
-  /** Light tint for the small icon chip. */
-  chipBg: string;
-  /** Darker icon colour, paired with chipBg. */
-  chipFg: string;
+  label: string;
+  value: string;
+  /** Soft tint fill for the whole box. */
+  tint: string;
+  /** Solid colour for the icon chip. */
+  chip: string;
+  /** Label text colour. */
+  labelColor: string;
+  /** Value text colour. */
+  valueColor: string;
 }) {
-  // Crisp white card on the neutral background: hairline border, large
-  // radius, flat (no gradient). Colour lives only in the small icon
-  // chip. Compact padding keeps the box short: chip, then a
-  // letterspaced label, the number at a readable size, and a muted
-  // sub-line.
   const box = (
-    <div className="h-full flex flex-col rounded-xl border-[0.5px] border-border bg-card p-4">
+    <div
+      className="flex h-full flex-col rounded-lg p-4 min-h-[116px]"
+      style={{ backgroundColor: tint }}
+    >
       <span
         aria-hidden
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg mb-3"
-        style={{ backgroundColor: chipBg, color: chipFg }}
+        className="inline-flex items-center justify-center rounded-lg"
+        style={{ width: 34, height: 34, backgroundColor: chip, color: "#FFFFFF" }}
       >
         <Icon className="h-[18px] w-[18px]" />
       </span>
-      <p className="text-[11px] uppercase tracking-[0.06em] font-medium text-muted-foreground">
+      <p className="mt-3 text-[13px] font-medium" style={{ color: labelColor }}>
         {label}
       </p>
-      <p className="text-[22px] leading-tight font-medium tracking-tight text-foreground truncate mt-0.5">
+      <p
+        className="mt-auto pt-2 text-2xl font-medium"
+        style={{ color: valueColor }}
+      >
         {value}
       </p>
-      <p className="text-xs text-muted-foreground mt-1">{hint}</p>
     </div>
   );
   return href ? (
@@ -375,6 +368,66 @@ function StatCard({
     </Link>
   ) : (
     box
+  );
+}
+
+/** The fourth box. No rupee value: instead two small icon stats, the
+ *  client count and the car count, side by side. */
+function ClientsAndCarsBox({
+  clients,
+  cars,
+}: {
+  clients: number;
+  cars: number;
+}) {
+  return (
+    <div
+      className="flex h-full flex-col rounded-lg p-4 min-h-[116px]"
+      style={{ backgroundColor: "#E6F1FB" }}
+    >
+      <span
+        aria-hidden
+        className="inline-flex items-center justify-center rounded-lg"
+        style={{
+          width: 34,
+          height: 34,
+          backgroundColor: "#185FA5",
+          color: "#FFFFFF",
+        }}
+      >
+        <Users className="h-[18px] w-[18px]" />
+      </span>
+      <p className="mt-3 text-[13px] font-medium" style={{ color: "#0C447C" }}>
+        Clients and cars
+      </p>
+      <div className="mt-auto pt-2 flex items-start gap-6">
+        <MiniStat icon={Building2} value={clients} caption="clients" />
+        <MiniStat icon={Car} value={cars} caption="cars" />
+      </div>
+    </div>
+  );
+}
+
+/** Icon plus count, with a small muted caption underneath. */
+function MiniStat({
+  icon: Icon,
+  value,
+  caption,
+}: {
+  icon: LucideIcon;
+  value: number;
+  caption: string;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="inline-flex items-center gap-1.5">
+        <Icon className="h-[18px] w-[18px]" style={{ color: "#185FA5" }} />
+        <span className="text-xl font-medium" style={{ color: "#042C53" }}>
+          {value.toLocaleString("en-IN")}
+        </span>
+      </span>
+      <span className="text-[11px] text-muted-foreground">{caption}</span>
+    </div>
   );
 }
 
