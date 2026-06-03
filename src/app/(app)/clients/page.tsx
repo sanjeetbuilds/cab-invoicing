@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import type { Client } from "@/lib/supabase/types";
 import { AddClientButton } from "./add-client-button";
 import { ClientsActionsMenu } from "./clients-actions-menu";
+import { ClientCardMenu } from "./client-card-menu";
 import { ClientRowActions } from "./client-row-actions";
 
 export const metadata = { title: "Clients" };
@@ -229,9 +230,12 @@ export default async function ClientsPage({
           {/* Mobile cards. The edit and delete icons sit in a reserved
               shrink-0 area at the top right, so the name and the lines
               below truncate cleanly and never run under the icons. */}
-          <div className="md:hidden flex flex-col gap-4 md:gap-5">
+          <div className="md:hidden flex flex-col gap-3">
             {list.map((c) => (
-              <Card key={c.id} size="sm">
+              <div
+                key={c.id}
+                className="relative rounded-lg border-[0.5px] border-border bg-card px-4 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_6px_rgba(0,0,0,0.06)]"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 items-center gap-2">
@@ -247,28 +251,32 @@ export default async function ClientsPage({
                         </Badge>
                       )}
                     </div>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {c.state}
-                      {c.gstin ? ` • ${c.gstin}` : ""}
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                      {c.gstin ? `${c.state} • ${c.gstin}` : c.state}
                     </p>
                     {c.default_booked_by && (
-                      <p className="truncate text-xs text-muted-foreground mt-1">
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
                         {c.default_booked_by}
                       </p>
                     )}
                     <div className="mt-2">
                       {c.is_rcm ? (
-                        <Badge variant="accent">RCM</Badge>
+                        <Badge variant="accent">GST RCM</Badge>
                       ) : (
-                        <Badge variant="default">Charged</Badge>
+                        <Badge variant="default">GST charged</Badge>
                       )}
                     </div>
                   </div>
-                  <div className="shrink-0">
-                    <ClientRowActions client={c} />
+                  <div className="relative z-10 shrink-0">
+                    <ClientCardMenu client={c} />
                   </div>
                 </div>
-              </Card>
+                <Link
+                  href={`/clients/${c.id}/edit`}
+                  aria-label={`Edit ${c.name}`}
+                  className="absolute inset-0 rounded-lg"
+                />
+              </div>
             ))}
           </div>
         </>
