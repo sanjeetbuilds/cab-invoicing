@@ -1,15 +1,15 @@
 import Link from "next/link";
 import {
-  Building2,
   Car,
-  Check,
   Clock,
   FileText,
+  Receipt,
   Users,
   type LucideIcon,
 } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
+import { RupeeValue } from "./rupee-value";
 import {
   Table,
   TableBody,
@@ -34,11 +34,15 @@ function fmtDate(iso: string) {
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
 }
 
-function firstOfThisMonthIso(): string {
+/** Start of the current Indian financial year as an ISO date. The
+ *  year runs 1 April to 31 March, so from April onward it starts this
+ *  calendar year, and in January to March it started last year. */
+function firstOfFinancialYearIso(): string {
   const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  return `${yyyy}-${mm}-01`;
+  const y = d.getFullYear();
+  // getMonth() is zero based, so April is 3.
+  const fyStartYear = d.getMonth() >= 3 ? y : y - 1;
+  return `${fyStartYear}-04-01`;
 }
 
 /** Friendly long date for the welcome strip, e.g. "Monday, 2 June 2026". */
@@ -51,18 +55,43 @@ function fmtToday(): string {
   });
 }
 
-/** Rupee amount in Indian style with a leading rupee symbol, e.g.
- *  ₹58,082.50, ₹2,14,500. Uses toLocaleString("en-IN") so grouping
- *  follows the lakh and crore convention. */
-function formatRupee(n: number): string {
-  const v = Number.isFinite(n) ? n : 0;
-  return `₹${v.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+/** Up to two decimals with Indian grouping, trailing zeros dropped, so
+ *  2.5 stays 2.5 and 2 stays 2 rather than 2.50 or 2.00. */
+function trimDecimals(x: number): string {
+  return x.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+}
+
+/** Short rupee figure that stays inside a small box whatever the size.
+ *  Below one lakh: the full figure with Indian commas, like ₹84,200.
+ *  One lakh up to a crore: lakh, like ₹1.13 L or ₹2.5 L.
+ *  A crore and above: crore, like ₹2.46 Cr. */
+function formatInrShort(amount: number): string {
+  const n = Number.isFinite(amount) ? amount : 0;
+  const abs = Math.abs(n);
+  if (abs < 100000) {
+    return `₹${Math.round(n).toLocaleString("en-IN")}`;
+  }
+  if (abs < 10000000) {
+    return `₹${trimDecimals(n / 100000)} L`;
+  }
+  return `₹${trimDecimals(n / 10000000)} Cr`;
+}
+
+/** Exact rupee figure with Indian commas, like ₹2,45,67,890. Paise are
+ *  shown only when the amount is not a whole number of rupees. */
+function formatInrFull(amount: number): string {
+  const n = Number.isFinite(amount) ? amount : 0;
+  const hasPaise = Math.round(n * 100) % 100 !== 0;
+  return `₹${n.toLocaleString("en-IN", {
+    minimumFractionDigits: hasPaise ? 2 : 0,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 export default async function DashboardPage() {
   const { supabase, membership } = await requireMembership();
 
-  const monthStart = firstOfThisMonthIso();
+  const fyStart = firstOfFinancialYearIso();
 
   // Calmer query set: just the four stats + the last five invoices.
   // No hero-prompt logic, no activity-feed merge, no unbilled-by-client
@@ -75,7 +104,7 @@ export default async function DashboardPage() {
     { count: tripCount },
     { count: invoiceCount },
     { data: unpaidInvoices },
-    { data: thisMonthInvoices },
+    { data: thisYearInvoices },
     { data: recentInvoices },
     { data: companyMeta },
   ] = await Promise.all([
@@ -114,7 +143,7 @@ export default async function DashboardPage() {
       .from("invoices")
       .select("net_amount")
       .eq("company_id", membership.company_id)
-      .gte("invoice_date", monthStart)
+      .gte("invoice_date", fyStart)
       // Only issued invoices count as billed. Drafts are not issued and
       // reversed ones are undone, so both are left out.
       .in("status", ["unpaid", "paid"])
@@ -150,7 +179,7 @@ export default async function DashboardPage() {
     (s, i) => s + Number(i.net_amount ?? 0),
     0,
   );
-  const billedThisMonth = (thisMonthInvoices ?? []).reduce(
+  const billedThisYear = (thisYearInvoices ?? []).reduce(
     (s, i) => s + Number(i.net_amount ?? 0),
     0,
   );
@@ -177,40 +206,32 @@ export default async function DashboardPage() {
       <SetupChecklist status={setupStatus} />
 
       {/* Four metric boxes. Two columns on phones, four in a row on
-          desktop. Flat tinted fills, dark text, a small solid icon
-          chip. No shadows, no gradients. */}
+          desktop. White cards with a soft shadow, coloured title and
+          icon, dark number. No gradients. */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <MetricBox
-          href="/trips"
-          icon={FileText}
-          label="Unbilled"
-          value={unbilledCount.toLocaleString("en-IN")}
-          tint="#EEEDFE"
-          chip="#534AB7"
-          labelColor="#3C3489"
-          valueColor="#26215C"
-        />
-        <MetricBox
-          href="/invoices"
-          icon={Clock}
-          label="Outstanding"
-          value={formatRupee(outstanding)}
-          tint="#FAECE7"
-          chip="#993C1D"
-          labelColor="#712B13"
-          valueColor="#4A1B0C"
-        />
-        <MetricBox
-          href="/invoices"
-          icon={Check}
-          label="Billed this month"
-          value={formatRupee(billedThisMonth)}
-          tint="#E1F5EE"
-          chip="#0F6E56"
-          labelColor="#085041"
-          valueColor="#04342C"
-        />
-        <ClientsAndCarsBox clients={cc} cars={vc} />
+        <MetricBox color="#534AB7" icon={FileText} title="Unbilled">
+          <span className="text-2xl font-medium text-foreground whitespace-nowrap">
+            {unbilledCount.toLocaleString("en-IN")}
+          </span>
+        </MetricBox>
+        <MetricBox color="#993C1D" icon={Clock} title="Outstanding">
+          <RupeeValue
+            short={formatInrShort(outstanding)}
+            full={formatInrFull(outstanding)}
+          />
+        </MetricBox>
+        <MetricBox color="#0F6E56" icon={Receipt} title="Billed this year">
+          <RupeeValue
+            short={formatInrShort(billedThisYear)}
+            full={formatInrFull(billedThisYear)}
+          />
+        </MetricBox>
+        <MetricBox color="#185FA5" icon={Users} title="Clients and cars">
+          <div className="flex items-center gap-5">
+            <MiniStat icon={Users} value={cc} />
+            <MiniStat icon={Car} value={vc} />
+          </div>
+        </MetricBox>
       </div>
 
       {/* Recent invoices, last 5. The only list on the dashboard. */}
@@ -313,121 +334,44 @@ function SectionHeader({
   );
 }
 
-/** A single tinted metric box: solid icon chip top left, label under
- *  it, value pinned to the bottom. Flat fill, no shadow, no gradient.
- *  Only font-normal and font-medium are used. */
+/** A single metric box: white card with a soft shadow, a coloured
+ *  header row (icon and title), and the value pinned to the bottom.
+ *  The value is passed in so a box can hold a number, a rupee figure,
+ *  or two small stats. Only font-normal and font-medium are used. */
 function MetricBox({
-  href,
   icon: Icon,
-  label,
-  value,
-  tint,
-  chip,
-  labelColor,
-  valueColor,
+  title,
+  color,
+  children,
 }: {
-  href?: string;
   icon: LucideIcon;
-  label: string;
-  value: string;
-  /** Soft tint fill for the whole box. */
-  tint: string;
-  /** Solid colour for the icon chip. */
-  chip: string;
-  /** Label text colour. */
-  labelColor: string;
-  /** Value text colour. */
-  valueColor: string;
+  title: string;
+  /** Colour for the header icon and title. */
+  color: string;
+  /** The value shown at the bottom of the box. */
+  children: React.ReactNode;
 }) {
-  const box = (
-    <div
-      className="flex h-full flex-col rounded-lg p-4 min-h-[116px]"
-      style={{ backgroundColor: tint }}
-    >
-      <span
-        aria-hidden
-        className="inline-flex items-center justify-center rounded-lg"
-        style={{ width: 34, height: 34, backgroundColor: chip, color: "#FFFFFF" }}
-      >
+  return (
+    <div className="flex h-full flex-col rounded-lg border-[0.5px] border-border bg-card px-4 py-3.5 min-h-[108px] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_6px_rgba(0,0,0,0.06)]">
+      <div className="flex items-center gap-2" style={{ color }}>
         <Icon className="h-[18px] w-[18px]" />
-      </span>
-      <p className="mt-3 text-[13px] font-medium" style={{ color: labelColor }}>
-        {label}
-      </p>
-      <p
-        className="mt-auto pt-2 text-2xl font-medium"
-        style={{ color: valueColor }}
-      >
-        {value}
-      </p>
-    </div>
-  );
-  return href ? (
-    <Link href={href} className="block h-full">
-      {box}
-    </Link>
-  ) : (
-    box
-  );
-}
-
-/** The fourth box. No rupee value: instead two small icon stats, the
- *  client count and the car count, side by side. */
-function ClientsAndCarsBox({
-  clients,
-  cars,
-}: {
-  clients: number;
-  cars: number;
-}) {
-  return (
-    <div
-      className="flex h-full flex-col rounded-lg p-4 min-h-[116px]"
-      style={{ backgroundColor: "#E6F1FB" }}
-    >
-      <span
-        aria-hidden
-        className="inline-flex items-center justify-center rounded-lg"
-        style={{
-          width: 34,
-          height: 34,
-          backgroundColor: "#185FA5",
-          color: "#FFFFFF",
-        }}
-      >
-        <Users className="h-[18px] w-[18px]" />
-      </span>
-      <p className="mt-3 text-[13px] font-medium" style={{ color: "#0C447C" }}>
-        Clients and cars
-      </p>
-      <div className="mt-auto pt-2 flex items-start gap-6">
-        <MiniStat icon={Building2} value={clients} caption="clients" />
-        <MiniStat icon={Car} value={cars} caption="cars" />
+        <span className="text-[13px] font-medium">{title}</span>
       </div>
+      <div className="mt-auto pt-2">{children}</div>
     </div>
   );
 }
 
-/** Icon plus count, with a small muted caption underneath. */
-function MiniStat({
-  icon: Icon,
-  value,
-  caption,
-}: {
-  icon: LucideIcon;
-  value: number;
-  caption: string;
-}) {
+/** Icon plus count for the clients and cars box. The icon labels the
+ *  number, so there is no caption word. */
+function MiniStat({ icon: Icon, value }: { icon: LucideIcon; value: number }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="inline-flex items-center gap-1.5">
-        <Icon className="h-[18px] w-[18px]" style={{ color: "#185FA5" }} />
-        <span className="text-xl font-medium" style={{ color: "#042C53" }}>
-          {value.toLocaleString("en-IN")}
-        </span>
+    <span className="inline-flex items-center gap-1.5">
+      <Icon className="h-[18px] w-[18px]" style={{ color: "#185FA5" }} />
+      <span className="text-xl font-medium text-foreground whitespace-nowrap">
+        {value.toLocaleString("en-IN")}
       </span>
-      <span className="text-[11px] text-muted-foreground">{caption}</span>
-    </div>
+    </span>
   );
 }
 
