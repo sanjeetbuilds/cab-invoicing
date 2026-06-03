@@ -227,7 +227,8 @@ export function InvoicesList({
       {/* Sticky header: title, search, filters and status pills stay at
           the top of the page scroll with a solid background above the
           rows. Normal flow, top 0, so the first row stays fully visible. */}
-      <div className="sticky top-0 z-20 flex flex-col gap-3 border-b-[0.5px] border-border bg-background">
+      <div className="sticky top-0 z-30 bg-background pb-3">
+        <div className="flex flex-col gap-3 border-b-[0.5px] border-border pb-3">
         {header}
 
         {/* Top actions in one even row: Quick invoice, Build invoice,
@@ -332,6 +333,7 @@ export function InvoicesList({
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Mobile bottom sheet, inline radio sections, no nested
