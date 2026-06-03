@@ -203,7 +203,10 @@ export function QuotationsList({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3">
+      {/* Sticky header: title, search, filters and status pills stay at
+          the top of the page scroll with a solid background above the
+          rows. Normal flow, top 0, so the first row stays fully visible. */}
+      <div className="sticky top-0 z-20 flex flex-col gap-3 border-b-[0.5px] border-border bg-background">
         {header}
         {(showSearch || showFiltersButton) && (
           <div className="flex items-center gap-2">
