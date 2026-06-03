@@ -418,6 +418,16 @@ export function InvoicesList({
   );
 }
 
+// Action button classes, shared by the card and the desktop row so the
+// two match. Share is the one filled CTA, Download is outline, both about
+// 38px tall. Flat, no gradient.
+const SHARE_BTN =
+  "inline-flex h-[38px] items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-transform hover:bg-primary-hover active:scale-[0.97]";
+const DOWNLOAD_BTN =
+  "inline-flex h-[38px] items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-medium text-foreground transition-transform hover:bg-muted active:scale-[0.97]";
+const MENU_BTN =
+  "inline-flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-muted";
+
 function InvoiceListItem({
   invoice,
   prefix,
@@ -550,33 +560,22 @@ function InvoiceListItem({
     }
   }
 
-  const meta = `Invoice ${fullNumber} · ${fmtDateLong(invoice.invoice_date)} · ${duties} trip${
+  const meta = `${fmtDateLong(invoice.invoice_date)} · ${duties} trip${
     duties === 1 ? "" : "s"
   }`;
 
-  // One menu, used by both the desktop row and the mobile card, so the
-  // items stay identical. View, Download PDF and Share are always there;
-  // issue, mark paid or unpaid, and delete or undo show as they fit.
+  // The three dot menu holds what is left once Share and Download are
+  // their own buttons: view, issue, mark paid or unpaid, delete or undo,
+  // as each fits. No copy invoice number. Same menu on card and row.
   const menu = (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label="Invoice actions"
-        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-      >
+      <DropdownMenuTrigger aria-label="More invoice actions" className={MENU_BTN}>
         <MoreVertical className="h-4 w-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[200px]">
         <DropdownMenuItem onClick={openPdf}>
           <Eye className="h-4 w-4" />
           View
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={downloadInvoicePdf}>
-          <Download className="h-4 w-4" />
-          Download PDF
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={shareInvoicePdf}>
-          <Share2 className="h-4 w-4" />
-          Share
         </DropdownMenuItem>
         {draft && (
           <DropdownMenuItem onClick={() => setConfirmIssue(true)}>
@@ -618,13 +617,32 @@ function InvoiceListItem({
     </DropdownMenu>
   );
 
+  // Share filled, Download outline, then the three dot menu. Raised
+  // above the body link so taps on them act instead of opening the
+  // invoice. The card stretches Share to the main width.
+  const shareLabel = (
+    <>
+      <Share2 className="h-4 w-4" />
+      Share
+    </>
+  );
+  const downloadLabel = (
+    <>
+      <Download className="h-4 w-4" />
+      Download
+    </>
+  );
+
   return (
     <>
-      {/* Desktop row, md and up, inside the framed list card. The whole
-          row opens the invoice via a stretched link; the menu sits above
-          it so it stays tappable. */}
+      {/* Desktop row, md and up, inside the framed list card. The body
+          opens the invoice via a stretched link; the actions sit above
+          it so they stay tappable. */}
       <div className="relative hidden border-b-[0.5px] border-border last:border-b-0 hover:bg-muted/40 md:block">
-        <div className="flex items-center gap-4 px-4 py-3">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <span className="w-16 shrink-0 truncate text-sm font-medium text-foreground">
+            #{fullNumber}
+          </span>
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium text-foreground">
               {invoice.client_name ?? "-"}
@@ -637,7 +655,19 @@ function InvoiceListItem({
           <div className="w-24 shrink-0">
             <StatusPill status={invoice.status} />
           </div>
-          <div className="relative z-10 shrink-0">{menu}</div>
+          <div className="relative z-10 flex shrink-0 items-center gap-2">
+            <button type="button" onClick={shareInvoicePdf} className={SHARE_BTN}>
+              {shareLabel}
+            </button>
+            <button
+              type="button"
+              onClick={downloadInvoicePdf}
+              className={DOWNLOAD_BTN}
+            >
+              {downloadLabel}
+            </button>
+            {menu}
+          </div>
         </div>
         <Link
           href={viewUrl}
@@ -652,7 +682,9 @@ function InvoiceListItem({
           <p className="line-clamp-2 min-w-0 flex-1 text-[15px] font-medium leading-snug text-foreground">
             {invoice.client_name ?? "-"}
           </p>
-          <div className="relative z-10 -mr-1.5 -mt-1 shrink-0">{menu}</div>
+          <span className="shrink-0 text-sm font-medium text-foreground">
+            #{fullNumber}
+          </span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">{meta}</p>
         <div className="mt-2 flex items-center justify-between gap-2">
@@ -660,6 +692,23 @@ function InvoiceListItem({
             {formatINR(invoice.net_amount)}
           </span>
           <StatusPill status={invoice.status} />
+        </div>
+        <div className="relative z-10 mt-3 flex items-center gap-2 border-t-[0.5px] border-border pt-3">
+          <button
+            type="button"
+            onClick={shareInvoicePdf}
+            className={cn(SHARE_BTN, "flex-1")}
+          >
+            {shareLabel}
+          </button>
+          <button
+            type="button"
+            onClick={downloadInvoicePdf}
+            className={DOWNLOAD_BTN}
+          >
+            {downloadLabel}
+          </button>
+          {menu}
         </div>
         <Link
           href={viewUrl}
