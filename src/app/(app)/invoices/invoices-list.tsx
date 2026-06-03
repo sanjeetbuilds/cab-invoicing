@@ -114,6 +114,7 @@ export function InvoicesList({
   prefix,
   dutiesByInvoice,
   header,
+  actions,
   initialFrom,
   initialTo,
 }: {
@@ -121,10 +122,11 @@ export function InvoicesList({
   clients: Pick<Client, "id" | "name">[];
   prefix: string;
   dutiesByInvoice: Record<string, number>;
-  /** Page title + actions JSX, rendered as the first row of the
-   *  list header. Passed in from the server page so the title,
-   *  search, and filters share one header block. */
+  /** Page title, rendered as the first row of the sticky header. */
   header?: React.ReactNode;
+  /** Page action buttons (Quick invoice, Build invoice). Rendered in one
+   *  even row with the filter button so they share a line. */
+  actions?: React.ReactNode;
   /** Optional date range, from the billed by month view. When both are
    *  set the list opens filtered to that custom period. */
   initialFrom?: string;
@@ -227,40 +229,46 @@ export function InvoicesList({
           rows. Normal flow, top 0, so the first row stays fully visible. */}
       <div className="sticky top-0 z-20 flex flex-col gap-3 border-b-[0.5px] border-border bg-background">
         {header}
-        {(showSearch || showFiltersButton) && (
-          <div className="flex items-center gap-2">
-            {showSearch && (
-              <div className="relative flex-1 min-w-0">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search invoice number or client…"
-                  className="pl-8"
-                />
-              </div>
-            )}
+
+        {/* Top actions in one even row: Quick invoice, Build invoice,
+            then the filter as an outline icon button at the end. Wraps
+            only if it truly cannot fit. */}
+        {(actions || showFiltersButton) && (
+          <div className="flex flex-wrap items-center gap-2">
+            {actions}
             {showFiltersButton && (
               <button
                 type="button"
                 onClick={() => setShowFilters((v) => !v)}
+                aria-label="Filters"
+                title="Filters"
                 className={cn(
-                  "inline-flex items-center gap-2 rounded-lg border px-3 h-10 text-sm font-medium shrink-0",
-                  !showSearch && "ml-auto",
-                  showFilters || activeFilterCount > 0
-                    ? "bg-accent-soft text-accent-foreground border-accent-soft"
-                    : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+                  "relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border",
+                  showFilters
+                    ? "bg-muted text-foreground border-border"
+                    : "bg-card text-foreground border-border hover:bg-muted",
                 )}
               >
                 <Filter className="h-4 w-4" />
-                <span className="hidden sm:inline">Filters</span>
                 {activeFilterCount > 0 && (
-                  <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
+                  <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
                     {activeFilterCount}
                   </span>
                 )}
               </button>
             )}
+          </div>
+        )}
+
+        {showSearch && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search invoice number or client…"
+              className="pl-8"
+            />
           </div>
         )}
 

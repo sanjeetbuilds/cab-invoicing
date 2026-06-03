@@ -20,6 +20,7 @@ export function AddTripButton({
       href="/trips/new"
       className={cn(
         buttonVariants({ variant: muted ? "outline" : "default" }),
+        "h-10",
         disabled && "pointer-events-none opacity-50",
       )}
     >

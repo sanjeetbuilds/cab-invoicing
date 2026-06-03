@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus, ReceiptIndianRupee, Zap } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { ListHeader } from "@/components/ui/list-header";
 import { PageHeader } from "@/components/ui/page-header";
@@ -99,16 +100,17 @@ export default async function InvoicesPage({
     <>
       <Link
         href="/invoices/quick"
-        className={buttonVariants({ variant: "outline" })}
+        className={cn(buttonVariants({ variant: "outline" }), "h-10")}
       >
         <Zap className="h-4 w-4" />
         Quick invoice
       </Link>
       <Link
         href="/invoices/build"
-        className={buttonVariants({
-          variant: showingSamples ? "outline" : "default",
-        })}
+        className={cn(
+          buttonVariants({ variant: showingSamples ? "outline" : "default" }),
+          "h-10",
+        )}
       >
         <Plus className="h-4 w-4" />
         Build invoice
@@ -116,27 +118,31 @@ export default async function InvoicesPage({
     </>
   );
 
-  const header = (
-    <PageHeader
-      title="Invoices"
-      description="A number belongs to one invoice at a time. Delete an undone invoice to free its number for reuse."
-    >
+  const description =
+    "A number belongs to one invoice at a time. Delete an undone invoice to free its number for reuse.";
+
+  // Empty and sample states keep the actions beside the title. The
+  // populated list gets a title-only header and renders the action row
+  // itself, so Quick invoice, Build invoice and the filter share a line.
+  const fullHeader = (
+    <PageHeader title="Invoices" description={description}>
       {actions}
     </PageHeader>
   );
+  const titleHeader = <PageHeader title="Invoices" description={description} />;
 
   return (
     <div className="flex flex-col gap-4">
       {error && (
         <>
-          <ListHeader>{header}</ListHeader>
+          <ListHeader>{fullHeader}</ListHeader>
           <p className="text-sm text-destructive">Failed to load: {error.message}</p>
         </>
       )}
 
       {showingSamples && (
         <>
-          <ListHeader>{header}</ListHeader>
+          <ListHeader>{fullHeader}</ListHeader>
           <SamplePreview
             icon={<ReceiptIndianRupee className="h-4 w-4" />}
             iconChipBg="#E1F5EE"
@@ -153,7 +159,7 @@ export default async function InvoicesPage({
 
       {showingCalmEmpty && (
         <>
-          <ListHeader>{header}</ListHeader>
+          <ListHeader>{fullHeader}</ListHeader>
           <Card>
             <CardContent className="py-12 text-center text-sm text-muted-foreground">
               No invoices here.
@@ -168,7 +174,8 @@ export default async function InvoicesPage({
           clients={clients ?? []}
           prefix={prefix}
           dutiesByInvoice={Object.fromEntries(dutiesByInvoice)}
-          header={header}
+          header={titleHeader}
+          actions={actions}
           initialFrom={initialFrom}
           initialTo={initialTo}
         />

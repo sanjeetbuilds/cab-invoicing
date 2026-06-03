@@ -177,8 +177,8 @@ export default async function TripsPage({
           <Link
             href="/trips/bulk"
             className={cn(
-              buttonVariants({ variant: "outline", size: "sm" }),
-              "hidden lg:inline-flex",
+              buttonVariants({ variant: "outline" }),
+              "h-10 hidden lg:inline-flex",
               noPrereqs ? "pointer-events-none opacity-50" : "",
             )}
           >

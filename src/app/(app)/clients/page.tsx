@@ -81,14 +81,14 @@ export default async function ClientsPage({
         >
           <Link
             href="/bulk-import?scope=clients"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
+            className={cn(buttonVariants({ variant: "outline" }), "h-10")}
           >
             <Upload className="h-4 w-4" />
             Import
           </Link>
           <Link
             href="/rate-cards"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
+            className={cn(buttonVariants({ variant: "outline" }), "h-10")}
           >
             <IndianRupee className="h-4 w-4" />
             Bulk edit rates

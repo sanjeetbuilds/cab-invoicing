@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FileSignature, Plus } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { ListHeader } from "@/components/ui/list-header";
 import { PageHeader } from "@/components/ui/page-header";
@@ -47,28 +48,38 @@ export default async function QuotationsPage() {
   const showingSamples = isEmpty && isFirstTime;
   const showingCalmEmpty = isEmpty && !isFirstTime;
 
-  const header = (
-    <PageHeader
-      title="Quotations"
-      description="Send your prices to a client. When they accept, it saves as their rates."
+  const actions = (
+    <Link
+      href="/quotations/new"
+      className={cn(
+        buttonVariants({ variant: showingSamples ? "outline" : "default" }),
+        "h-10",
+      )}
     >
-      <Link
-        href="/quotations/new"
-        className={buttonVariants({
-          variant: showingSamples ? "outline" : "default",
-        })}
-      >
-        <Plus className="h-4 w-4" />
-        New quotation
-      </Link>
+      <Plus className="h-4 w-4" />
+      New quotation
+    </Link>
+  );
+
+  const description =
+    "Send your prices to a client. When they accept, it saves as their rates.";
+  // Empty and sample states keep the action beside the title. The
+  // populated list gets a title-only header and renders the action row
+  // with the filter so they share one line.
+  const fullHeader = (
+    <PageHeader title="Quotations" description={description}>
+      {actions}
     </PageHeader>
+  );
+  const titleHeader = (
+    <PageHeader title="Quotations" description={description} />
   );
 
   return (
     <div className="flex flex-col gap-4">
       {showingSamples && (
         <>
-          <ListHeader>{header}</ListHeader>
+          <ListHeader>{fullHeader}</ListHeader>
           <SamplePreview
             icon={<FileSignature className="h-4 w-4" />}
             iconChipBg="#E6F1FB"
@@ -84,7 +95,7 @@ export default async function QuotationsPage() {
 
       {showingCalmEmpty && (
         <>
-          <ListHeader>{header}</ListHeader>
+          <ListHeader>{fullHeader}</ListHeader>
           <Card>
             <CardContent className="py-12 text-center text-sm text-muted-foreground">
               No quotations here.
@@ -97,7 +108,8 @@ export default async function QuotationsPage() {
         <QuotationsList
           quotations={list}
           clients={clients ?? []}
-          header={header}
+          header={titleHeader}
+          actions={actions}
         />
       )}
     </div>

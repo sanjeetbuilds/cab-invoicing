@@ -31,6 +31,7 @@ import { formatINR } from "@/lib/format";
 import { ListHeader } from "@/components/ui/list-header";
 import { PageHeader } from "@/components/ui/page-header";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { AddRateCardButton } from "./add-rate-card-button";
 import { RateCardRowActions } from "./rate-card-row-actions";
 
@@ -78,7 +79,7 @@ export default async function RateCardsPage() {
         >
           <Link
             href="/bulk-import?scope=rate_cards"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
+            className={cn(buttonVariants({ variant: "outline" }), "h-10")}
           >
             <Upload className="h-4 w-4" />
             Import
@@ -86,6 +87,7 @@ export default async function RateCardsPage() {
           <AddRateCardButton
             clients={clientList}
             variant={showingSamples ? "outline" : "default"}
+            className="h-10"
           />
         </PageHeader>
       </ListHeader>
