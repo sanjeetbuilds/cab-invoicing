@@ -572,6 +572,9 @@ function HeaderBand({
         <View style={styles.partyCol3}>
           <Text style={styles.partyLabel}>BILLED TO</Text>
           <Text style={styles.partyTextBold}>{invoice.client_name ?? ""}</Text>
+          {invoice.client_address && (
+            <Text style={styles.partyText}>{invoice.client_address}</Text>
+          )}
           <Text style={styles.partyText}>
             {invoice.client_gstin
               ? `GSTIN ${invoice.client_gstin}`
