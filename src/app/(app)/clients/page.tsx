@@ -213,26 +213,33 @@ export default async function ClientsPage({
             </Table>
           </div>
 
-          {/* Mobile cards */}
+          {/* Mobile cards. The edit and delete icons sit in a reserved
+              shrink-0 area at the top right, so the name and the lines
+              below truncate cleanly and never run under the icons. */}
           <div className="md:hidden flex flex-col gap-4 md:gap-5">
             {list.map((c) => (
               <Card key={c.id} size="sm">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-foreground truncate inline-flex items-center gap-2">
-                      {c.name}
+                    <div className="flex min-w-0 items-center gap-2">
+                      <p className="min-w-0 truncate font-semibold text-foreground">
+                        {c.name}
+                      </p>
                       {c.is_quick_customer && (
-                        <Badge variant="outline" className="text-[10px]">
+                        <Badge
+                          variant="outline"
+                          className="shrink-0 text-[10px]"
+                        >
                           One-time
                         </Badge>
                       )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
+                    </div>
+                    <p className="truncate text-xs text-muted-foreground">
                       {c.state}
                       {c.gstin ? ` • ${c.gstin}` : ""}
                     </p>
                     {c.default_booked_by && (
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="truncate text-xs text-muted-foreground mt-1">
                         {c.default_booked_by}
                       </p>
                     )}
@@ -244,7 +251,9 @@ export default async function ClientsPage({
                       )}
                     </div>
                   </div>
-                  <ClientRowActions client={c} />
+                  <div className="shrink-0">
+                    <ClientRowActions client={c} />
+                  </div>
                 </div>
               </Card>
             ))}
