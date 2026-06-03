@@ -10,6 +10,8 @@ import {
 import { requireMembership } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatInrShort, formatInrFull } from "@/lib/money";
+import { buildBilledByMonth } from "@/lib/billed-by-month";
+import { BilledByMonthPeek } from "@/components/billed-by-month-chart";
 import { RupeeValue } from "./rupee-value";
 import {
   Table,
@@ -175,6 +177,9 @@ export default async function DashboardPage() {
     latestMonthCount === 1 ? "" : "s"
   }`;
 
+  // Twelve month series for the peek under the boxes, from the same set.
+  const billedSeries = buildBilledByMonth(billed, new Date());
+
   const isFresh = (clientCount ?? 0) === 0 && (vehicleCount ?? 0) === 0;
   const recent = recentInvoices ?? [];
   const companyName = companyMeta?.name ?? "there";
@@ -240,6 +245,15 @@ export default async function DashboardPage() {
           </div>
         </MetricBox>
       </div>
+
+      {/* Billed by month peek under the boxes. Only once there is at
+          least one issued bill, so a fresh account stays clean. */}
+      {billedSeries.latestIndex !== null && (
+        <BilledByMonthPeek
+          months={billedSeries.months}
+          latestIndex={billedSeries.latestIndex}
+        />
+      )}
 
       {/* Recent invoices, last 5. The only list on the dashboard. */}
       <section className="flex flex-col gap-3">

@@ -18,8 +18,15 @@ export const metadata = { title: "Invoices" };
 // an explicit force-dynamic adds nothing and opts out of future
 // partial-prerendering wins.
 
-export default async function InvoicesPage() {
+export default async function InvoicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
   const { supabase, membership } = await requireMembership();
+  // A month tap on the billed by month view lands here with a date
+  // range, applied as the list's custom period filter.
+  const { from: initialFrom, to: initialTo } = await searchParams;
 
   const [
     { data: invoices, error },
@@ -162,6 +169,8 @@ export default async function InvoicesPage() {
           prefix={prefix}
           dutiesByInvoice={Object.fromEntries(dutiesByInvoice)}
           header={header}
+          initialFrom={initialFrom}
+          initialTo={initialTo}
         />
       )}
     </div>

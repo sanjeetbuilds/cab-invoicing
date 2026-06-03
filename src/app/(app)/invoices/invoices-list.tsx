@@ -97,6 +97,8 @@ export function InvoicesList({
   prefix,
   dutiesByInvoice,
   header,
+  initialFrom,
+  initialTo,
 }: {
   invoices: Invoice[];
   clients: Pick<Client, "id" | "name">[];
@@ -106,13 +108,20 @@ export function InvoicesList({
    *  list header. Passed in from the server page so the title,
    *  search, and filters share one header block. */
   header?: React.ReactNode;
+  /** Optional date range, from the billed by month view. When both are
+   *  set the list opens filtered to that custom period. */
+  initialFrom?: string;
+  initialTo?: string;
 }) {
+  const hasInitialRange = Boolean(initialFrom && initialTo);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [clientId, setClientId] = useState<string>("all");
-  const [period, setPeriod] = useState<PeriodPreset>("all");
-  const [customFrom, setCustomFrom] = useState<string>("");
-  const [customTo, setCustomTo] = useState<string>("");
+  const [period, setPeriod] = useState<PeriodPreset>(
+    hasInitialRange ? "custom" : "all",
+  );
+  const [customFrom, setCustomFrom] = useState<string>(initialFrom ?? "");
+  const [customTo, setCustomTo] = useState<string>(initialTo ?? "");
   const [showFilters, setShowFilters] = useState(false);
   const isMobile = useIsMobile();
 
