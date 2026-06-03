@@ -223,7 +223,11 @@ export function InvoicesList({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    // Bottom padding clears the fixed bottom navigation bar (h-16 plus
+    // the safe area) with about 16px to spare, so the last card and its
+    // Share and Download row sit fully above the tabs. The nav only shows
+    // below lg, so the padding is dropped on desktop.
+    <div className="flex flex-col gap-4 pb-[calc(5rem_+_env(safe-area-inset-bottom))] lg:pb-0">
       {/* Sticky header: title, search, filters and status pills stay at
           the top of the page scroll with a solid background above the
           rows. Normal flow, top 0, so the first row stays fully visible. */}
@@ -649,7 +653,7 @@ function InvoiceListItem({
           it so they stay tappable. */}
       <div className="relative hidden border-b-[0.5px] border-border last:border-b-0 hover:bg-muted/40 md:block">
         <div className="flex items-center gap-3 px-4 py-3">
-          <span className="w-16 shrink-0 truncate text-sm font-medium text-foreground">
+          <span className="w-16 shrink-0 truncate text-sm font-semibold text-foreground">
             #{fullNumber}
           </span>
           <div className="min-w-0 flex-1">
@@ -688,7 +692,7 @@ function InvoiceListItem({
           <p className="line-clamp-2 min-w-0 flex-1 text-[15px] font-medium leading-snug text-foreground">
             {invoice.client_name ?? "-"}
           </p>
-          <span className="shrink-0 text-sm font-medium text-foreground">
+          <span className="shrink-0 text-sm font-semibold text-foreground">
             #{fullNumber}
           </span>
         </div>
