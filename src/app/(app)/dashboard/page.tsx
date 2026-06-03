@@ -1,14 +1,15 @@
 import Link from "next/link";
 import {
+  CalendarDays,
   Car,
   Clock,
-  FileText,
   Receipt,
   Users,
   type LucideIcon,
 } from "lucide-react";
 import { requireMembership } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatInrShort, formatInrFull } from "@/lib/money";
 import { RupeeValue } from "./rupee-value";
 import {
   Table,
@@ -55,37 +56,10 @@ function fmtToday(): string {
   });
 }
 
-/** Up to two decimals with Indian grouping, trailing zeros dropped, so
- *  2.5 stays 2.5 and 2 stays 2 rather than 2.50 or 2.00. */
-function trimDecimals(x: number): string {
-  return x.toLocaleString("en-IN", { maximumFractionDigits: 2 });
-}
-
-/** Short rupee figure that stays inside a small box whatever the size.
- *  Below one lakh: the full figure with Indian commas, like ₹84,200.
- *  One lakh up to a crore: lakh, like ₹1.13 L or ₹2.5 L.
- *  A crore and above: crore, like ₹2.46 Cr. */
-function formatInrShort(amount: number): string {
-  const n = Number.isFinite(amount) ? amount : 0;
-  const abs = Math.abs(n);
-  if (abs < 100000) {
-    return `₹${Math.round(n).toLocaleString("en-IN")}`;
-  }
-  if (abs < 10000000) {
-    return `₹${trimDecimals(n / 100000)} L`;
-  }
-  return `₹${trimDecimals(n / 10000000)} Cr`;
-}
-
-/** Exact rupee figure with Indian commas, like ₹2,45,67,890. Paise are
- *  shown only when the amount is not a whole number of rupees. */
-function formatInrFull(amount: number): string {
-  const n = Number.isFinite(amount) ? amount : 0;
-  const hasPaise = Math.round(n * 100) % 100 !== 0;
-  return `₹${n.toLocaleString("en-IN", {
-    minimumFractionDigits: hasPaise ? 2 : 0,
-    maximumFractionDigits: 2,
-  })}`;
+/** Short month name for a "YYYY-MM" key, e.g. "2026-05" to "May". */
+function monthName(ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-IN", { month: "short" });
 }
 
 export default async function DashboardPage() {
@@ -100,11 +74,10 @@ export default async function DashboardPage() {
     { count: clientCount },
     { count: vehicleCount },
     { count: rateCardCount },
-    { count: unbilledTripsCount },
     { count: tripCount },
     { count: invoiceCount },
     { data: unpaidInvoices },
-    { data: thisYearInvoices },
+    { data: billedInvoices },
     { data: recentInvoices },
     { data: companyMeta },
   ] = await Promise.all([
@@ -123,11 +96,6 @@ export default async function DashboardPage() {
     supabase
       .from("trips")
       .select("id", { count: "exact", head: true })
-      .eq("company_id", membership.company_id)
-      .eq("invoiced", false),
-    supabase
-      .from("trips")
-      .select("id", { count: "exact", head: true })
       .eq("company_id", membership.company_id),
     supabase
       .from("invoices")
@@ -141,13 +109,14 @@ export default async function DashboardPage() {
       .returns<Pick<Invoice, "net_amount">[]>(),
     supabase
       .from("invoices")
-      .select("net_amount")
-      .eq("company_id", membership.company_id)
-      .gte("invoice_date", fyStart)
+      .select("invoice_date, net_amount")
       // Only issued invoices count as billed. Drafts are not issued and
-      // reversed ones are undone, so both are left out.
+      // reversed ones are undone, so both are left out. No date bound:
+      // the latest billed month and the financial year total are both
+      // worked out in JS from this one set.
+      .eq("company_id", membership.company_id)
       .in("status", ["unpaid", "paid"])
-      .returns<Pick<Invoice, "net_amount">[]>(),
+      .returns<Pick<Invoice, "invoice_date" | "net_amount">[]>(),
     supabase
       .from("invoices")
       .select("*")
@@ -174,15 +143,37 @@ export default async function DashboardPage() {
     hasInvoice: (invoiceCount ?? 0) > 0,
   };
 
-  const unbilledCount = unbilledTripsCount ?? 0;
   const outstanding = (unpaidInvoices ?? []).reduce(
     (s, i) => s + Number(i.net_amount ?? 0),
     0,
   );
-  const billedThisYear = (thisYearInvoices ?? []).reduce(
+
+  // Billed figures, both from the one issued-invoice set above.
+  const billed = billedInvoices ?? [];
+
+  // Financial year total: bills dated on or after 1 April of this FY.
+  const billedThisYear = billed
+    .filter((i) => i.invoice_date >= fyStart)
+    .reduce((s, i) => s + Number(i.net_amount ?? 0), 0);
+
+  // Latest calendar month that has any issued bill, by invoice date.
+  let latestYm: string | null = null;
+  for (const i of billed) {
+    const ym = i.invoice_date.slice(0, 7);
+    if (latestYm === null || ym > latestYm) latestYm = ym;
+  }
+  const monthRows = latestYm
+    ? billed.filter((i) => i.invoice_date.slice(0, 7) === latestYm)
+    : [];
+  const billedLatestMonth = monthRows.reduce(
     (s, i) => s + Number(i.net_amount ?? 0),
     0,
   );
+  const latestMonthCount = monthRows.length;
+  const latestMonthTitle = latestYm ? `Billed, ${monthName(latestYm)}` : "Billed";
+  const latestMonthSub = `${latestMonthCount.toLocaleString("en-IN")} bill${
+    latestMonthCount === 1 ? "" : "s"
+  }`;
 
   const isFresh = (clientCount ?? 0) === 0 && (vehicleCount ?? 0) === 0;
   const recent = recentInvoices ?? [];
@@ -209,21 +200,37 @@ export default async function DashboardPage() {
           desktop. White cards with a soft shadow, coloured title and
           icon, dark number. No gradients. */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <MetricBox color="#534AB7" icon={FileText} title="Unbilled">
-          <span className="text-2xl font-medium text-foreground whitespace-nowrap">
-            {unbilledCount.toLocaleString("en-IN")}
-          </span>
-        </MetricBox>
-        <MetricBox color="#993C1D" icon={Clock} title="Outstanding">
+        <MetricBox
+          color="#0F6E56"
+          icon={Receipt}
+          title={latestMonthTitle}
+          subline={latestMonthSub}
+        >
           <RupeeValue
-            short={formatInrShort(outstanding)}
-            full={formatInrFull(outstanding)}
+            short={formatInrShort(billedLatestMonth)}
+            full={formatInrFull(billedLatestMonth)}
           />
         </MetricBox>
-        <MetricBox color="#0F6E56" icon={Receipt} title="Billed this year">
+        <MetricBox
+          color="#534AB7"
+          icon={CalendarDays}
+          title="Billed this year"
+          subline="Apr to Mar"
+        >
           <RupeeValue
             short={formatInrShort(billedThisYear)}
             full={formatInrFull(billedThisYear)}
+          />
+        </MetricBox>
+        <MetricBox
+          color="#993C1D"
+          icon={Clock}
+          title="Outstanding"
+          subline="unpaid"
+        >
+          <RupeeValue
+            short={formatInrShort(outstanding)}
+            full={formatInrFull(outstanding)}
           />
         </MetricBox>
         <MetricBox color="#185FA5" icon={Users} title="Clients and cars">
@@ -342,22 +349,30 @@ function MetricBox({
   icon: Icon,
   title,
   color,
+  subline,
   children,
 }: {
   icon: LucideIcon;
   title: string;
   /** Colour for the header icon and title. */
   color: string;
+  /** Optional 11px muted line under the value. */
+  subline?: string;
   /** The value shown at the bottom of the box. */
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-full flex-col rounded-lg border-[0.5px] border-border bg-card px-4 py-3.5 min-h-[108px] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_6px_rgba(0,0,0,0.06)]">
+    <div className="flex h-full flex-col rounded-lg border-[0.5px] border-border bg-card px-4 py-3.5 min-h-[112px] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_6px_rgba(0,0,0,0.06)]">
       <div className="flex items-center gap-2" style={{ color }}>
         <Icon className="h-[18px] w-[18px]" />
         <span className="text-[13px] font-medium">{title}</span>
       </div>
-      <div className="mt-auto pt-2">{children}</div>
+      <div className="mt-auto pt-2">
+        {children}
+        {subline && (
+          <p className="mt-1 text-[11px] text-muted-foreground">{subline}</p>
+        )}
+      </div>
     </div>
   );
 }
