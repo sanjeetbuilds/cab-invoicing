@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Check,
+  Download,
   Filter,
   MoreVertical,
   RotateCcw,
@@ -46,7 +47,7 @@ import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/format";
 import { invoiceFilename } from "@/lib/filename";
 import { hapticDestructive, hapticSuccess } from "@/lib/haptics";
-import { sharePdf } from "@/lib/share-pdf";
+import { downloadPdf, sharePdf } from "@/lib/share-pdf";
 import { useIsMobile } from "@/lib/use-is-mobile";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
@@ -374,7 +375,7 @@ export function InvoicesList({
                   <TableHead className="text-right">Trips</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="w-[60px]"></TableHead>
+                  <TableHead className="w-[132px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -466,6 +467,16 @@ function DesktopInvoiceRow({
     }
   }
 
+  async function downloadInvoicePdf() {
+    try {
+      await downloadPdf({ url: pdfUrl, filename: downloadName });
+      toast.success(`Downloaded ${downloadName}.`);
+    } catch (err) {
+      const e = err as Error;
+      toast.error(e.message || "Download failed.");
+    }
+  }
+
   async function togglePaid(target: boolean) {
     setPending(true);
     const result = await markInvoicePaidAction({
@@ -551,56 +562,72 @@ function DesktopInvoiceRow({
           <StatusBadge status={invoice.status} />
         </TableCell>
         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              aria-label="More actions"
+          <div className="flex items-center justify-end gap-1">
+            <button
+              type="button"
+              aria-label="Download PDF"
+              title="Download"
+              onClick={downloadInvoicePdf}
               className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              <MoreVertical className="h-4 w-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[220px]">
-              <DropdownMenuItem onClick={shareInvoicePdf}>
-                <Share2 className="h-4 w-4" />
-                Share PDF
-              </DropdownMenuItem>
-              {draft && (
-                <DropdownMenuItem onClick={() => setConfirmIssue(true)}>
-                  <Send className="h-4 w-4" />
-                  Issue invoice
-                </DropdownMenuItem>
-              )}
-              {!draft && !reversed && !paid && (
-                <DropdownMenuItem onClick={() => setConfirmPaid("mark")}>
-                  <Check className="h-4 w-4" />
-                  Mark paid
-                </DropdownMenuItem>
-              )}
-              {!draft && !reversed && paid && (
-                <DropdownMenuItem onClick={() => setConfirmPaid("unmark")}>
-                  <Undo2 className="h-4 w-4" />
-                  Mark unpaid
-                </DropdownMenuItem>
-              )}
-              {!draft && !reversed && (
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => setConfirmReverse(true)}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Undo invoice
-                </DropdownMenuItem>
-              )}
-              {deletable && (
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => setConfirmDelete(true)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {draft ? "Delete draft" : "Delete invoice"}
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <Download className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="Share PDF"
+              title="Share"
+              onClick={shareInvoicePdf}
+              className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label="More actions"
+                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[220px]">
+                {draft && (
+                  <DropdownMenuItem onClick={() => setConfirmIssue(true)}>
+                    <Send className="h-4 w-4" />
+                    Issue invoice
+                  </DropdownMenuItem>
+                )}
+                {!draft && !reversed && !paid && (
+                  <DropdownMenuItem onClick={() => setConfirmPaid("mark")}>
+                    <Check className="h-4 w-4" />
+                    Mark paid
+                  </DropdownMenuItem>
+                )}
+                {!draft && !reversed && paid && (
+                  <DropdownMenuItem onClick={() => setConfirmPaid("unmark")}>
+                    <Undo2 className="h-4 w-4" />
+                    Mark unpaid
+                  </DropdownMenuItem>
+                )}
+                {!draft && !reversed && (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => setConfirmReverse(true)}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Undo invoice
+                  </DropdownMenuItem>
+                )}
+                {deletable && (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => setConfirmDelete(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {draft ? "Delete draft" : "Delete invoice"}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </TableCell>
       </TableRow>
 
@@ -690,6 +717,16 @@ function MobileInvoiceCard({
       const e = err as Error;
       if (e.name === "AbortError") return;
       toast.error(e.message || "Share failed.");
+    }
+  }
+
+  async function downloadInvoicePdf() {
+    try {
+      await downloadPdf({ url: pdfUrl, filename: downloadName });
+      toast.success(`Downloaded ${downloadName}.`);
+    } catch (err) {
+      const e = err as Error;
+      toast.error(e.message || "Download failed.");
     }
   }
 
@@ -803,22 +840,37 @@ function MobileInvoiceCard({
             </p>
           </button>
 
-          {/* Action row. Same actions as the desktop row, in the same
-              place: one three-dot menu. Tapping the summary above opens
-              the invoice, so the menu holds share / status / lifecycle. */}
-          <div className="flex items-center justify-end border-t border-border pt-3">
+          {/* Action row. Download and Share are the two primary CTAs;
+              the three-dot menu holds the lifecycle actions (issue /
+              mark paid / undo / delete). Tapping the summary above opens
+              the invoice. Same set as the desktop row. */}
+          <div className="flex items-center gap-2 border-t border-border pt-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={downloadInvoicePdf}
+            >
+              <Download className="h-4 w-4" />
+              Download
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={shareInvoicePdf}
+            >
+              <Share2 className="h-4 w-4" />
+              Share
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger
                 aria-label="More actions"
-                className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-border bg-card text-foreground hover:bg-muted"
+                className="inline-flex items-center justify-center h-10 w-10 shrink-0 rounded-md border border-border bg-card text-foreground hover:bg-muted"
               >
                 <MoreVertical className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[220px]">
-                <DropdownMenuItem onClick={shareInvoicePdf}>
-                  <Share2 className="h-4 w-4" />
-                  Share PDF
-                </DropdownMenuItem>
                 {draft && (
                   <DropdownMenuItem onClick={() => setConfirmIssue(true)}>
                     <Send className="h-4 w-4" />
