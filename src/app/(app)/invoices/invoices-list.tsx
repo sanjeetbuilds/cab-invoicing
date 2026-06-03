@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Check,
   Download,
+  Eye,
   Filter,
   MoreVertical,
   RotateCcw,
@@ -16,17 +18,8 @@ import {
   Undo2,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,6 +82,30 @@ function fmtDate(iso: string | null | undefined): string {
   const [y, m, d] = iso.split("-");
   if (!y || !m || !d) return iso;
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
+}
+
+const MONTHS_LONG = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+/** Long readable date for a card or row meta line, like "31 May 2026".
+ *  Parsed by hand to avoid any time zone shift on the ISO date. */
+function fmtDateLong(iso: string | null | undefined): string {
+  if (!iso) return "-";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${Number(d)} ${MONTHS_LONG[Number(m) - 1] ?? ""} ${y}`;
 }
 
 export function InvoicesList({
@@ -374,53 +391,26 @@ export function InvoicesList({
           </CardContent>
         </Card>
       ) : (
-        <>
-          {/* Desktop (md+): clean table; row click opens PDF */}
-          <div className="hidden md:block rounded-xl bg-card shadow-card overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Period</TableHead>
-                  <TableHead className="text-right">Trips</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="w-[132px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((inv) => (
-                  <DesktopInvoiceRow
-                    key={inv.id}
-                    invoice={inv}
-                    prefix={prefix}
-                    duties={dutiesByInvoice[inv.id] ?? 0}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Mobile (<md): rich summary cards, replace the detail page */}
-          <div className="md:hidden flex flex-col gap-4 md:gap-5">
-            {filtered.map((inv) => (
-              <MobileInvoiceCard
-                key={inv.id}
-                invoice={inv}
-                prefix={prefix}
-                duties={dutiesByInvoice[inv.id] ?? 0}
-              />
-            ))}
-          </div>
-        </>
+        // One item per invoice. On phones it renders a compact card with
+        // gaps between; on desktop the same data as a row inside a single
+        // framed card, rows split by a hairline. The item component holds
+        // both layouts so the actions and menu stay identical.
+        <div className="flex flex-col gap-3 md:gap-0 md:overflow-hidden md:rounded-lg md:border-[0.5px] md:border-border md:bg-card">
+          {filtered.map((inv) => (
+            <InvoiceListItem
+              key={inv.id}
+              invoice={inv}
+              prefix={prefix}
+              duties={dutiesByInvoice[inv.id] ?? 0}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
-function DesktopInvoiceRow({
+function InvoiceListItem({
   invoice,
   prefix,
   duties,
@@ -552,378 +542,123 @@ function DesktopInvoiceRow({
     }
   }
 
-  return (
-    <>
-      <TableRow
-        className="cursor-pointer hover:bg-muted/40"
-        onClick={openPdf}
+  const meta = `Invoice ${fullNumber} · ${fmtDateLong(invoice.invoice_date)} · ${duties} trip${
+    duties === 1 ? "" : "s"
+  }`;
+
+  // One menu, used by both the desktop row and the mobile card, so the
+  // items stay identical. View, Download PDF and Share are always there;
+  // issue, mark paid or unpaid, and delete or undo show as they fit.
+  const menu = (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label="Invoice actions"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
       >
-        <TableCell className="font-mono font-medium">{fullNumber}</TableCell>
-        <TableCell>{invoice.client_name ?? "-"}</TableCell>
-        <TableCell className="font-mono">{fmtDate(invoice.invoice_date)}</TableCell>
-        <TableCell className="text-xs text-muted-foreground">
-          {invoice.period_from && invoice.period_to
-            ? `${fmtDate(invoice.period_from)} – ${fmtDate(invoice.period_to)}`
-            : "-"}
-        </TableCell>
-        <TableCell className="text-right font-mono">{duties || "-"}</TableCell>
-        <TableCell className="text-right font-mono">
-          {formatINR(invoice.net_amount)}
-        </TableCell>
-        <TableCell className="text-center">
-          <StatusBadge status={invoice.status} />
-        </TableCell>
-        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-end gap-1">
-            <button
-              type="button"
-              aria-label="Download PDF"
-              title="Download"
-              onClick={downloadInvoicePdf}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <Download className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="Share PDF"
-              title="Share"
-              onClick={shareInvoicePdf}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <Share2 className="h-4 w-4" />
-            </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label="More actions"
-                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[220px]">
-                {draft && (
-                  <DropdownMenuItem onClick={() => setConfirmIssue(true)}>
-                    <Send className="h-4 w-4" />
-                    Issue invoice
-                  </DropdownMenuItem>
-                )}
-                {!draft && !reversed && !paid && (
-                  <DropdownMenuItem onClick={() => setConfirmPaid("mark")}>
-                    <Check className="h-4 w-4" />
-                    Mark paid
-                  </DropdownMenuItem>
-                )}
-                {!draft && !reversed && paid && (
-                  <DropdownMenuItem onClick={() => setConfirmPaid("unmark")}>
-                    <Undo2 className="h-4 w-4" />
-                    Mark unpaid
-                  </DropdownMenuItem>
-                )}
-                {!draft && !reversed && (
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => setConfirmReverse(true)}
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    Undo invoice
-                  </DropdownMenuItem>
-                )}
-                {deletable && (
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => setConfirmDelete(true)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    {draft ? "Delete draft" : "Delete invoice"}
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </TableCell>
-      </TableRow>
-
-      <PaidDialog
-        open={confirmPaid !== null}
-        mode={confirmPaid}
-        invoice={invoice}
-        fullNumber={fullNumber}
-        pending={pending}
-        onCancel={() => setConfirmPaid(null)}
-        onConfirm={() => togglePaid(confirmPaid === "mark")}
-      />
-      <ReverseDialog
-        open={confirmReverse}
-        invoice={invoice}
-        fullNumber={fullNumber}
-        pending={pending}
-        onCancel={() => setConfirmReverse(false)}
-        onConfirm={onReverse}
-      />
-      <DeleteInvoiceDialog
-        open={confirmDelete}
-        invoice={invoice}
-        fullNumber={fullNumber}
-        draft={draft}
-        pending={pending}
-        onCancel={() => setConfirmDelete(false)}
-        onConfirm={onDelete}
-      />
-      <IssueDraftDialog
-        open={confirmIssue}
-        invoice={invoice}
-        fullNumber={fullNumber}
-        pending={pending}
-        onCancel={() => setConfirmIssue(false)}
-        onConfirm={onIssueDraft}
-      />
-    </>
+        <MoreVertical className="h-4 w-4" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[200px]">
+        <DropdownMenuItem onClick={openPdf}>
+          <Eye className="h-4 w-4" />
+          View
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={downloadInvoicePdf}>
+          <Download className="h-4 w-4" />
+          Download PDF
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={shareInvoicePdf}>
+          <Share2 className="h-4 w-4" />
+          Share
+        </DropdownMenuItem>
+        {draft && (
+          <DropdownMenuItem onClick={() => setConfirmIssue(true)}>
+            <Send className="h-4 w-4" />
+            Issue invoice
+          </DropdownMenuItem>
+        )}
+        {!draft && !reversed && !paid && (
+          <DropdownMenuItem onClick={() => setConfirmPaid("mark")}>
+            <Check className="h-4 w-4" />
+            Mark paid
+          </DropdownMenuItem>
+        )}
+        {!draft && !reversed && paid && (
+          <DropdownMenuItem onClick={() => setConfirmPaid("unmark")}>
+            <Undo2 className="h-4 w-4" />
+            Mark unpaid
+          </DropdownMenuItem>
+        )}
+        {!draft && !reversed && (
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => setConfirmReverse(true)}
+          >
+            <RotateCcw className="h-4 w-4" />
+            Undo invoice
+          </DropdownMenuItem>
+        )}
+        {deletable && (
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => setConfirmDelete(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+            {draft ? "Delete draft" : "Delete invoice"}
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
-}
-
-function MobileInvoiceCard({
-  invoice,
-  prefix,
-  duties,
-}: {
-  invoice: Invoice;
-  prefix: string;
-  duties: number;
-}) {
-  const router = useRouter();
-  const [pending, setPending] = useState(false);
-  const [confirmPaid, setConfirmPaid] = useState<null | "mark" | "unmark">(
-    null,
-  );
-  const [confirmReverse, setConfirmReverse] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [confirmIssue, setConfirmIssue] = useState(false);
-
-  const fullNumber = `${prefix}${invoice.invoice_number}`;
-  const pdfUrl = `/api/invoices/${invoice.id}/pdf`;
-  const viewUrl = `/invoices/${invoice.id}`;
-  const downloadName = invoiceFilename(fullNumber, invoice.client_name);
-  const reversed = invoice.status === "reversed";
-  const paid = invoice.status === "paid";
-  const draft = invoice.status === "draft";
-  // Drafts (never issued) and undone invoices can be deleted and their
-  // number freed. Active issued and paid invoices cannot.
-  const deletable = draft || reversed;
-
-  function openPdf() {
-    // Same-tab navigation, see DesktopInvoiceRow above.
-    router.push(viewUrl);
-  }
-
-  async function shareInvoicePdf() {
-    try {
-      const result = await sharePdf({
-        url: pdfUrl,
-        filename: downloadName,
-        title: `Invoice ${fullNumber}`,
-      });
-      if (result === "downloaded") {
-        toast.success(`Downloaded ${downloadName}.`);
-      }
-    } catch (err) {
-      const e = err as Error;
-      if (e.name === "AbortError") return;
-      toast.error(e.message || "Share failed.");
-    }
-  }
-
-  async function downloadInvoicePdf() {
-    try {
-      await downloadPdf({ url: pdfUrl, filename: downloadName });
-      toast.success(`Downloaded ${downloadName}.`);
-    } catch (err) {
-      const e = err as Error;
-      toast.error(e.message || "Download failed.");
-    }
-  }
-
-  async function togglePaid(target: boolean) {
-    setPending(true);
-    const result = await markInvoicePaidAction({
-      id: invoice.id,
-      paid: target,
-    });
-    setPending(false);
-    if (result.ok) {
-      hapticSuccess();
-      toast.success(target ? "Marked paid." : "Marked unpaid.");
-      setConfirmPaid(null);
-      router.refresh();
-    } else {
-      toast.error(result.error);
-    }
-  }
-
-  async function onReverse() {
-    setPending(true);
-    const result = await reverseInvoiceAction({ id: invoice.id });
-    setPending(false);
-    if (result.ok) {
-      hapticDestructive();
-      toast.success(`${fullNumber} undone.`);
-      setConfirmReverse(false);
-      router.refresh();
-    } else {
-      toast.error(result.error);
-    }
-  }
-
-  async function onDelete() {
-    setPending(true);
-    const result = await deleteInvoiceAction({ id: invoice.id });
-    setPending(false);
-    if (result.ok) {
-      hapticDestructive();
-      toast.success(
-        result.freed_number != null
-          ? `${draft ? "Draft" : "Invoice"} ${prefix}${result.freed_number} deleted. Its number is free to use again.`
-          : "Deleted.",
-      );
-      setConfirmDelete(false);
-      router.refresh();
-    } else {
-      toast.error(result.error);
-    }
-  }
-
-  async function onIssueDraft() {
-    setPending(true);
-    const result = await issueDraftAction({ id: invoice.id });
-    setPending(false);
-    if (result.ok) {
-      hapticSuccess();
-      toast.success(`Invoice ${fullNumber} issued.`);
-      setConfirmIssue(false);
-      router.refresh();
-    } else {
-      toast.error(result.error);
-    }
-  }
 
   return (
     <>
-      <Card>
-        <CardContent className="py-3 px-3 flex flex-col gap-3">
-          {/* Tappable summary block, anywhere on this area opens the PDF */}
-          <button
-            type="button"
-            onClick={openPdf}
-            className="text-left flex flex-col gap-3 -m-1 p-1 rounded-md hover:bg-muted/40 active:bg-muted transition-colors"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <StatusBadge status={invoice.status} />
-              <span className="font-mono text-xs text-muted-foreground">
-                Invoice #{fullNumber}
-              </span>
-            </div>
-
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Billed to
-              </p>
-              <p className="font-semibold text-foreground leading-tight">
-                {invoice.client_name ?? "-"}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Net amount
-              </p>
-              <p className="font-mono text-2xl font-semibold tabular-nums leading-tight">
-                {formatINR(invoice.net_amount)}
-              </p>
-            </div>
-
-            <p className="text-xs text-muted-foreground">
-              {fmtDate(invoice.invoice_date)}
-              {invoice.period_from && invoice.period_to ? (
-                <>
-                  {" · Period "}
-                  {fmtDate(invoice.period_from)}–{fmtDate(invoice.period_to)}
-                </>
-              ) : null}
-              {duties > 0 ? ` · ${duties} trip${duties === 1 ? "" : "s"}` : null}
+      {/* Desktop row, md and up, inside the framed list card. The whole
+          row opens the invoice via a stretched link; the menu sits above
+          it so it stays tappable. */}
+      <div className="relative hidden border-b-[0.5px] border-border last:border-b-0 hover:bg-muted/40 md:block">
+        <div className="flex items-center gap-4 px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-medium text-foreground">
+              {invoice.client_name ?? "-"}
             </p>
-          </button>
-
-          {/* Action row. Download and Share are the two primary CTAs;
-              the three-dot menu holds the lifecycle actions (issue /
-              mark paid / undo / delete). Tapping the summary above opens
-              the invoice. Same set as the desktop row. */}
-          <div className="flex items-center gap-2 border-t border-border pt-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={downloadInvoicePdf}
-            >
-              <Download className="h-4 w-4" />
-              Download
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={shareInvoicePdf}
-            >
-              <Share2 className="h-4 w-4" />
-              Share
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label="More actions"
-                className="inline-flex items-center justify-center h-10 w-10 shrink-0 rounded-md border border-border bg-card text-foreground hover:bg-muted"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[220px]">
-                {draft && (
-                  <DropdownMenuItem onClick={() => setConfirmIssue(true)}>
-                    <Send className="h-4 w-4" />
-                    Issue invoice
-                  </DropdownMenuItem>
-                )}
-                {!draft && !reversed && !paid && (
-                  <DropdownMenuItem onClick={() => setConfirmPaid("mark")}>
-                    <Check className="h-4 w-4" />
-                    Mark paid
-                  </DropdownMenuItem>
-                )}
-                {!draft && !reversed && paid && (
-                  <DropdownMenuItem onClick={() => setConfirmPaid("unmark")}>
-                    <Undo2 className="h-4 w-4" />
-                    Mark unpaid
-                  </DropdownMenuItem>
-                )}
-                {!draft && !reversed && (
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => setConfirmReverse(true)}
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    Undo invoice
-                  </DropdownMenuItem>
-                )}
-                {deletable && (
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => setConfirmDelete(true)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    {draft ? "Delete draft" : "Delete invoice"}
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <p className="truncate text-xs text-muted-foreground">{meta}</p>
           </div>
-        </CardContent>
-      </Card>
+          <span className="w-28 shrink-0 text-right text-sm font-medium tabular-nums text-foreground">
+            {formatINR(invoice.net_amount)}
+          </span>
+          <div className="w-24 shrink-0">
+            <StatusPill status={invoice.status} />
+          </div>
+          <div className="relative z-10 shrink-0">{menu}</div>
+        </div>
+        <Link
+          href={viewUrl}
+          aria-label={`Open invoice ${fullNumber}`}
+          className="absolute inset-0"
+        />
+      </div>
+
+      {/* Mobile card, below md. */}
+      <div className="relative rounded-lg border-[0.5px] border-border bg-card px-4 py-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_6px_rgba(0,0,0,0.06)] md:hidden">
+        <div className="flex items-start justify-between gap-2">
+          <p className="line-clamp-2 min-w-0 flex-1 text-[15px] font-medium leading-snug text-foreground">
+            {invoice.client_name ?? "-"}
+          </p>
+          <div className="relative z-10 -mr-1.5 -mt-1 shrink-0">{menu}</div>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">{meta}</p>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span className="text-2xl font-medium tabular-nums text-foreground">
+            {formatINR(invoice.net_amount)}
+          </span>
+          <StatusPill status={invoice.status} />
+        </div>
+        <Link
+          href={viewUrl}
+          aria-label={`Open invoice ${fullNumber}`}
+          className="absolute inset-0 rounded-lg"
+        />
+      </div>
 
       <PaidDialog
         open={confirmPaid !== null}
@@ -1128,15 +863,32 @@ function IssueDraftDialog({
   );
 }
 
-function StatusBadge({ status }: { status: Invoice["status"] }) {
-  switch (status) {
-    case "paid":
-      return <Badge variant="success">Paid</Badge>;
-    case "unpaid":
-      return <Badge variant="warning">Unpaid</Badge>;
-    case "reversed":
-      return <Badge variant="ghost">Undone</Badge>;
-    case "draft":
-      return <Badge variant="outline">Draft</Badge>;
-  }
+// Flat status pill: soft fill, dark text and a small dot, all fixed
+// hex so it reads the same in light and dark mode. Undone reuses the
+// neutral grey of Draft, the only status the brief did not colour.
+const STATUS_PILL: Record<
+  Invoice["status"],
+  { label: string; bg: string; text: string; dot: string }
+> = {
+  unpaid: { label: "Unpaid", bg: "#FAECE7", text: "#4A1B0C", dot: "#993C1D" },
+  paid: { label: "Paid", bg: "#E1F5EE", text: "#04342C", dot: "#0F6E56" },
+  draft: { label: "Draft", bg: "#F1EFE8", text: "#2C2C2A", dot: "#888780" },
+  reversed: { label: "Undone", bg: "#F1EFE8", text: "#2C2C2A", dot: "#888780" },
+};
+
+function StatusPill({ status }: { status: Invoice["status"] }) {
+  const s = STATUS_PILL[status];
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium"
+      style={{ backgroundColor: s.bg, color: s.text }}
+    >
+      <span
+        className="h-1.5 w-1.5 rounded-full"
+        style={{ backgroundColor: s.dot }}
+        aria-hidden
+      />
+      {s.label}
+    </span>
+  );
 }
