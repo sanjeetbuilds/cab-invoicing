@@ -208,7 +208,10 @@ export function InvoiceBuilderForm({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div>
+      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+        {/* Left: invoice details, trip checklist, charges */}
+        <div className="flex flex-col gap-4">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Invoice details</CardTitle>
@@ -361,6 +364,10 @@ export function InvoiceBuilderForm({
           </CardContent>
         </Card>
 
+        </div>
+
+        {/* Right: invoice number, warnings, help. Sticky on desktop. */}
+        <div className="flex flex-col gap-4 lg:sticky lg:top-4 self-start">
         {/* Invoice number picker. */}
         <Card>
           <CardHeader>
@@ -411,6 +418,8 @@ export function InvoiceBuilderForm({
           Issuing reserves an invoice number for {client.name}. Use the Issue
           invoice button at the bottom of the screen.
         </p>
+        </div>
+      </div>
       <SaveBarSpacer />
       <SaveBar
         onSave={onIssue}
