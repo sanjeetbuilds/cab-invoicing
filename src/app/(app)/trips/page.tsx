@@ -1,13 +1,5 @@
 import Link from "next/link";
 import { requireMembership } from "@/lib/auth";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -273,23 +265,26 @@ export default async function TripsPage({
 
       {tripList.length > 0 && (
         <>
-          {/* Desktop table */}
-          <div className="hidden md:block rounded-md border bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Vehicle</TableHead>
-                  <TableHead>Mode</TableHead>
-                  <TableHead className="text-right">Kms / Hrs</TableHead>
-                  <TableHead className="text-center">TA / Night</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="w-[100px] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+          {/* Desktop and tablet, md and up. A fixed layout table that
+              always fits the page width, so there is no horizontal
+              scroll. Client takes the slack, the rest size to content,
+              and overflow-hidden on the frame is the safety net. */}
+          <div className="hidden md:block overflow-hidden rounded-md border border-border bg-card">
+            <table className="w-full table-fixed text-sm">
+              <thead className="border-b border-border bg-muted/60">
+                <tr className="[&>th]:h-10 [&>th]:px-2.5 [&>th]:align-middle [&>th]:whitespace-nowrap [&>th]:text-[11px] [&>th]:font-semibold [&>th]:uppercase [&>th]:tracking-wider [&>th]:text-muted-foreground">
+                  <th className="w-[68px] text-left">Date</th>
+                  <th className="text-left">Client</th>
+                  <th className="w-[88px] text-left">Vehicle</th>
+                  <th className="w-[92px] text-left">Mode</th>
+                  <th className="w-[80px] text-right">Kms / Hrs</th>
+                  <th className="w-[72px] text-center">TA / Night</th>
+                  <th className="w-[88px] text-right">Amount</th>
+                  <th className="w-[92px] text-center">Status</th>
+                  <th className="w-[48px] text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
                 {tripList.map((t) => {
                   const c = clientById.get(t.client_id);
                   const v = vehicleById.get(t.vehicle_id);
@@ -304,87 +299,99 @@ export default async function TripsPage({
                   );
                   const amount = computeAmount(t, r);
                   const needsRate = amount == null;
+                  const overridden = v != null && v.type !== t.car_type;
                   return (
-                    <TableRow
+                    <tr
                       key={t.id}
                       className={cn(
+                        "border-b border-border last:border-b-0 hover:bg-muted/40 [&>td]:px-2.5 [&>td]:py-3 [&>td]:align-middle",
                         needsRate &&
                           "bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-950/20 dark:hover:bg-amber-950/30",
                       )}
                     >
-                      <TableCell className="font-mono">{fmtDate(t.date)}</TableCell>
-                      <TableCell className="font-medium">{c?.name ?? "-"}</TableCell>
-                      <TableCell>
+                      <td className="whitespace-nowrap font-mono text-xs">
+                        {fmtDate(t.date)}
+                      </td>
+                      <td className="truncate font-medium" title={c?.name}>
+                        {c?.name ?? "-"}
+                      </td>
+                      <td className="truncate">
                         {v ? (
                           <span
-                            className="font-mono text-xs inline-flex items-center gap-2"
+                            className="inline-flex max-w-full items-center gap-1.5 font-mono text-xs"
                             title={
-                              v.type !== t.car_type
+                              overridden
                                 ? `Override: billed as ${t.car_type} (vehicle is actually ${v.type}).`
                                 : undefined
                             }
                           >
-                            {v.number} · {t.car_type}
-                            {v.type !== t.car_type && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-[10px] font-medium text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
-                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                                billed as
-                              </span>
+                            <span className="truncate">
+                              {v.number} · {t.car_type}
+                            </span>
+                            {overridden && (
+                              <span
+                                aria-hidden
+                                className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"
+                              />
                             )}
                           </span>
                         ) : (
                           "-"
                         )}
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td>
                         {t.mode === "local" ? (
                           <Badge variant="outline">Local</Badge>
                         ) : (
                           <Badge variant="secondary">Outstation</Badge>
                         )}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-xs">
+                      </td>
+                      <td className="whitespace-nowrap text-right font-mono text-xs">
                         {t.total_kms}km
                         {t.mode === "local" ? ` / ${t.total_hours}hr` : ""}
-                      </TableCell>
-                      <TableCell className="text-center text-xs">
+                      </td>
+                      <td className="whitespace-nowrap text-center text-xs">
                         {t.driver_ta > 0 && <span>TA×{t.driver_ta} </span>}
                         {t.night && <span>· night</span>}
                         {t.driver_ta === 0 && !t.night && "-"}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
+                      </td>
+                      <td className="whitespace-nowrap text-right font-mono text-xs">
                         {needsRate ? (
                           <Link
                             href={`/rate-cards/new?client_id=${t.client_id}&car_type=${t.car_type}&mode=${t.mode}`}
-                            className="text-xs font-medium text-primary hover:text-primary-hover"
+                            className="font-medium text-primary hover:text-primary-hover"
                           >
-                            + Add rate card
+                            Add rate
                           </Link>
                         ) : (
                           formatINR(amount)
                         )}
-                      </TableCell>
-                      <TableCell className="text-center">
+                      </td>
+                      <td className="text-center">
                         {needsRate ? (
-                          <Badge variant="warning">⚠ Needs rate</Badge>
+                          <Badge variant="warning">Needs rate</Badge>
                         ) : t.invoiced ? (
                           <Badge>Invoiced</Badge>
                         ) : (
                           <Badge variant="outline">Open</Badge>
                         )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <TripRowActions trip={t} />
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                      <td className="text-right">
+                        <div className="flex justify-end">
+                          <TripRowActions trip={t} />
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })}
-              </TableBody>
-            </Table>
+              </tbody>
+            </table>
           </div>
 
-          {/* Mobile cards */}
-          <div className="md:hidden flex flex-col gap-4 md:gap-5">
+          {/* Phone, below md. Each trip is a stacked card. The whole
+              card opens the trip via a stretched link; the three dot
+              menu sits above that link so it stays tappable. */}
+          <div className="md:hidden flex flex-col gap-3">
             {tripList.map((t) => {
               const c = clientById.get(t.client_id);
               const v = vehicleById.get(t.vehicle_id);
@@ -399,60 +406,75 @@ export default async function TripsPage({
               );
               const amount = computeAmount(t, r);
               const needsRate = amount == null;
+              const overridden = v != null && v.type !== t.car_type;
+              const clientName = c?.name ?? "-";
+              const summary =
+                `${t.total_kms}km` +
+                (t.mode === "local" ? ` / ${t.total_hours}hr` : "") +
+                (t.driver_ta > 0 ? ` · TA×${t.driver_ta}` : "") +
+                (t.night ? " · night" : "");
               return (
-                <Card
-                  key={t.id}
-                  className={cn(
-                    needsRate &&
-                      "border-amber-300 bg-amber-50/80 dark:border-amber-700/60 dark:bg-amber-950/30",
-                  )}
-                >
-                  <CardContent className="py-3 flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{c?.name ?? "-"}</p>
-                      <p className="text-xs text-muted-foreground inline-flex items-center gap-2">
-                        {fmtDate(t.date)} · {v?.number ?? "-"} · {t.car_type}
-                        {v && v.type !== t.car_type && (
-                          <span
-                            title={`Override: billed as ${t.car_type} (vehicle is actually ${v.type}).`}
-                            className="h-1.5 w-1.5 rounded-full bg-amber-500"
-                          />
-                        )}
+                <div key={t.id} className="relative">
+                  <div
+                    className={cn(
+                      "rounded-lg border border-border bg-card p-4",
+                      needsRate &&
+                        "border-amber-300 bg-amber-50/80 dark:border-amber-700/60 dark:bg-amber-950/30",
+                    )}
+                  >
+                    {/* Line one: client and status, plus the menu. */}
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="min-w-0 flex-1 truncate font-medium">
+                        {clientName}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t.total_kms}km
-                        {t.mode === "local" ? ` / ${t.total_hours}hr` : ""}
-                        {t.driver_ta > 0 ? ` · TA×${t.driver_ta}` : ""}
-                        {t.night ? " · night" : ""}
-                      </p>
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <div className="flex shrink-0 items-center gap-1">
                         {needsRate ? (
-                          <>
-                            <Badge variant="warning">⚠ Needs rate card</Badge>
-                            <Link
-                              href={`/rate-cards/new?client_id=${t.client_id}&car_type=${t.car_type}&mode=${t.mode}`}
-                              className="text-xs font-medium text-primary hover:text-primary-hover"
-                            >
-                              + Add rate card
-                            </Link>
-                          </>
+                          <Badge variant="warning">Needs rate</Badge>
+                        ) : t.invoiced ? (
+                          <Badge>Invoiced</Badge>
                         ) : (
-                          <>
-                            <span className="font-mono text-sm">
-                              {formatINR(amount)}
-                            </span>
-                            {t.invoiced ? (
-                              <Badge>Invoiced</Badge>
-                            ) : (
-                              <Badge variant="outline">Open</Badge>
-                            )}
-                          </>
+                          <Badge variant="outline">Open</Badge>
                         )}
+                        <div className="relative z-10 -mr-1.5 -mt-1">
+                          <TripRowActions trip={t} />
+                        </div>
                       </div>
                     </div>
-                    <TripRowActions trip={t} />
-                  </CardContent>
-                </Card>
+
+                    {/* Line two: date and vehicle. */}
+                    <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                      {fmtDate(t.date)} · {v?.number ?? "-"} · {t.car_type}
+                      {overridden && (
+                        <span
+                          aria-hidden
+                          title={`Override: billed as ${t.car_type} (vehicle is actually ${v?.type}).`}
+                          className="h-1.5 w-1.5 rounded-full bg-amber-500"
+                        />
+                      )}
+                    </p>
+
+                    {/* Line three: short summary and the amount. */}
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <span className="truncate text-xs text-muted-foreground">
+                        {summary}
+                      </span>
+                      <span className="shrink-0 font-mono text-sm">
+                        {needsRate ? (
+                          <span className="text-xs text-muted-foreground">
+                            Add rate
+                          </span>
+                        ) : (
+                          formatINR(amount)
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  <Link
+                    href={`/trips/${t.id}/edit`}
+                    aria-label={`Open trip for ${clientName}`}
+                    className="absolute inset-0 rounded-lg"
+                  />
+                </div>
               );
             })}
           </div>

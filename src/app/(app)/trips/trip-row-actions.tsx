@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +21,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
 import { hapticDestructive } from "@/lib/haptics";
 import type { Trip } from "@/lib/supabase/types";
 import { deleteTripAction } from "./actions";
@@ -45,31 +48,32 @@ export function TripRowActions({ trip }: { trip: Trip }) {
 
   return (
     <>
-      <div className="flex gap-1 justify-end">
-        <Link
-          href={locked ? "#" : `/trips/${trip.id}/edit`}
-          aria-disabled={locked}
-          tabIndex={locked ? -1 : 0}
-          aria-label="Edit trip"
-          title={locked ? "On an invoice. Undo it first." : "Edit"}
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "icon-sm" }),
-            locked && "pointer-events-none opacity-50",
-          )}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label="Trip actions"
+          title={locked ? "On an invoice. Undo it first." : "Actions"}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
         >
-          <Pencil className="h-4 w-4" />
-        </Link>
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          onClick={() => setConfirmDelete(true)}
-          disabled={locked}
-          aria-label="Delete trip"
-          title={locked ? "On an invoice. Undo it first." : "Delete"}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
+          <MoreVertical className="h-4 w-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[180px]">
+          <DropdownMenuItem
+            disabled={locked}
+            onClick={() => router.push(`/trips/${trip.id}/edit`)}
+          >
+            <Pencil className="h-4 w-4" />
+            Edit trip
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={locked}
+            onClick={() => setConfirmDelete(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete trip
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
