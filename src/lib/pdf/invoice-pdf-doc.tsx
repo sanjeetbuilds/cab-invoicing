@@ -52,26 +52,29 @@ const COLORS = {
 const PT = (mm: number) => (mm / 25.4) * 72;
 
 // Pagination uses a "cost" budget tuned to the real A4 layout, measured by
-// rendering invoices of growing size and watching where a page actually
-// overflows. Cost is not a plain line count: each trip group also carries a
-// little vertical padding (groupBlock paddingTop + paddingBottom + divider),
-// so a group costs its lines plus a fixed GROUP_OVERHEAD. Measured single
-// page capacity with the totals block is about 39 cost units; we sit safely
-// under that.
+// rendering invoices of growing size and watching where react-pdf actually
+// overflows (see invoice-pagination.test.tsx, which forces the budgets wide
+// open and reads the physical page count back out of the rendered PDF).
+// Cost is not a plain line count: each trip group also carries a little
+// vertical padding (groupBlock paddingTop + paddingBottom + divider), so a
+// group costs its lines plus a fixed GROUP_OVERHEAD.
 //
-// Page 1 loses the header band and column header, so it holds less than a
-// later page, which only loses the column header and the brought-forward
-// row. The last page also needs room for the totals block, handled by
-// TOTALS_RESERVE in paginateGroups.
+// Measured capacity (page 1 = header band + column header + totals block):
+// ~28 real rows, roughly cost 42-47 depending on how the rows split into
+// groups. A continuation page drops the header band and holds far more
+// (~44 rows). The last page also needs room for the totals block, handled
+// by TOTALS_RESERVE. These budgets sit just under the measured overflow
+// point so a normal month (METALMAN-sized, ~21 rows) stays on ONE page
+// instead of spilling a near-empty second page.
 const GROUP_OVERHEAD = 2; // padding around each trip group, in cost units
-const FIRST_PAGE_BUDGET = 33; // page 1 line area (header + parties eat space)
-const NEXT_PAGE_BUDGET = 45; // later pages (no parties band)
+const FIRST_PAGE_BUDGET = 42; // page 1 line area (header + parties eat space)
+const NEXT_PAGE_BUDGET = 54; // later pages (no parties band)
 // Cost the Total / GST / Net Amount / In Words block needs on the last page.
 // Kept generous so the totals stay with their lines; when the last page is
 // too full we move trailing groups to a fresh page instead of orphaning the
 // totals. TotalsBlock also has wrap={false} as a final natural-overflow
 // safety net.
-const TOTALS_RESERVE = 6;
+const TOTALS_RESERVE = 3;
 
 /** Cost of one page's worth of groups: their lines plus per-group padding. */
 function groupsCost(groups: LineGroup[]): number {
