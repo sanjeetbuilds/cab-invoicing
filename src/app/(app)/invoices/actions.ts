@@ -232,7 +232,22 @@ async function createInvoiceFromTrips(
     return { ok: false, error: `Trip flag failed: ${updateErr.message}` };
   }
 
+  // Remember the charges on the client so the build screen can pre-fill them
+  // next time, and so they survive an undo → delete → rebuild of this invoice.
+  // Non-critical: a failure here must not fail an already-created invoice.
+  await ctx.admin
+    .from("clients")
+    .update({
+      last_charge_amount: draft.toll_total,
+      last_charge_toll: data.charges?.toll ?? false,
+      last_charge_tax: data.charges?.tax ?? false,
+      last_charge_parking: data.charges?.parking ?? false,
+    })
+    .eq("id", client.id)
+    .eq("company_id", ctx.companyId);
+
   revalidatePath("/invoices");
+  revalidatePath("/invoices/build");
   revalidatePath("/trips");
   revalidatePath("/dashboard");
   return { ok: true, invoice_id, invoice_number };

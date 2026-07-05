@@ -58,6 +58,15 @@ export interface Client {
   is_quick_customer: boolean;
   default_booked_by: string | null;
   notes: string | null;
+  /**
+   * Last reimbursement charges (toll / tax / parking) entered for this client
+   * on the build screen. Persisted on every issue/draft so the charges box can
+   * be pre-filled next time and survive an undo → delete → rebuild.
+   */
+  last_charge_amount: number;
+  last_charge_toll: boolean;
+  last_charge_tax: boolean;
+  last_charge_parking: boolean;
   created_at: string;
   updated_at: string;
 }

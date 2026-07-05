@@ -87,10 +87,18 @@ export function InvoiceBuilderForm({
     new Set(trips.map((t) => t.id)),
   );
   // Reimbursement charges entered here, added after GST on the invoice.
-  const [chargeAmountStr, setChargeAmountStr] = useState("");
-  const [chargeToll, setChargeToll] = useState(false);
-  const [chargeTax, setChargeTax] = useState(false);
-  const [chargeParking, setChargeParking] = useState(false);
+  // Seeded from the last charges recorded for this client (persisted on the
+  // client on every issue/draft) so a rebuild after delete — or simply next
+  // month's invoice — starts pre-filled instead of blank. Fully editable.
+  const lastAmount = Number(client.last_charge_amount ?? 0);
+  const [chargeAmountStr, setChargeAmountStr] = useState(
+    lastAmount > 0 ? String(lastAmount) : "",
+  );
+  const [chargeToll, setChargeToll] = useState(Boolean(client.last_charge_toll));
+  const [chargeTax, setChargeTax] = useState(Boolean(client.last_charge_tax));
+  const [chargeParking, setChargeParking] = useState(
+    Boolean(client.last_charge_parking),
+  );
 
   const rateByKey = useMemo(() => {
     const m = new Map<string, RateCard>();
@@ -385,6 +393,13 @@ export function InvoiceBuilderForm({
             <p className="text-xs text-muted-foreground">
               Added to the invoice net after GST. Tick the boxes to label what
               it covers. Leave the amount blank for no charges.
+              {lastAmount > 0 && (
+                <>
+                  {" "}
+                  Pre-filled from {client.name}&apos;s last invoice — edit or
+                  clear it for this month.
+                </>
+              )}
             </p>
           </CardContent>
         </Card>
