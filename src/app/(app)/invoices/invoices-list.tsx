@@ -9,6 +9,7 @@ import {
   Download,
   Eye,
   Filter,
+  ListChecks,
   MoreVertical,
   RotateCcw,
   Search,
@@ -16,6 +17,7 @@ import {
   Share2,
   Trash2,
   Undo2,
+  X,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,7 +42,14 @@ import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/format";
 import { invoiceFilename } from "@/lib/filename";
 import { hapticDestructive, hapticSuccess } from "@/lib/haptics";
-import { downloadPdf, sharePdf } from "@/lib/share-pdf";
+import {
+  canShareFiles,
+  downloadFiles,
+  downloadPdf,
+  fetchPdfsAsFiles,
+  shareFiles,
+  sharePdf,
+} from "@/lib/share-pdf";
 import { useIsMobile } from "@/lib/use-is-mobile";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
@@ -144,6 +153,16 @@ export function InvoicesList({
   const [showFilters, setShowFilters] = useState(false);
   const isMobile = useIsMobile();
 
+  // Multi-select for bulk share (WhatsApp / apps) and bulk download.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
+  // Files fetched but not yet shared: the OS share sheet must be opened from a
+  // fresh tap, so if the tap window lapsed during fetch we cache them here and
+  // the next Share tap sends instantly.
+  const [preparedFiles, setPreparedFiles] = useState<File[] | null>(null);
+
   const showSearch = shouldShowSearch(invoices.length);
   const statusPills = useMemo(
     () => visibleStatusPills(invoices, STATUS_PILLS, (i) => i.status),
@@ -222,6 +241,118 @@ export function InvoicesList({
     setCustomTo("");
   }
 
+  // Any change to the selected set invalidates already-fetched files.
+  function mutateSelection(fn: (next: Set<string>) => void) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      fn(next);
+      return next;
+    });
+    setPreparedFiles(null);
+  }
+  function toggleSelect(id: string) {
+    mutateSelection((n) => (n.has(id) ? n.delete(id) : n.add(id)));
+  }
+  const allFilteredSelected =
+    filtered.length > 0 && filtered.every((i) => selectedIds.has(i.id));
+  function toggleSelectAll() {
+    if (allFilteredSelected) mutateSelection((n) => filtered.forEach((i) => n.delete(i.id)));
+    else mutateSelection((n) => filtered.forEach((i) => n.add(i.id)));
+  }
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+    setPreparedFiles(null);
+    setBulkBusy(false);
+    setBulkMsg(null);
+  }
+
+  // Selected invoices across the whole list (not just what's filtered in
+  // view right now), in newest-first order.
+  const selectedInvoices = useMemo(
+    () => invoices.filter((i) => selectedIds.has(i.id)),
+    [invoices, selectedIds],
+  );
+
+  function shareItems() {
+    return selectedInvoices.map((inv) => ({
+      url: `/api/invoices/${inv.id}/pdf`,
+      filename: invoiceFilename(`${prefix}${inv.invoice_number}`, inv.client_name),
+    }));
+  }
+
+  async function onBulkShare() {
+    const items = shareItems();
+    if (items.length === 0) return;
+    const title = `${items.length} invoice${items.length === 1 ? "" : "s"}`;
+
+    // Second tap after a lapsed share window: files are ready, just send.
+    if (preparedFiles) {
+      try {
+        await shareFiles(preparedFiles, title);
+        toast.success("Share sheet opened.");
+        exitSelectMode();
+      } catch (err) {
+        const e = err as Error;
+        if (e.name !== "AbortError") toast.error(e.message || "Share failed.");
+      }
+      return;
+    }
+
+    setBulkBusy(true);
+    try {
+      const files = await fetchPdfsAsFiles(items, (done, total) =>
+        setBulkMsg(`Preparing ${done}/${total}…`),
+      );
+      setBulkMsg(null);
+      if (!canShareFiles(files)) {
+        // Desktop / unsupported: download them all with correct names.
+        await downloadFiles(files);
+        toast.success(`Downloaded ${files.length} invoices.`);
+        exitSelectMode();
+        return;
+      }
+      try {
+        // Often still within the tap window right after fetch.
+        await shareFiles(files, title);
+        toast.success("Share sheet opened.");
+        exitSelectMode();
+      } catch (err) {
+        const e = err as Error;
+        if (e.name === "AbortError") return; // user dismissed the sheet
+        // Tap window lapsed during fetch: cache and ask for one more tap.
+        setPreparedFiles(files);
+        toast("Ready — tap Share once more to open WhatsApp.");
+      }
+    } catch (err) {
+      toast.error((err as Error).message || "Couldn't prepare the invoices.");
+    } finally {
+      setBulkBusy(false);
+      setBulkMsg(null);
+    }
+  }
+
+  async function onBulkDownload() {
+    const items = shareItems();
+    if (items.length === 0) return;
+    setBulkBusy(true);
+    try {
+      const files =
+        preparedFiles ??
+        (await fetchPdfsAsFiles(items, (done, total) =>
+          setBulkMsg(`Preparing ${done}/${total}…`),
+        ));
+      await downloadFiles(files);
+      toast.success(`Downloaded ${files.length} invoices.`);
+      exitSelectMode();
+    } catch (err) {
+      toast.error((err as Error).message || "Download failed.");
+    } finally {
+      setBulkBusy(false);
+      setBulkMsg(null);
+    }
+  }
+
   return (
     // Bottom padding clears the fixed bottom navigation bar (h-16 plus
     // the safe area) with about 16px to spare, so the last card and its
@@ -235,34 +366,71 @@ export function InvoicesList({
         <div className="flex flex-col gap-3 border-b-[0.5px] border-border pb-3">
         {header}
 
-        {/* Top actions in one even row: Quick invoice, Build invoice,
-            then the filter as an outline icon button at the end. Wraps
-            only if it truly cannot fit. */}
-        {(actions || showFiltersButton) && (
-          <div className="flex flex-wrap items-center gap-2">
-            {actions}
-            {showFiltersButton && (
-              <button
-                type="button"
-                onClick={() => setShowFilters((v) => !v)}
-                aria-label="Filters"
-                title="Filters"
-                className={cn(
-                  "relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border",
-                  showFilters
-                    ? "bg-muted text-foreground border-border"
-                    : "bg-card text-foreground border-border hover:bg-muted",
-                )}
-              >
-                <Filter className="h-4 w-4" />
-                {activeFilterCount > 0 && (
-                  <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-            )}
+        {/* Selection toolbar replaces the normal action row while picking
+            invoices to bulk share / download. Cancel · count · Select all. */}
+        {selectMode ? (
+          <div className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={exitSelectMode}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+              Cancel
+            </button>
+            <span className="text-sm font-medium text-foreground">
+              {selectedIds.size} selected
+            </span>
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className="text-sm font-medium text-primary hover:text-primary-hover"
+            >
+              {allFilteredSelected ? "Clear all" : "Select all"}
+            </button>
           </div>
+        ) : (
+          // Top actions in one even row: Quick invoice, Build invoice, then
+          // Select and the filter button pushed to the end. Wraps only if it
+          // truly cannot fit.
+          (actions || showFiltersButton || invoices.length > 0) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {actions}
+              <div className="ml-auto flex items-center gap-2">
+                {invoices.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectMode(true)}
+                    className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground hover:bg-muted"
+                  >
+                    <ListChecks className="h-4 w-4" />
+                    Select
+                  </button>
+                )}
+                {showFiltersButton && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFilters((v) => !v)}
+                    aria-label="Filters"
+                    title="Filters"
+                    className={cn(
+                      "relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border",
+                      showFilters
+                        ? "bg-muted text-foreground border-border"
+                        : "bg-card text-foreground border-border hover:bg-muted",
+                    )}
+                  >
+                    <Filter className="h-4 w-4" />
+                    {activeFilterCount > 0 && (
+                      <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          )
         )}
 
         {showSearch && (
@@ -416,8 +584,41 @@ export function InvoicesList({
               invoice={inv}
               prefix={prefix}
               duties={dutiesByInvoice[inv.id] ?? 0}
+              selectMode={selectMode}
+              selected={selectedIds.has(inv.id)}
+              onToggleSelect={() => toggleSelect(inv.id)}
             />
           ))}
+        </div>
+      )}
+
+      {/* Bulk action bar: floats above the bottom nav on phones, bottom of the
+          viewport on desktop. Only while selecting with at least one ticked. */}
+      {selectMode && selectedIds.size > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 px-4 pb-[calc(0.75rem_+_env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:bottom-4 lg:inset-x-auto lg:right-6 lg:rounded-xl lg:border lg:pb-3 lg:shadow-lg">
+          <div className="mx-auto flex max-w-2xl items-center gap-2">
+            <span className="mr-auto text-sm font-medium text-foreground">
+              {bulkMsg ?? `${selectedIds.size} selected`}
+            </span>
+            <button
+              type="button"
+              onClick={onBulkDownload}
+              disabled={bulkBusy}
+              className={cn(DOWNLOAD_BTN, "disabled:opacity-50")}
+            >
+              <Download className="h-4 w-4" />
+              Download
+            </button>
+            <button
+              type="button"
+              onClick={onBulkShare}
+              disabled={bulkBusy}
+              className={cn(SHARE_BTN, "disabled:opacity-50")}
+            >
+              <Share2 className="h-4 w-4" />
+              {preparedFiles ? "Tap to send" : "Share"}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -434,14 +635,35 @@ const DOWNLOAD_BTN =
 const MENU_BTN =
   "inline-flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-muted";
 
+function SelectBox({ checked }: { checked: boolean }) {
+  return (
+    <span
+      className={cn(
+        "flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border-[1.5px] transition-colors",
+        checked
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-muted-foreground/40 bg-card",
+      )}
+    >
+      {checked && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+    </span>
+  );
+}
+
 function InvoiceListItem({
   invoice,
   prefix,
   duties,
+  selectMode = false,
+  selected = false,
+  onToggleSelect,
 }: {
   invoice: Invoice;
   prefix: string;
   duties: number;
+  selectMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -651,8 +873,14 @@ function InvoiceListItem({
       {/* Desktop row, md and up, inside the framed list card. The body
           opens the invoice via a stretched link; the actions sit above
           it so they stay tappable. */}
-      <div className="relative hidden border-b-[0.5px] border-border last:border-b-0 hover:bg-muted/40 md:block">
+      <div
+        className={cn(
+          "relative hidden border-b-[0.5px] border-border last:border-b-0 hover:bg-muted/40 md:block",
+          selectMode && selected && "bg-accent-soft/40",
+        )}
+      >
         <div className="flex items-center gap-3 px-4 py-3">
+          {selectMode && <SelectBox checked={selected} />}
           <span className="w-16 shrink-0 truncate text-sm font-semibold text-foreground">
             #{fullNumber}
           </span>
@@ -668,27 +896,48 @@ function InvoiceListItem({
           <div className="w-24 shrink-0">
             <StatusPill status={invoice.status} />
           </div>
-          <div className="relative z-10 flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={downloadInvoicePdf}
-              className={DOWNLOAD_BTN}
-            >
-              {downloadLabel}
-            </button>
-            {buildMenu(true)}
-          </div>
+          {!selectMode && (
+            <div className="relative z-10 flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={downloadInvoicePdf}
+                className={DOWNLOAD_BTN}
+              >
+                {downloadLabel}
+              </button>
+              {buildMenu(true)}
+            </div>
+          )}
         </div>
-        <Link
-          href={viewUrl}
-          aria-label={`Open invoice ${fullNumber}`}
-          className="absolute inset-0"
-        />
+        {selectMode ? (
+          <button
+            type="button"
+            onClick={onToggleSelect}
+            aria-label={`${selected ? "Deselect" : "Select"} invoice ${fullNumber}`}
+            className="absolute inset-0 z-20"
+          />
+        ) : (
+          <Link
+            href={viewUrl}
+            aria-label={`Open invoice ${fullNumber}`}
+            className="absolute inset-0"
+          />
+        )}
       </div>
 
       {/* Mobile card, below md. */}
-      <div className="relative rounded-lg border-[0.5px] border-border bg-card px-4 py-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_6px_rgba(0,0,0,0.06)] md:hidden">
+      <div
+        className={cn(
+          "relative rounded-lg border-[0.5px] border-border bg-card px-4 py-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_6px_rgba(0,0,0,0.06)] md:hidden",
+          selectMode && selected && "ring-2 ring-primary",
+        )}
+      >
         <div className="flex items-start justify-between gap-2">
+          {selectMode && (
+            <span className="mt-0.5">
+              <SelectBox checked={selected} />
+            </span>
+          )}
           <p className="line-clamp-2 min-w-0 flex-1 text-[15px] font-medium leading-snug text-foreground">
             {invoice.client_name ?? "-"}
           </p>
@@ -703,28 +952,39 @@ function InvoiceListItem({
           </span>
           <StatusPill status={invoice.status} />
         </div>
-        <div className="relative z-10 mt-3 flex items-center gap-2 border-t-[0.5px] border-border pt-3">
+        {!selectMode && (
+          <div className="relative z-10 mt-3 flex items-center gap-2 border-t-[0.5px] border-border pt-3">
+            <button
+              type="button"
+              onClick={shareInvoicePdf}
+              className={cn(SHARE_BTN, "flex-1")}
+            >
+              {shareLabel}
+            </button>
+            <button
+              type="button"
+              onClick={downloadInvoicePdf}
+              className={DOWNLOAD_BTN}
+            >
+              {downloadLabel}
+            </button>
+            {buildMenu(false)}
+          </div>
+        )}
+        {selectMode ? (
           <button
             type="button"
-            onClick={shareInvoicePdf}
-            className={cn(SHARE_BTN, "flex-1")}
-          >
-            {shareLabel}
-          </button>
-          <button
-            type="button"
-            onClick={downloadInvoicePdf}
-            className={DOWNLOAD_BTN}
-          >
-            {downloadLabel}
-          </button>
-          {buildMenu(false)}
-        </div>
-        <Link
-          href={viewUrl}
-          aria-label={`Open invoice ${fullNumber}`}
-          className="absolute inset-0 rounded-lg"
-        />
+            onClick={onToggleSelect}
+            aria-label={`${selected ? "Deselect" : "Select"} invoice ${fullNumber}`}
+            className="absolute inset-0 z-20 rounded-lg"
+          />
+        ) : (
+          <Link
+            href={viewUrl}
+            aria-label={`Open invoice ${fullNumber}`}
+            className="absolute inset-0 rounded-lg"
+          />
+        )}
       </div>
 
       <PaidDialog

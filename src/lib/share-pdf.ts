@@ -54,6 +54,68 @@ export async function sharePdf(args: {
 }
 
 /**
+ * Fetch several server-rendered PDFs and wrap each in a named File, so a
+ * later navigator.share() / download sees the real filenames. Sequential so
+ * we can report progress and not hammer the PDF route with N parallel
+ * server renders. Throws on the first failure with the offending filename.
+ */
+export async function fetchPdfsAsFiles(
+  items: { url: string; filename: string }[],
+  onProgress?: (done: number, total: number) => void,
+): Promise<File[]> {
+  const files: File[] = [];
+  let done = 0;
+  for (const it of items) {
+    const res = await fetch(it.url, { credentials: "same-origin" });
+    if (!res.ok) {
+      throw new Error(`Couldn't prepare ${it.filename} (HTTP ${res.status}).`);
+    }
+    const blob = await res.blob();
+    files.push(new File([blob], it.filename, { type: "application/pdf" }));
+    onProgress?.(++done, items.length);
+  }
+  return files;
+}
+
+/** True when the browser can hand these files to the OS share sheet. */
+export function canShareFiles(files: File[]): boolean {
+  return (
+    typeof navigator !== "undefined" &&
+    typeof navigator.canShare === "function" &&
+    navigator.canShare({ files })
+  );
+}
+
+/**
+ * Open the OS share sheet for already-fetched files (WhatsApp / Mail / Drive
+ * see them as attachments). MUST be called straight from a user gesture, or
+ * the browser rejects it with NotAllowedError; that is why the caller fetches
+ * first and then calls this on a tap.
+ */
+export async function shareFiles(files: File[], title?: string): Promise<void> {
+  await navigator.share({ files, title });
+}
+
+/**
+ * Trigger a plain download of already-fetched files, each with its own
+ * filename. The desktop / unsupported fallback for bulk share. A small gap
+ * between clicks keeps the browser from dropping later downloads.
+ */
+export async function downloadFiles(files: File[]): Promise<void> {
+  for (const file of files) {
+    const objectUrl = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = objectUrl;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    await new Promise((r) => setTimeout(r, 250));
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  }
+}
+
+/**
  * Download a server-rendered PDF directly with the chosen filename, on
  * both desktop and mobile. Fetches the bytes and triggers a regular
  * <a download> click, so it never depends on an embedded frame.
