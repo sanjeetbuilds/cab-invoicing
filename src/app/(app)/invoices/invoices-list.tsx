@@ -10,6 +10,7 @@ import {
   Eye,
   Filter,
   MoreVertical,
+  Pencil,
   RotateCcw,
   Search,
   Send,
@@ -455,6 +456,7 @@ function InvoiceListItem({
   const fullNumber = `${prefix}${invoice.invoice_number}`;
   const pdfUrl = `/api/invoices/${invoice.id}/pdf`;
   const viewUrl = `/invoices/${invoice.id}`;
+  const editUrl = `/invoices/${invoice.id}/edit`;
   const downloadName = invoiceFilename(fullNumber, invoice.client_name);
   const reversed = invoice.status === "reversed";
   const paid = invoice.status === "paid";
@@ -583,6 +585,10 @@ function InvoiceListItem({
         <DropdownMenuItem onClick={openPdf}>
           <Eye className="h-4 w-4" />
           View
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push(editUrl)}>
+          <Pencil className="h-4 w-4" />
+          Edit
         </DropdownMenuItem>
         {withShare && (
           <DropdownMenuItem onClick={shareInvoicePdf}>

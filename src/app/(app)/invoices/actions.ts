@@ -8,6 +8,7 @@ import { buildInvoiceDraft } from "@/lib/invoice-builder";
 import type {
   Client,
   Company,
+  Invoice,
   RateCard,
   Trip,
   Vehicle,
@@ -266,6 +267,241 @@ export async function saveDraftInvoiceAction(
   raw: IssueInvoiceInput,
 ): Promise<IssueInvoiceResult> {
   return createInvoiceFromTrips(raw, "draft");
+}
+
+const UpdateInvoiceSchema = z.object({
+  id: z.string().uuid(),
+  invoice_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  period_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  period_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  trip_ids: z.array(z.string().uuid()).min(1, "Pick at least one trip."),
+  charges: z
+    .object({
+      amount: z.number().min(0).default(0),
+      toll: z.boolean().default(false),
+      tax: z.boolean().default(false),
+      parking: z.boolean().default(false),
+    })
+    .optional(),
+});
+
+export type UpdateInvoiceInput = z.input<typeof UpdateInvoiceSchema>;
+
+export type UpdateInvoiceResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Edit an already-created invoice in place, whatever its status: date,
+ * period, charges, and which trips are on it. The invoice number and
+ * status are left untouched. Trips dropped from the invoice are freed
+ * back to the uninvoiced pool; trips added are claimed against this
+ * invoice. Lines are recomputed from scratch and replaced, same as a
+ * fresh issue.
+ */
+export async function updateInvoiceAction(
+  raw: UpdateInvoiceInput,
+): Promise<UpdateInvoiceResult> {
+  const parsed = UpdateInvoiceSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+  const data = parsed.data;
+
+  const ctx = await requireWriter();
+  if (!ctx.ok) return ctx;
+
+  const { data: invoice, error: invErr } = await ctx.admin
+    .from("invoices")
+    .select("*")
+    .eq("id", data.id)
+    .eq("company_id", ctx.companyId)
+    .maybeSingle<Invoice>();
+  if (invErr) return { ok: false, error: invErr.message };
+  if (!invoice) return { ok: false, error: "Invoice not found." };
+  if (!invoice.client_id) {
+    return {
+      ok: false,
+      error: "This invoice has no client on record and can't be edited.",
+    };
+  }
+
+  // Trips currently attached to this invoice's lines. Read from the lines
+  // (not trips.invoice_id) so a previously undone invoice, whose trips
+  // were already freed, still resolves its original set correctly.
+  const { data: existingLines, error: linesReadErr } = await ctx.admin
+    .from("invoice_lines")
+    .select("trip_id")
+    .eq("invoice_id", data.id);
+  if (linesReadErr) return { ok: false, error: linesReadErr.message };
+  const oldTripIds = Array.from(
+    new Set(
+      (existingLines ?? [])
+        .map((l) => l.trip_id)
+        .filter((tid): tid is string => tid != null),
+    ),
+  );
+
+  const candidateIds = Array.from(new Set([...data.trip_ids, ...oldTripIds]));
+
+  const [
+    { data: trips, error: tripsErr },
+    { data: rateCards, error: ratesErr },
+    { data: vehicles, error: vehiclesErr },
+    { data: client, error: clientErr },
+    { data: company, error: companyErr },
+  ] = await Promise.all([
+    ctx.admin
+      .from("trips")
+      .select("*")
+      .eq("company_id", ctx.companyId)
+      .in("id", candidateIds)
+      .returns<Trip[]>(),
+    ctx.admin
+      .from("rate_cards")
+      .select("*")
+      .eq("company_id", ctx.companyId)
+      .eq("client_id", invoice.client_id)
+      .returns<RateCard[]>(),
+    ctx.admin
+      .from("vehicles")
+      .select("id, number, type")
+      .eq("company_id", ctx.companyId)
+      .returns<Pick<Vehicle, "id" | "number" | "type">[]>(),
+    ctx.admin
+      .from("clients")
+      .select("*")
+      .eq("id", invoice.client_id)
+      .eq("company_id", ctx.companyId)
+      .maybeSingle<Client>(),
+    ctx.admin
+      .from("companies")
+      .select("*")
+      .eq("id", ctx.companyId)
+      .maybeSingle<Company>(),
+  ]);
+
+  if (tripsErr) return { ok: false, error: tripsErr.message };
+  if (ratesErr) return { ok: false, error: ratesErr.message };
+  if (vehiclesErr) return { ok: false, error: vehiclesErr.message };
+  if (clientErr) return { ok: false, error: clientErr.message };
+  if (companyErr) return { ok: false, error: companyErr.message };
+  if (!client) return { ok: false, error: "Client not found." };
+  if (!company) return { ok: false, error: "Company not found." };
+
+  const tripById = new Map((trips ?? []).map((t) => [t.id, t]));
+  const selectedTrips: Trip[] = [];
+  for (const id of data.trip_ids) {
+    const t = tripById.get(id);
+    if (!t) return { ok: false, error: "Some trips were not found." };
+    selectedTrips.push(t);
+  }
+
+  // A trip already billed on a *different* invoice can't be pulled onto
+  // this one without double-billing it.
+  const stolen = selectedTrips.find(
+    (t) => t.invoiced && t.invoice_id && t.invoice_id !== data.id,
+  );
+  if (stolen) {
+    return {
+      ok: false,
+      error: "One or more trips are already billed on a different invoice.",
+    };
+  }
+
+  const draft = buildInvoiceDraft({
+    trips: selectedTrips,
+    rateCards: rateCards ?? [],
+    vehicles: vehicles ?? [],
+    client,
+    company,
+    charges: data.charges
+      ? {
+          amount: data.charges.amount,
+          toll: data.charges.toll,
+          tax: data.charges.tax,
+          parking: data.charges.parking,
+        }
+      : undefined,
+  });
+
+  if (draft.unmatched_trip_ids.length > 0) {
+    return {
+      ok: false,
+      error: `Missing rate card for ${draft.unmatched_trip_ids.length} trip(s). Add rate cards first.`,
+    };
+  }
+
+  const { error: updErr } = await ctx.admin
+    .from("invoices")
+    .update({
+      invoice_date: data.invoice_date,
+      period_from: data.period_from,
+      period_to: data.period_to,
+      subtotal: draft.subtotal,
+      gst_mode: draft.gst.mode,
+      cgst: draft.gst.cgst,
+      sgst: draft.gst.sgst,
+      igst: draft.gst.igst,
+      toll_total: draft.toll_total,
+      toll_label: draft.toll_label,
+      net_amount: draft.net_amount,
+      amount_in_words: draft.amount_in_words,
+    })
+    .eq("id", data.id)
+    .eq("company_id", ctx.companyId);
+  if (updErr) return { ok: false, error: updErr.message };
+
+  const { error: delErr } = await ctx.admin
+    .from("invoice_lines")
+    .delete()
+    .eq("invoice_id", data.id);
+  if (delErr) return { ok: false, error: `Lines failed: ${delErr.message}` };
+
+  const { error: insErr } = await ctx.admin.from("invoice_lines").insert(
+    draft.lines.map((l) => ({
+      invoice_id: data.id,
+      trip_id: l.trip_id,
+      date: l.date,
+      vehicle_label: l.vehicle_label,
+      hsn_code: l.hsn_code,
+      particulars: l.particulars,
+      qty: l.qty,
+      rate: l.rate,
+      amount: l.amount,
+      sort_order: l.sort_order,
+    })),
+  );
+  if (insErr) return { ok: false, error: `Lines failed: ${insErr.message}` };
+
+  const newTripIds = new Set(data.trip_ids);
+  const droppedIds = oldTripIds.filter((id) => !newTripIds.has(id));
+
+  if (droppedIds.length > 0) {
+    const { error: freeErr } = await ctx.admin
+      .from("trips")
+      .update({ invoiced: false, invoice_id: null })
+      .in("id", droppedIds)
+      .eq("company_id", ctx.companyId)
+      .eq("invoice_id", data.id);
+    if (freeErr) {
+      return { ok: false, error: `Trip flag failed: ${freeErr.message}` };
+    }
+  }
+
+  const { error: claimErr } = await ctx.admin
+    .from("trips")
+    .update({ invoiced: true, invoice_id: data.id })
+    .in("id", data.trip_ids)
+    .eq("company_id", ctx.companyId);
+  if (claimErr) {
+    return { ok: false, error: `Trip flag failed: ${claimErr.message}` };
+  }
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${data.id}`);
+  revalidatePath("/invoices/build");
+  revalidatePath("/trips");
+  revalidatePath("/dashboard");
+  return { ok: true };
 }
 
 const IdSchema = z.object({ id: z.string().uuid() });
