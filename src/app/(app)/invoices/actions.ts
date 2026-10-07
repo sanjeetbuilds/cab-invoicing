@@ -317,6 +317,12 @@ export async function updateInvoiceAction(
     .maybeSingle<Invoice>();
   if (invErr) return { ok: false, error: invErr.message };
   if (!invoice) return { ok: false, error: "Invoice not found." };
+  if (invoice.status === "paid" || invoice.status === "reversed") {
+    return {
+      ok: false,
+      error: "Paid and undone invoices are closed records and can't be edited.",
+    };
+  }
   if (!invoice.client_id) {
     return {
       ok: false,

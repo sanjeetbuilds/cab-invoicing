@@ -30,6 +30,20 @@ export default async function EditInvoicePage({
     .maybeSingle<Invoice>();
 
   if (!invoice) notFound();
+  if (invoice.status === "paid" || invoice.status === "reversed") {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          Paid and undone invoices are closed records and can&apos;t be
+          edited.{" "}
+          <Link href={`/invoices/${id}`} className="underline">
+            Back to invoice
+          </Link>
+          .
+        </CardContent>
+      </Card>
+    );
+  }
   if (!invoice.client_id) {
     return (
       <Card>
