@@ -10,6 +10,7 @@ import {
   Eye,
   Filter,
   MoreVertical,
+  Pencil,
   RotateCcw,
   Search,
   Send,
@@ -451,10 +452,12 @@ function InvoiceListItem({
   const [confirmReverse, setConfirmReverse] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmIssue, setConfirmIssue] = useState(false);
+  const [confirmEdit, setConfirmEdit] = useState(false);
 
   const fullNumber = `${prefix}${invoice.invoice_number}`;
   const pdfUrl = `/api/invoices/${invoice.id}/pdf`;
   const viewUrl = `/invoices/${invoice.id}`;
+  const editUrl = `/invoices/${invoice.id}/edit`;
   const downloadName = invoiceFilename(fullNumber, invoice.client_name);
   const reversed = invoice.status === "reversed";
   const paid = invoice.status === "paid";
@@ -462,6 +465,18 @@ function InvoiceListItem({
   // Drafts (never issued) and undone invoices can be deleted and their
   // number freed. Active issued and paid invoices cannot.
   const deletable = draft || reversed;
+  // Paid and undone invoices are closed records, not edited. An issued
+  // but still-unpaid invoice may already be with the client, so editing
+  // it gets a confirm step; a draft was never sent, so it opens straight.
+  const editable = !paid && !reversed;
+
+  function onEditClick() {
+    if (!draft) {
+      setConfirmEdit(true);
+    } else {
+      router.push(editUrl);
+    }
+  }
 
   function openPdf() {
     // Same-tab navigation to the in-shell PDF viewer keeps the user
@@ -584,6 +599,12 @@ function InvoiceListItem({
           <Eye className="h-4 w-4" />
           View
         </DropdownMenuItem>
+        {editable && (
+          <DropdownMenuItem onClick={onEditClick}>
+            <Pencil className="h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+        )}
         {withShare && (
           <DropdownMenuItem onClick={shareInvoicePdf}>
             <Share2 className="h-4 w-4" />
@@ -744,6 +765,14 @@ function InvoiceListItem({
         onCancel={() => setConfirmReverse(false)}
         onConfirm={onReverse}
       />
+      <EditIssuedDialog
+        open={confirmEdit}
+        onCancel={() => setConfirmEdit(false)}
+        onConfirm={() => {
+          setConfirmEdit(false);
+          router.push(editUrl);
+        }}
+      />
       <DeleteInvoiceDialog
         open={confirmDelete}
         invoice={invoice}
@@ -843,6 +872,34 @@ function ReverseDialog({
           <AlertDialogAction onClick={onConfirm} disabled={pending}>
             {pending ? "Undoing…" : "Undo"}
           </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function EditIssuedDialog({
+  open,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Edit this invoice?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This invoice may already have been sent to your client. Editing
+            changes the official record. Continue?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>Continue</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
