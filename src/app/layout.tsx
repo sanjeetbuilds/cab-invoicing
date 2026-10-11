@@ -21,11 +21,11 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "EasyBills",
-    template: "%s, EasyBills",
+    default: "TaxiMunshi",
+    template: "%s, TaxiMunshi",
   },
   description: "Cab invoicing for small fleet operators.",
-  applicationName: "EasyBills",
+  applicationName: "TaxiMunshi",
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   // iOS Safari PWA tags. Next.js folds these into <head>.
   appleWebApp: {
     capable: true,
-    title: "EasyBills",
+    title: "TaxiMunshi",
     statusBarStyle: "default",
   },
   formatDetection: {

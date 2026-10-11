@@ -145,7 +145,7 @@ export function PwaInstaller() {
         <div className="rounded-lg border border-border bg-card shadow-card px-3 py-3 flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium leading-tight">
-              Install EasyBills
+              Install TaxiMunshi
             </p>
             <p className="text-xs text-muted-foreground leading-tight">
               Faster access from your home screen.
@@ -182,7 +182,7 @@ export function PwaInstaller() {
           <Share2 className="h-5 w-5 text-primary shrink-0 mt-1" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium leading-tight">
-              Install EasyBills
+              Install TaxiMunshi
             </p>
             <p className="text-xs text-muted-foreground leading-snug mt-1">
               Tap the <span className="font-medium">Share</span> button in

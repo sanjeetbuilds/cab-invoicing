@@ -44,7 +44,7 @@ function applySampleRow(row) {
 }
 
 const wb = new ExcelJS.Workbook();
-wb.creator = "EasyBills";
+wb.creator = "TaxiMunshi";
 wb.created = new Date();
 
 // ───────────────── Clients ─────────────────
@@ -223,7 +223,7 @@ wb.created = new Date();
     "  • Yes/No / Mode / Ownership / Car Type: case-insensitive.",
     "",
     "RATE CARD CLIENT LINKING:",
-    "  Each row's 'Client Name' must match either an existing client in EasyBills",
+    "  Each row's 'Client Name' must match either an existing client in TaxiMunshi",
     "  OR a row in the Clients sheet of this same upload. Otherwise the rate",
     "  card row will be flagged 'needs attention' and skipped.",
     "",

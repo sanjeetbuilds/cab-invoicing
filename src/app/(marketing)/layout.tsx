@@ -5,7 +5,9 @@ import Link from "next/link";
  * thin top bar shows just the wordmark and a Sign in link. The wider
  * page padding gives the landing room to breathe.
  *
- * This layout wraps "/", "/privacy", "/terms", "/contact". Anything
+ * This layout wraps "/privacy", "/terms", "/contact" — the home page
+ * ("/") lives in the (landing) route group instead, since it brings its
+ * own full header and footer and would duplicate this one. Anything
  * inside (app)/* is a separate layout that adds the authenticated
  * shell.
  */
@@ -25,7 +27,7 @@ export default function MarketingLayout({
             href="/"
             className="text-lg font-semibold tracking-tight text-foreground"
           >
-            EasyBills
+            TaxiMunshi
           </Link>
           <Link
             href="/sign-in"
