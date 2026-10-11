@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rateLimit } from "@/lib/rate-limit";
+import { sendWaitlistNotification } from "@/lib/email/send";
 
 const Schema = z.object({
   company: z.string().trim().min(1, "Enter your company name."),
@@ -26,13 +27,20 @@ export async function submitWaitlistLeadAction(raw: {
   if (!rate.ok) return { ok: false, error: rate.message };
 
   const admin = createAdminClient();
-  const { error } = await admin.from("waitlist_leads").insert({
+  const lead = {
     company: parsed.data.company,
     email: parsed.data.email.toLowerCase(),
     phone: parsed.data.phone,
+  };
+  const { error } = await admin.from("waitlist_leads").insert({
+    ...lead,
     source: "taximunshi-landing",
   });
   if (error) return { ok: false, error: "Couldn't submit just now. Please try again." };
+
+  // Best-effort notification — the lead is already saved regardless of
+  // whether this send succeeds, so failures here are logged, not thrown.
+  await sendWaitlistNotification(lead);
 
   return { ok: true };
 }
