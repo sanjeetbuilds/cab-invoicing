@@ -6,7 +6,6 @@ import { submitWaitlistLeadAction } from "./waitlist-actions";
 
 const NAV_LINKS = [
   { href: "#how", label: "How it works" },
-  { href: "#share", label: "Share & export" },
   { href: "#features", label: "Features" },
   { href: "#pricing", label: "Pricing" },
   { href: "#faq", label: "FAQ" },
@@ -241,6 +240,26 @@ function Ticker() {
   );
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function digitsOnly(v: string): string {
+  return v.replace(/\D/g, "");
+}
+
+function isValidEmail(v: string): boolean {
+  return EMAIL_RE.test(v.trim());
+}
+
+function isValidPhone(v: string): boolean {
+  const d = digitsOnly(v);
+  return d.length >= 10 && d.length <= 15;
+}
+
+/** Fixed height so swapping this area between the form and the "done"
+ *  message never resizes the card around it (the hero mascot and the
+ *  waitlist band's standing mascot are both positioned relative to it). */
+const WAITLIST_SLOT_HEIGHT = 300;
+
 function WaitlistForm({
   sending,
   error,
@@ -250,19 +269,29 @@ function WaitlistForm({
   error: boolean;
   onSubmit: (data: { company: string; email: string; phone: string }) => void;
 }) {
+  const [company, setCompany] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [touched, setTouched] = useState(false);
+
+  const companyValid = company.trim().length > 0;
+  const emailValid = isValidEmail(email);
+  const phoneValid = isValidPhone(phone);
+  const formValid = companyValid && emailValid && phoneValid;
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setTouched(true);
+    if (!formValid) return;
+    onSubmit({ company: company.trim(), email: email.trim(), phone: phone.trim() });
+  }
+
   return (
     <form
       aria-label="Join the waitlist"
-      style={{ display: "flex", flexDirection: "column", gap: 12 }}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const fd = new FormData(e.currentTarget);
-        onSubmit({
-          company: String(fd.get("company") ?? ""),
-          email: String(fd.get("email") ?? ""),
-          phone: String(fd.get("phone") ?? ""),
-        });
-      }}
+      style={{ display: "flex", flexDirection: "column", gap: 10, minHeight: WAITLIST_SLOT_HEIGHT }}
+      onSubmit={handleSubmit}
+      noValidate
     >
       <label style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 13, fontWeight: 600, color: "#3F3B35" }}>
         Company name
@@ -270,13 +299,32 @@ function WaitlistForm({
           name="company"
           type="text"
           autoComplete="organization"
-          required
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
           style={inputStyle}
         />
+        {touched && !companyValid && (
+          <span role="alert" style={fieldErrorStyle}>
+            Enter your company name.
+          </span>
+        )}
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 13, fontWeight: 600, color: "#3F3B35" }}>
         Email
-        <input name="email" type="email" autoComplete="email" required style={inputStyle} />
+        <input
+          name="email"
+          type="email"
+          autoComplete="email"
+          inputMode="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={inputStyle}
+        />
+        {touched && !emailValid && (
+          <span role="alert" style={fieldErrorStyle}>
+            Enter a valid email address.
+          </span>
+        )}
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 13, fontWeight: 600, color: "#3F3B35" }}>
         Phone number
@@ -284,18 +332,23 @@ function WaitlistForm({
           name="phone"
           type="tel"
           autoComplete="tel"
-          required
           inputMode="tel"
-          pattern="[0-9+ ()-]{10,16}"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
           style={inputStyle}
         />
+        {touched && !phoneValid && (
+          <span role="alert" style={fieldErrorStyle}>
+            Enter a valid phone number (10 digits).
+          </span>
+        )}
       </label>
       {error && (
-        <span role="alert" style={{ fontSize: 13, color: "#B42318" }}>
+        <span role="alert" style={fieldErrorStyle}>
           Couldn&apos;t submit just now. Please try again.
         </span>
       )}
-      <button type="submit" disabled={sending} style={darkButtonStyle}>
+      <button type="submit" disabled={sending || (touched && !formValid)} style={{ ...darkButtonStyle, opacity: touched && !formValid ? 0.6 : 1 }}>
         {sending ? "Sending…" : "Join the waitlist"}
       </button>
       <span style={{ fontSize: 12, lineHeight: 1.5, color: "#8A847A" }}>
@@ -304,6 +357,8 @@ function WaitlistForm({
     </form>
   );
 }
+
+const fieldErrorStyle: React.CSSProperties = { fontSize: 12.5, color: "#B42318" };
 
 const inputStyle: React.CSSProperties = {
   height: 46,
@@ -330,7 +385,7 @@ const darkButtonStyle: React.CSSProperties = {
 
 function WaitlistDone() {
   return (
-    <div role="status" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "6px 0 4px" }}>
+    <div role="status" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "6px 0 4px", minHeight: WAITLIST_SLOT_HEIGHT, justifyContent: "flex-start" }}>
       <strong style={{ fontSize: 18 }}>Shukriya! You&apos;re on the list.</strong>
       <span style={{ fontSize: 14, lineHeight: 1.6, color: "#5E5A52" }}>
         Our team will reach out on your email or phone soon. Your first 3 months will be free.
@@ -604,8 +659,20 @@ export function TaxiMunshiLanding() {
         body { margin: 0; }
         .tm-root a { color: #7A4E00; text-decoration: none; }
         .tm-root a:hover { color: #1C1A17; }
+        /* The mascot art is a "peeking round a corner" pose, not an
+           actual waving hand — rotating the whole image tried to fake a
+           wave and just looked like the character wobbling. A small
+           attention bounce reads naturally on any pose instead. */
+        @keyframes tm-peek-bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+        .tm-peek-wave {
+          animation: tm-peek-bounce 1.8s ease-in-out infinite;
+        }
         @media (prefers-reduced-motion: reduce) {
           html { scroll-behavior: auto; }
+          .tm-peek-wave { animation: none; }
         }
       `}</style>
       <div className="tm-root" style={{ background: "#FFFFFF", color: "#1C1A17", WebkitFontSmoothing: "antialiased", overflowX: "hidden" }}>
@@ -848,6 +915,7 @@ export function TaxiMunshiLanding() {
                   <div aria-hidden="true" style={{ position: "absolute", inset: "18px -14px -14px 18px", background: "#FFFFFF", border: "1px solid #E6E0D3", borderRadius: 10, transform: "rotate(3.5deg)", boxShadow: "0 20px 40px -30px rgba(80,55,10,0.4)" }} />
                   <div aria-hidden="true" style={{ position: "absolute", inset: "10px -6px -8px 10px", background: "#FFFFFF", border: "1px solid #E6E0D3", borderRadius: 10, transform: "rotate(1.6deg)" }} />
                   <SampleInvoiceCard invoiceMax={invoiceMax} />
+                  <InvoiceActionRail />
                   {standing && (
                     <div
                       aria-hidden="true"
@@ -879,7 +947,10 @@ export function TaxiMunshiLanding() {
                     style={{
                       position: "absolute",
                       left: -22,
-                      bottom: 0,
+                      // Lifted off the very bottom edge so the invoice
+                      // card's border doesn't visually cut across the
+                      // mascot like a wall at its feet.
+                      bottom: 40,
                       width: 258,
                       height: 437,
                       zIndex: 4,
@@ -1202,7 +1273,14 @@ export function TaxiMunshiLanding() {
                 aria-expanded={leadOpen}
                 style={{ pointerEvents: "auto", display: "block", border: 0, background: "none", padding: 0, margin: `0 ${peekRight} 0 0`, cursor: "pointer", width: peekW, height: peekH }}
               >
-                <img src="/taximunshi/mascot-waving.png" alt="" width={100} height={170} style={{ display: "block", width: "100%", height: "100%" }} />
+                <img
+                  src="/taximunshi/mascot-waving.png"
+                  alt=""
+                  width={100}
+                  height={170}
+                  className="tm-peek-wave"
+                  style={{ display: "block", width: "100%", height: "100%" }}
+                />
               </button>
             </div>
           </aside>
@@ -1217,6 +1295,87 @@ function CheckIcon({ color }: { color: string }) {
     <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 6 9 17l-5-5" />
     </svg>
+  );
+}
+
+/** Decorative action buttons, pulled outside the invoice card itself so
+ *  the card can stay a clean "paper" look with nothing overlapping the
+ *  mascot standing beside it. Sits vertically along the card's right
+ *  edge, below the sticky note so the two never collide. */
+function InvoiceActionRail() {
+  const items = [
+    {
+      label: "Download PDF",
+      bg: "#1C1A17",
+      fg: "#FFFFFF",
+      icon: (
+        <>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <path d="m7 10 5 5 5-5" />
+          <path d="M12 15V3" />
+        </>
+      ),
+    },
+    {
+      label: "WhatsApp",
+      bg: "#EEFAF2",
+      fg: "#14663A",
+      border: "1px solid #CDEBD8",
+      icon: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />,
+    },
+    {
+      label: "Email",
+      bg: "#FFFFFF",
+      fg: "#1C1A17",
+      border: "1px solid #E6E0D3",
+      icon: (
+        <>
+          <rect width={20} height={16} x={2} y={4} rx={2} />
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+        </>
+      ),
+    },
+  ];
+  return (
+    // Normal document flow (not absolutely positioned) so it can never
+    // exceed the invoice card's own width and cause horizontal overflow
+    // on narrower laptop screens — it just sits below the card instead.
+    <div
+      aria-hidden="true"
+      style={{
+        position: "relative",
+        marginTop: 14,
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: "center",
+        gap: 10,
+      }}
+    >
+      {items.map((it) => (
+        <span
+          key={it.label}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            height: 36,
+            padding: "0 14px",
+            borderRadius: 999,
+            fontSize: 12.5,
+            fontWeight: 600,
+            background: it.bg,
+            color: it.fg,
+            border: it.border,
+            boxShadow: "0 10px 20px -12px rgba(28,26,23,0.35)",
+          }}
+        >
+          <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            {it.icon}
+          </svg>
+          {it.label}
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -1306,20 +1465,6 @@ function SampleInvoiceCard({ invoiceMax }: { invoiceMax: string }) {
         <strong style={{ fontSize: 13 }}>Net Amount</strong><strong style={{ fontSize: 17 }}>₹4,880.00</strong>
       </div>
       <div style={{ marginTop: 8, fontSize: 11 }}><strong>In Words:</strong> Four Thousand Eight Hundred &amp; Eighty Only.</div>
-      <div aria-hidden="true" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16, paddingTop: 14, borderTop: "1px solid #ECE7DC", fontSize: 12, fontWeight: 600 }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 32, padding: "0 12px", borderRadius: 8, background: "#1C1A17", color: "#FFFFFF" }}>
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" /><path d="M12 15V3" /></svg>
-          Download PDF
-        </span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 32, padding: "0 12px", borderRadius: 8, border: "1px solid #CDEBD8", background: "#EEFAF2", color: "#14663A" }}>
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>
-          WhatsApp
-        </span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 32, padding: "0 12px", borderRadius: 8, border: "1px solid #E6E0D3", color: "#1C1A17" }}>
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect width={20} height={16} x={2} y={4} rx={2} /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
-          Email
-        </span>
-      </div>
       <figcaption style={{ position: "absolute", top: -11, left: 20, background: "#1C1A17", color: "#FFFFFF", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", padding: "4px 10px", borderRadius: 999 }}>
         SAMPLE · FICTIONAL DATA
       </figcaption>

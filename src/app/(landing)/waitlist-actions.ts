@@ -8,7 +8,13 @@ import { sendWaitlistNotification } from "@/lib/email/send";
 const Schema = z.object({
   company: z.string().trim().min(1, "Enter your company name."),
   email: z.string().trim().email("Enter a valid email."),
-  phone: z.string().trim().min(10, "Enter a valid phone number."),
+  phone: z
+    .string()
+    .trim()
+    .refine((v) => {
+      const digits = v.replace(/\D/g, "");
+      return digits.length >= 10 && digits.length <= 15;
+    }, "Enter a valid phone number."),
 });
 
 export type WaitlistResult = { ok: true } | { ok: false; error: string };
