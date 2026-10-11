@@ -20,6 +20,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.taximunshi.com"),
   title: {
     default: "TaxiMunshi",
     template: "%s, TaxiMunshi",
@@ -56,7 +57,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#4f46e5",
+  themeColor: "#FFC21A",
 };
 
 export default function RootLayout({
