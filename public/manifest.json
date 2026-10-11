@@ -1,6 +1,6 @@
 {
-  "name": "EasyBills",
-  "short_name": "EasyBills",
+  "name": "TaxiMunshi",
+  "short_name": "TaxiMunshi",
   "description": "Cab invoicing for small fleet operators.",
   "start_url": "/",
   "display": "standalone",

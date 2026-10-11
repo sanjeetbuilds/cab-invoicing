@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* =====================================================================
-   Design tokens, EasyBills SaaS palette
+   Design tokens, TaxiMunshi SaaS palette
    bg #fafafa, surface #ffffff, border #e5e7eb, text #111827,
    muted #6b7280, accent indigo #4f46e5, success/warning/danger as below
    ===================================================================== */
@@ -36,7 +36,7 @@
   /* Subtle lift on the primary CTA. */
   --shadow-primary: 0 1px 2px rgba(79, 70, 229, 0.15);
 
-  /* Color tokens, map shadcn names to the EasyBills palette */
+  /* Color tokens, map shadcn names to the TaxiMunshi palette */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 

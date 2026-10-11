@@ -7,16 +7,25 @@ first. `@AGENTS.md` below still applies (Next.js version note).
 
 ## What this is
 
-**EasyBills / Krishna Cabs** — a multi-tenant SaaS app for small cab/fleet
-operators in India: clients, vehicles, rate cards, quotations, trips, and
-GST-compliant invoices. Built for a real customer (Krishna Cabs, Gurugram)
-replacing an Excel/Word workflow. The original spec is `BUILD-SPEC.md`
-(historical — the app has gone well past v1 of that doc; don't treat it as
-current state, only as background on original intent).
+**TaxiMunshi** (product name as of 2026-10-11, rebranded from the earlier
+working name "EasyBills" — if you see "EasyBills" anywhere it's a stale
+leftover, not an intentional dual-brand) **/ Krishna Cabs** — a multi-tenant
+SaaS app for small cab/fleet operators in India: clients, vehicles, rate
+cards, quotations, trips, and GST-compliant invoices. Built for a real
+customer (Krishna Cabs, Gurugram) replacing an Excel/Word workflow. The
+original spec is `BUILD-SPEC.md` (historical — the app has gone well past
+v1 of that doc; don't treat it as current state, only as background on
+original intent).
 
 As of 2026-10-07 the product is moving from open self-signup to
 **invite-only SaaS** with a platform-admin panel (see "Branch state" below)
 — ask before assuming new companies can self-onboard.
+
+A public marketing/waitlist landing page (hero, animated mascot, pricing,
+FAQ) lives at `src/app/(landing)/` — a deliberately separate route group
+from `src/app/(marketing)/` (which still covers /privacy, /terms, /contact
+with a shared thin header) because the landing page brings its own full
+header and footer. Don't merge the two layouts.
 
 ## Tech stack
 

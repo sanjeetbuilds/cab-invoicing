@@ -16,7 +16,7 @@ const STEPS: TourStep[] = [
   {
     selector: null,
     placement: "center",
-    title: "Welcome to EasyBills.",
+    title: "Welcome to TaxiMunshi.",
     body:
       "Here is how to make your first bill in a few steps. Use Skip if you want to explore on your own.",
   },

@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 /**
- * EasyBills service worker — minimal, intentional.
+ * TaxiMunshi service worker — minimal, intentional.
  *
  * Scope: speed up repeat visits and the home-screen launch by caching
  * the static asset bundle. Do NOT cache:
