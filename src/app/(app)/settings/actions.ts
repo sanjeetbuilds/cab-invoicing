@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireWriter } from "@/lib/auth";
+import { generateTempPassword } from "@/lib/temp-password";
+import { markMustChangePassword } from "@/lib/temp-password-state";
 import type { Role } from "@/lib/supabase/types";
 
 const INVITABLE_ROLES: Role[] = ["admin", "staff", "viewer"];
@@ -52,7 +54,13 @@ const IdSchema = z.object({ membership_id: z.string().uuid() });
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 export type InviteResult =
-  | { ok: true; email: string; tempPassword: string }
+  | {
+      ok: true;
+      outcome: "created" | "added_existing";
+      email: string;
+      /** Only set for outcome "created" — never persisted, shown once. */
+      tempPassword?: string;
+    }
   | { ok: false; error: string };
 
 export async function updateCompanyAction(
@@ -140,9 +148,12 @@ export async function updateTermsAction(
 }
 
 /**
- * Create the user via the admin API with a generated temporary password,
- * then attach them to the company as a member. Returns the temp password
- * so the inviter can copy it and share manually (no email required).
+ * Add a teammate. If their email already has an account anywhere on the
+ * platform, they're attached immediately — no email, no password, they
+ * just see the new company next time they switch. Otherwise a new login
+ * is created with a generated temporary password, which the inviter
+ * copies and shares directly (e.g. WhatsApp) — same 7-day-expiry,
+ * forced-change-on-first-login rules as an owner account from /admin.
  */
 export async function inviteMemberAction(
   raw: { email: string; role: Role },
@@ -159,7 +170,6 @@ export async function inviteMemberAction(
 
   const email = parsed.data.email.toLowerCase();
 
-  // Prevent duplicate membership on this company.
   const { data: existingMembership } = await ctx.admin
     .from("memberships")
     .select("id")
@@ -170,55 +180,45 @@ export async function inviteMemberAction(
     return { ok: false, error: "That email is already a member." };
   }
 
-  // Random temp password (16 chars, mixed). Inviter copies and shares it.
-  const tempPassword = generateTempPassword();
+  const { data: existingUsers } = await ctx.admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+  const existing = existingUsers?.users.find((u) => (u.email ?? "").toLowerCase() === email);
 
-  // Either find an existing auth user with that email, or create a new one.
-  let userId: string | null = null;
-  const { data: existingByEmail } = await ctx.admin.auth.admin.listUsers({
-    page: 1,
-    perPage: 200,
-  });
-  const found = existingByEmail.users.find(
-    (u) => (u.email ?? "").toLowerCase() === email,
-  );
-  if (found) {
-    userId = found.id;
-  } else {
-    const { data: created, error: createErr } =
-      await ctx.admin.auth.admin.createUser({
-        email,
-        password: tempPassword,
-        email_confirm: true,
-      });
-    if (createErr || !created.user) {
-      return {
-        ok: false,
-        error: createErr?.message ?? "Failed to create user.",
-      };
-    }
-    userId = created.user.id;
+  if (existing) {
+    const { error: insertErr } = await ctx.admin.from("memberships").insert({
+      company_id: ctx.companyId,
+      user_id: existing.id,
+      role: parsed.data.role,
+      invited_email: email,
+      accepted_at: new Date().toISOString(),
+    });
+    if (insertErr) return { ok: false, error: insertErr.message };
+
+    revalidatePath("/settings");
+    return { ok: true, outcome: "added_existing", email };
   }
+
+  const tempPassword = generateTempPassword();
+  const { data: created, error: createErr } = await ctx.admin.auth.admin.createUser({
+    email,
+    password: tempPassword,
+    email_confirm: true,
+  });
+  if (createErr || !created.user) {
+    return { ok: false, error: createErr?.message ?? "Failed to create user." };
+  }
+  await markMustChangePassword(ctx.admin, created.user.id);
 
   const { error: insertErr } = await ctx.admin.from("memberships").insert({
     company_id: ctx.companyId,
-    user_id: userId,
+    user_id: created.user.id,
     role: parsed.data.role,
     invited_email: email,
-    accepted_at: new Date().toISOString(),
+    accepted_at: null,
   });
-  if (insertErr) {
-    return { ok: false, error: insertErr.message };
-  }
+  if (insertErr) return { ok: false, error: insertErr.message };
 
   revalidatePath("/settings");
-  return {
-    ok: true,
-    email,
-    tempPassword: found
-      ? "(existing user, they sign in with their current password)"
-      : tempPassword,
-  };
+  return { ok: true, outcome: "created", email, tempPassword };
 }
 
 export async function updateMemberRoleAction(
@@ -304,16 +304,4 @@ export async function removeMemberAction(
 
   revalidatePath("/settings");
   return { ok: true };
-}
-
-function generateTempPassword(): string {
-  // Browser/edge runtimes have crypto.getRandomValues; we're on Node.
-  // 16 chars from a mixed alphabet for human readability.
-  const alphabet =
-    "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-  let out = "";
-  const buf = new Uint8Array(16);
-  crypto.getRandomValues(buf);
-  for (const b of buf) out += alphabet[b % alphabet.length];
-  return out;
 }

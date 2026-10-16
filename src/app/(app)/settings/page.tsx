@@ -14,6 +14,8 @@ export interface TeamMemberRow {
   accepted_at: string | null;
   email: string | null;
   is_self: boolean;
+  /** Account exists but hasn't completed its first login yet. */
+  isPending: boolean;
 }
 
 export default async function SettingsPage() {
@@ -39,9 +41,12 @@ export default async function SettingsPage() {
   const memberRows: TeamMemberRow[] = [];
   for (const r of rows ?? []) {
     let email: string | null = r.invited_email;
+    let isPending = false;
     if (r.user_id) {
       const { data } = await admin.auth.admin.getUserById(r.user_id);
       email = data.user?.email ?? r.invited_email ?? null;
+      const meta = (data.user?.user_metadata ?? {}) as { must_change_password?: boolean };
+      isPending = Boolean(meta.must_change_password);
     }
     memberRows.push({
       id: r.id,
@@ -51,6 +56,7 @@ export default async function SettingsPage() {
       accepted_at: r.accepted_at,
       email,
       is_self: r.user_id === user.id,
+      isPending,
     });
   }
 

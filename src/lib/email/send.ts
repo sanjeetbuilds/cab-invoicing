@@ -1,4 +1,5 @@
 import "server-only";
+import { PLATFORM_BRAND_NAME } from "@/lib/platform-config";
 
 /**
  * Thin wrapper around Resend's HTTP API (no SDK dependency — one fetch
@@ -68,6 +69,54 @@ export function sendWaitlistNotification(lead: {
         <li><strong>Email:</strong> ${lead.email}</li>
         <li><strong>Phone:</strong> ${lead.phone}</li>
       </ul>
+    `,
+  });
+}
+
+const SIGNOFF = `<p>— Team ${PLATFORM_BRAND_NAME}</p>`;
+
+/** Sent whenever an owner account is created or re-issued a temporary
+ *  password — by /admin's "+ New company", "Send new temporary password",
+ *  or "Change owner email". Wording matches the "Copy login details" text
+ *  exactly so the email and the WhatsApp fallback never disagree. */
+export function sendTempPasswordEmail(args: {
+  to: string;
+  ownerName: string;
+  companyName: string;
+  appUrl: string;
+  password: string;
+}): Promise<SendResult> {
+  return sendEmail({
+    to: args.to,
+    subject: `Your ${PLATFORM_BRAND_NAME} account for ${args.companyName} is ready`,
+    html: `
+      <p>Hi ${args.ownerName},</p>
+      <p>Your account for <strong>${args.companyName}</strong> has been created.</p>
+      <p>
+        Login: <a href="${args.appUrl}">${args.appUrl}</a><br/>
+        Email: ${args.to}<br/>
+        Temporary password: <strong>${args.password}</strong>
+      </p>
+      <p>You'll be asked to set your own password when you first sign in. This temporary password expires in 7 days.</p>
+      ${SIGNOFF}
+    `,
+  });
+}
+
+export function sendAddedAsOwnerEmail(args: {
+  to: string;
+  ownerName: string;
+  companyName: string;
+  signInUrl: string;
+}): Promise<SendResult> {
+  return sendEmail({
+    to: args.to,
+    subject: `You've been added as owner of ${args.companyName}`,
+    html: `
+      <p>Hi ${args.ownerName},</p>
+      <p>You've been added as owner of <strong>${args.companyName}</strong>. Sign in with your existing password.</p>
+      <p>Login: <a href="${args.signInUrl}">${args.signInUrl}</a></p>
+      ${SIGNOFF}
     `,
   });
 }

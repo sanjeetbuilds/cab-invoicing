@@ -20,6 +20,17 @@ function isPublic(pathname: string) {
   );
 }
 
+// Reachable even while a forced password change is pending: the page
+// itself, and signing out to abandon it instead.
+const PASSWORD_CHANGE_ALLOWED = ["/set-password", "/sign-out"];
+
+function isPasswordChangeAllowed(pathname: string) {
+  if (pathname.startsWith("/api/")) return true;
+  return PASSWORD_CHANGE_ALLOWED.some(
+    (p) => pathname === p || pathname.startsWith(p + "/"),
+  );
+}
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -57,6 +68,19 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/sign-in";
     url.searchParams.set("next", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Signed in with a temporary password still pending → nothing else is
+  // reachable, not even by typing a URL directly, until it's replaced.
+  const mustChangePassword = Boolean(
+    (user?.user_metadata as { must_change_password?: boolean } | undefined)
+      ?.must_change_password,
+  );
+  if (user && mustChangePassword && !isPasswordChangeAllowed(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/set-password";
+    url.searchParams.delete("next");
     return NextResponse.redirect(url);
   }
 

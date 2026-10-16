@@ -19,7 +19,7 @@ export default function SignInPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Welcome to TaxiMunshi</CardTitle>
           <CardDescription>
-            Sign in with your email and password, or create a new account.
+            Sign in with your email and password.
           </CardDescription>
         </CardHeader>
         <CardContent>

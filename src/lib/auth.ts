@@ -1,8 +1,9 @@
 import "server-only";
 import { cache } from "react";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getSelectedCompanyId } from "@/lib/current-company";
 import type { Membership, Role } from "@/lib/supabase/types";
 
 const WRITER_ROLES: Role[] = ["owner", "admin", "staff"];
@@ -26,38 +27,14 @@ export const requireUser = cache(async () => {
 });
 
 /**
- * If the signed-in user has any pending invite (a memberships row with
- * matching invited_email and user_id still null), claim it: bind the row
- * to their user_id and stamp accepted_at. Returns how many invites were
- * claimed, the caller can use that to skip the "no membership →
- * onboarding" redirect.
- *
- * Runs through the admin client because the user can't UPDATE a row
- * where user_id is still null (RLS only matches their own rows).
- */
-export async function claimPendingInvites(
-  userId: string,
-  email: string,
-): Promise<number> {
-  if (!email) return 0;
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("memberships")
-    .update({ user_id: userId, accepted_at: new Date().toISOString() })
-    .eq("invited_email", email)
-    .is("user_id", null)
-    .select("id");
-  if (error) {
-    console.warn(`[claimPendingInvites] ${error.message}`);
-    return 0;
-  }
-  return data?.length ?? 0;
-}
-
-/**
- * Returns the user and their "current" membership (currently the first one).
- * Redirects to /onboarding if the user has no memberships *and* has no
- * pending invites to claim.
+ * Returns the user, their full list of memberships (for the company
+ * switcher), and the "current" one: whichever company_id is in the
+ * current_company_id cookie, falling back to the first membership by
+ * creation order for single-company users or a switcher that hasn't been
+ * used yet. Redirects to /onboarding if the user has no memberships —
+ * every account is created with a membership already attached (the admin
+ * panel and team invites both do this atomically), so this only happens
+ * if their last membership was later removed.
  *
  * Cached per request so the layout and every page share one
  * memberships lookup, regardless of how many components call this.
@@ -65,44 +42,39 @@ export async function claimPendingInvites(
 export const requireMembership = cache(async () => {
   const { supabase, user } = await requireUser();
 
-  // First pass, do they already have a membership?
-  let { data } = await supabase
+  const { data: memberships } = await supabase
     .from("memberships")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle<Membership>();
+    .returns<Membership[]>();
 
-  // If not, try to claim any invite waiting on their email, then re-query.
-  if (!data && user.email) {
-    const claimed = await claimPendingInvites(user.id, user.email);
-    if (claimed > 0) {
-      const retry = await supabase
-        .from("memberships")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle<Membership>();
-      data = retry.data;
-    }
-  }
+  if (!memberships || memberships.length === 0) redirect("/onboarding");
 
-  if (!data) redirect("/onboarding");
+  const selectedId = await getSelectedCompanyId();
+  const membership =
+    memberships.find((m) => m.company_id === selectedId) ?? memberships[0];
 
-  return { supabase, user, membership: data };
+  return { supabase, user, membership, memberships };
 });
 
 /**
  * For server actions that perform writes. Verifies the user is signed in,
  * looks up their membership via the admin client (so the check itself isn't
- * subject to the policies we're about to write through), and rejects viewers.
- * Returns the admin client so the action can do tenant-scoped writes with
- * explicit company_id.
+ * subject to the policies we're about to write through), matches the same
+ * company the switcher currently has selected, rejects viewers, and rejects
+ * a suspended company. Returns the admin client so the action can do
+ * tenant-scoped writes with explicit company_id.
  */
 export async function requireWriter(): Promise<
-  | { ok: true; userId: string; companyId: string; role: Role; admin: ReturnType<typeof createAdminClient> }
+  | {
+      ok: true;
+      userId: string;
+      userEmail: string;
+      companyId: string;
+      role: Role;
+      admin: ReturnType<typeof createAdminClient>;
+    }
   | { ok: false; error: string }
 > {
   const supabase = await createClient();
@@ -112,25 +84,113 @@ export async function requireWriter(): Promise<
   if (!user) return { ok: false, error: "Not signed in." };
 
   const admin = createAdminClient();
-  const { data, error } = await admin
+  const { data: memberships, error } = await admin
     .from("memberships")
     .select("company_id, role")
     .eq("user_id", user.id)
     .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle<{ company_id: string; role: Role }>();
+    .returns<{ company_id: string; role: Role }[]>();
 
   if (error) return { ok: false, error: error.message };
-  if (!data) return { ok: false, error: "You don't belong to any company yet." };
-  if (!WRITER_ROLES.includes(data.role)) {
+  if (!memberships || memberships.length === 0) {
+    return { ok: false, error: "You don't belong to any company yet." };
+  }
+
+  // Match the same company the user is currently viewing (per the
+  // switcher cookie), not just whichever membership they joined first —
+  // otherwise a multi-company user's writes could land in the wrong
+  // tenant while they're looking at another one.
+  const selectedId = await getSelectedCompanyId();
+  const current =
+    memberships.find((m) => m.company_id === selectedId) ?? memberships[0];
+
+  if (!WRITER_ROLES.includes(current.role)) {
     return { ok: false, error: "Viewers can't modify data." };
+  }
+
+  const { data: companyRow } = await admin
+    .from("companies")
+    .select("status")
+    .eq("id", current.company_id)
+    .maybeSingle<{ status: string }>();
+  if (companyRow?.status === "suspended") {
+    return {
+      ok: false,
+      error: "Your account is paused. Contact us to restore access.",
+    };
   }
 
   return {
     ok: true,
     userId: user.id,
-    companyId: data.company_id,
-    role: data.role,
+    userEmail: user.email ?? "",
+    companyId: current.company_id,
+    role: current.role,
     admin,
   };
+}
+
+/**
+ * True platform-operator check, entirely separate from per-company roles.
+ * Reads the super_admins allow-list through the service-role client, which
+ * is the only way anything can read that table — it has RLS enabled with
+ * zero policies. Rows are added by hand in the SQL editor, never via a
+ * screen or action.
+ *
+ * Use at the top of any /admin Server Component. A non-super-admin gets a
+ * plain 404 rather than a "no access" page, so the admin surface isn't
+ * advertised to anyone poking at the URL.
+ */
+export const requireSuperAdmin = cache(async () => {
+  const { user } = await requireUser();
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("super_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle<{ user_id: string }>();
+  if (!data) notFound();
+  return { user, admin };
+});
+
+/** True/false version for places that need to branch UI (e.g. the sidebar
+ *  "Admin" link) without throwing a 404 themselves. */
+export const isSuperAdmin = cache(async (): Promise<boolean> => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("super_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle<{ user_id: string }>();
+  return data != null;
+});
+
+/**
+ * Same check as requireSuperAdmin, but for use inside Server Actions
+ * (mutations), which need an error result instead of a thrown 404.
+ */
+export async function requireSuperAdminAction(): Promise<
+  | { ok: true; userId: string; userEmail: string; admin: ReturnType<typeof createAdminClient> }
+  | { ok: false; error: string }
+> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("super_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle<{ user_id: string }>();
+  if (!data) return { ok: false, error: "Not authorized." };
+
+  return { ok: true, userId: user.id, userEmail: user.email ?? "", admin };
 }

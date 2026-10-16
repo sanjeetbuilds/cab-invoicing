@@ -60,7 +60,7 @@ import {
   shouldShowSearch,
   visibleStatusPills,
 } from "@/lib/list-controls";
-import type { Client, Invoice } from "@/lib/supabase/types";
+import type { Client, Invoice, Role } from "@/lib/supabase/types";
 import {
   deleteInvoiceAction,
   issueDraftAction,
@@ -118,6 +118,7 @@ export function InvoicesList({
   actions,
   initialFrom,
   initialTo,
+  currentRole,
 }: {
   invoices: Invoice[];
   clients: Pick<Client, "id" | "name">[];
@@ -132,6 +133,8 @@ export function InvoicesList({
    *  set the list opens filtered to that custom period. */
   initialFrom?: string;
   initialTo?: string;
+  /** Viewers never see Edit, regardless of invoice status. */
+  currentRole: Role;
 }) {
   const hasInitialRange = Boolean(initialFrom && initialTo);
   const [search, setSearch] = useState("");
@@ -417,6 +420,7 @@ export function InvoicesList({
               invoice={inv}
               prefix={prefix}
               duties={dutiesByInvoice[inv.id] ?? 0}
+              currentRole={currentRole}
             />
           ))}
         </div>
@@ -439,10 +443,12 @@ function InvoiceListItem({
   invoice,
   prefix,
   duties,
+  currentRole,
 }: {
   invoice: Invoice;
   prefix: string;
   duties: number;
+  currentRole: Role;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -468,7 +474,8 @@ function InvoiceListItem({
   // Paid and undone invoices are closed records, not edited. An issued
   // but still-unpaid invoice may already be with the client, so editing
   // it gets a confirm step; a draft was never sent, so it opens straight.
-  const editable = !paid && !reversed;
+  // Viewers never see Edit at all, regardless of status.
+  const editable = currentRole !== "viewer" && !paid && !reversed;
 
   function onEditClick() {
     if (!draft) {

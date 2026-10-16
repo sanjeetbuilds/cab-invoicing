@@ -1,5 +1,6 @@
 import { UserMenu } from "./user-menu";
 import { BrandDisplay } from "./brand-display";
+import { CompanySwitcher, type SwitcherCompany } from "./company-switcher";
 import type { BrandMode } from "@/lib/supabase/types";
 
 export function TopBar({
@@ -8,16 +9,20 @@ export function TopBar({
   logoUrl,
   logoAspectRatio,
   email,
+  companies,
+  currentCompanyId,
 }: {
   companyName: string;
   brandMode: BrandMode;
   logoUrl: string | null;
   logoAspectRatio: number | null;
   email: string;
+  companies: SwitcherCompany[];
+  currentCompanyId: string;
 }) {
   // Mobile: thin strip, brand block on the left (mode-aware), user
   // menu on the right. Desktop: the sidebar already shows the brand, so
-  // the top bar collapses to just the user menu on the right.
+  // the top bar collapses to just the switcher + user menu on the right.
   // `pt-[env(safe-area-inset-top)]` clears the notch on iOS; the visible
   // h-11/sm:h-12 strip sits below that.
   return (
@@ -35,7 +40,8 @@ export function TopBar({
             size="topbar-mobile"
           />
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <CompanySwitcher companies={companies} currentId={currentCompanyId} />
           <UserMenu email={email} />
         </div>
       </div>
