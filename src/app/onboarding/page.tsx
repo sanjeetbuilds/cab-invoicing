@@ -7,13 +7,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
-import { claimPendingInvites } from "@/lib/auth";
-import { OnboardingForm } from "./onboarding-form";
+import { SUPPORT_CONTACT, supportWhatsAppLink } from "@/lib/platform-config";
 
 export const metadata = {
-  title: "Create your company",
+  title: "No company yet",
 };
 
+/**
+ * Companies are now created only by a platform super-admin (invite-only
+ * SaaS), never self-serve, and every account is created with a membership
+ * already attached. A signed-in user only ever lands here if their last
+ * membership was later removed — there's nothing for them to do but
+ * reach out.
+ */
 export default async function OnboardingPage() {
   const supabase = await createClient();
   const {
@@ -21,14 +27,6 @@ export default async function OnboardingPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  // First: claim any pending team invite on this email. If we claim one,
-  // they're now a member of someone else's company, skip onboarding.
-  if (user.email) {
-    await claimPendingInvites(user.id, user.email);
-  }
-
-  // If user is already a member of a company (including the one we just
-  // claimed), jump to dashboard.
   const { data: existing } = await supabase
     .from("memberships")
     .select("id")
@@ -38,16 +36,24 @@ export default async function OnboardingPage() {
 
   return (
     <div className="flex flex-1 items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">Create your company</CardTitle>
+          <CardTitle className="text-2xl">No company yet</CardTitle>
           <CardDescription>
-            This is your tenant. Everything you add (clients, trips, invoices)
-            lives under it. You can invite teammates later.
+            Your account isn&apos;t attached to a company. Companies are set
+            up by us, not self-serve — contact {SUPPORT_CONTACT} to get
+            access.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <OnboardingForm defaultEmail={user.email ?? undefined} />
+          <a
+            href={supportWhatsAppLink("Hi, I need access to Cab Invoicing.")}
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm font-medium text-primary hover:text-primary-hover underline"
+          >
+            Contact us on WhatsApp
+          </a>
         </CardContent>
       </Card>
     </div>

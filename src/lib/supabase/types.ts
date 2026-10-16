@@ -13,6 +13,9 @@ export type InvoiceStatus = "draft" | "unpaid" | "paid" | "reversed";
 
 export type BrandMode = "text_only" | "logo_only" | "logo_with_text";
 
+export type CompanyStatus = "invited" | "active" | "suspended";
+export type CreatedVia = "admin" | "self_signup";
+
 export interface Company {
   id: string;
   name: string;
@@ -33,6 +36,8 @@ export interface Company {
   brand_mode: BrandMode;
   logo_url: string | null;
   logo_aspect_ratio: number | null;
+  status: CompanyStatus;
+  created_via: CreatedVia;
   created_at: string;
   updated_at: string;
 }
@@ -43,7 +48,27 @@ export interface Membership {
   user_id: string | null;
   role: Role;
   invited_email: string | null;
+  member_name: string | null;
   accepted_at: string | null;
+  created_at: string;
+}
+
+export type AuditAction =
+  | "created"
+  | "temp_password_sent"
+  | "owner_email_changed"
+  | "suspended"
+  | "reactivated"
+  | "deleted";
+
+export interface AuditLogEntry {
+  id: string;
+  company_id: string | null;
+  actor_user_id: string | null;
+  actor_email: string | null;
+  action: AuditAction;
+  reason: string | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 }
 

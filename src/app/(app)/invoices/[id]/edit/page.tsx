@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireMembership } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type {
   Client,
   Company,
@@ -13,6 +15,33 @@ import type {
 import { EditInvoiceForm } from "./edit-invoice-form";
 
 export const metadata = { title: "Edit invoice" };
+
+/** Matches the word used elsewhere in the app (StatusPill calls
+ *  "reversed" invoices "Undone"), so the blocked message reads
+ *  consistently with the rest of the UI. */
+const STATUS_WORD: Record<string, string> = {
+  paid: "paid",
+  reversed: "undone",
+};
+
+function BlockedMessage({
+  id,
+  message,
+}: {
+  id: string;
+  message: string;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+        <p className="text-sm text-muted-foreground">{message}</p>
+        <Link href={`/invoices/${id}`} className={cn(buttonVariants({ variant: "outline" }))}>
+          Back to invoice
+        </Link>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default async function EditInvoicePage({
   params,
@@ -30,18 +59,20 @@ export default async function EditInvoicePage({
     .maybeSingle<Invoice>();
 
   if (!invoice) notFound();
-  if (invoice.status === "paid" || invoice.status === "reversed") {
+
+  if (membership.role === "viewer") {
     return (
-      <Card>
-        <CardContent className="py-12 text-center text-sm text-muted-foreground">
-          Paid and undone invoices are closed records and can&apos;t be
-          edited.{" "}
-          <Link href={`/invoices/${id}`} className="underline">
-            Back to invoice
-          </Link>
-          .
-        </CardContent>
-      </Card>
+      <BlockedMessage id={id} message="You don't have permission to edit invoices." />
+    );
+  }
+
+  if (invoice.status === "paid" || invoice.status === "reversed") {
+    const word = STATUS_WORD[invoice.status] ?? invoice.status;
+    return (
+      <BlockedMessage
+        id={id}
+        message={`This invoice can't be edited because it is ${word}.`}
+      />
     );
   }
   if (!invoice.client_id) {

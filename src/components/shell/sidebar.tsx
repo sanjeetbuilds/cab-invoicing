@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav-items";
 import { BrandDisplay } from "./brand-display";
@@ -19,11 +19,13 @@ export function Sidebar({
   brandMode,
   logoUrl,
   logoAspectRatio,
+  isSuperAdmin = false,
 }: {
   companyName: string;
   brandMode: BrandMode;
   logoUrl: string | null;
   logoAspectRatio: number | null;
+  isSuperAdmin?: boolean;
 }) {
   const pathname = usePathname();
 
@@ -79,6 +81,20 @@ export function Sidebar({
             </Link>
           );
         })}
+        {isSuperAdmin && (
+          <Link
+            href="/admin"
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
+              pathname === "/admin" || pathname.startsWith("/admin/")
+                ? "bg-[rgba(79,70,229,0.10)] text-[#4f46e5] font-medium"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            <ShieldCheck className="h-4 w-4 shrink-0" />
+            Admin
+          </Link>
+        )}
       </nav>
       <div className="border-t border-border px-3 py-3">
         {/* Real <form method="POST"> so Next.js doesn't prefetch the

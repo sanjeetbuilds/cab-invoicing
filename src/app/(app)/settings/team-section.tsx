@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/table";
 import type { Role } from "@/lib/supabase/types";
 import type { TeamMemberRow } from "./page";
+import { buildLoginDetailsText } from "@/lib/login-details-text";
 import {
   inviteMemberAction,
   removeMemberAction,
@@ -86,13 +87,17 @@ export function TeamSection({
     }
     startInvite(async () => {
       const result = await inviteMemberAction({ email: email.trim(), role });
-      if (result.ok) {
-        setNewInvite({ email: result.email, tempPassword: result.tempPassword });
-        setEmail("");
-        setCopied(false);
-        router.refresh();
-      } else {
+      if (!result.ok) {
         toast.error(result.error);
+        return;
+      }
+      setEmail("");
+      setCopied(false);
+      router.refresh();
+      if (result.outcome === "created" && result.tempPassword) {
+        setNewInvite({ email: result.email, tempPassword: result.tempPassword });
+      } else {
+        toast.success(`${result.email} already has an account — added to this company.`);
       }
     });
   }
@@ -125,9 +130,15 @@ export function TeamSection({
     }
   }
 
-  async function copyTempPassword() {
+  async function copyLoginDetails() {
     if (!newInvite) return;
-    await navigator.clipboard.writeText(newInvite.tempPassword);
+    const text = buildLoginDetailsText({
+      company: "this company",
+      appUrl: `${window.location.origin}/sign-in`,
+      email: newInvite.email,
+      password: newInvite.tempPassword,
+    });
+    await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }
@@ -139,9 +150,10 @@ export function TeamSection({
           <CardContent>
             <p className="text-sm font-semibold text-foreground">Invite teammate</p>
             <p className="text-xs text-muted-foreground mt-1 mb-4">
-              Creates a user account with a temp password. Copy it and share
-              it with them, they sign in at <span className="font-mono">/sign-in</span> and
-              can reset their password from there.
+              Creates a login with a temporary password. Copy it and share it with
+              them (e.g. WhatsApp) — they sign in at{" "}
+              <span className="font-mono">/sign-in</span> and are asked to set
+              their own password on first login.
             </p>
             <form
               onSubmit={onInvite}
@@ -201,23 +213,19 @@ export function TeamSection({
         <Card className="border-success/30 bg-success-soft">
           <CardContent>
             <p className="text-sm font-semibold text-foreground">
-              Invite ready for {newInvite.email}
+              Account ready for {newInvite.email}
             </p>
             <p className="text-xs text-muted-foreground mt-1 mb-3">
-              Share this temporary password with them (e.g. WhatsApp). They
-              sign in at <span className="font-mono">/sign-in</span> with their
-              email + this password, then can change it under Forgot password.
+              Share this with them (e.g. WhatsApp). They sign in at{" "}
+              <span className="font-mono">/sign-in</span> with this temporary
+              password and are asked to set their own on first login. It expires
+              in 7 days.
             </p>
             <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-2">
               <code className="flex-1 font-mono text-sm break-all px-2">
                 {newInvite.tempPassword}
               </code>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={copyTempPassword}
-                aria-label="Copy temp password"
-              >
+              <Button size="sm" variant="outline" onClick={copyLoginDetails}>
                 {copied ? (
                   <>
                     <Check className="h-4 w-4" />
@@ -226,7 +234,7 @@ export function TeamSection({
                 ) : (
                   <>
                     <Copy className="h-4 w-4" />
-                    Copy
+                    Copy login details
                   </>
                 )}
               </Button>
@@ -250,7 +258,7 @@ export function TeamSection({
             <TableRow>
               <TableHead>Email</TableHead>
               <TableHead className="w-[160px]">Role</TableHead>
-              <TableHead className="w-[120px]">Status</TableHead>
+              <TableHead className="w-[150px]">Status</TableHead>
               <TableHead className="w-[80px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -296,10 +304,10 @@ export function TeamSection({
                   )}
                 </TableCell>
                 <TableCell>
-                  {m.user_id ? (
-                    <Badge variant="success">Active</Badge>
+                  {m.isPending ? (
+                    <Badge variant="warning">Password sent</Badge>
                   ) : (
-                    <Badge variant="warning">Pending</Badge>
+                    <Badge variant="success">Active</Badge>
                   )}
                 </TableCell>
                 <TableCell className="text-right">

@@ -178,6 +178,7 @@ export default async function InvoicesPage({
           actions={actions}
           initialFrom={initialFrom}
           initialTo={initialTo}
+          currentRole={membership.role}
         />
       )}
     </div>

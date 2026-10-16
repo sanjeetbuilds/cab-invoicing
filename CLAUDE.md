@@ -86,19 +86,40 @@ library — Server Components + `useState`, Supabase JS client directly.
 
 ## Platform admin / invite-only layer (new, see branch state)
 
-- `companies.status`: `invited | active | suspended`. Suspended companies
-  keep all data; every page for their users is replaced by a paused
-  notice (`src/app/(app)/layout.tsx`), enforced again inside
-  `requireWriter()` so writes are blocked server-side too, not just hidden.
-- `platform_invites`: app-owned 7-day invite tokens for brand-new company
-  owners (not Supabase's built-in invite link — we control expiry,
-  resend, and cancel ourselves). `super_admins`: a bare allow-list,
-  RLS-enabled with **zero policies** (service-role only, no screen ever
-  writes to it — add a row by hand in the SQL editor).
+- `companies.status`: `invited | active | suspended`. `invited` means
+  "account created, temporary password issued, first login not done yet"
+  — displayed in `/admin` as "Password sent" or "Password expired"
+  depending on whether 7 days have passed (`src/lib/temp-password-state.ts`).
+  Suspended companies keep all data; every page for their users is
+  replaced by a paused notice (`src/app/(app)/layout.tsx`), enforced again
+  inside `requireWriter()` so writes are blocked server-side too, not just
+  hidden.
+- **No invite-links, no invites table.** The admin panel ("+ New company")
+  and team invites (Settings) both create the auth user and membership
+  directly with a generated temporary password (`src/lib/temp-password.ts`)
+  — no link to click, no separate accept step. Whether someone still needs
+  to set their own password lives on the auth user's own metadata
+  (`must_change_password` / `temp_password_set_at` via
+  `src/lib/temp-password-state.ts`), not in a project table, since it's a
+  property of the login, not of any one company. Enforced in
+  `src/lib/supabase/middleware.ts`: a signed-in user with
+  `must_change_password` set can't reach any page except `/set-password`
+  and `/sign-out`, even by typing a URL directly. The 7-day expiry is
+  checked at sign-in time (`src/app/sign-in/actions.ts`) — an expired
+  temporary password signs the session back out immediately with
+  "Contact us for a new one."
+- `super_admins`: a bare allow-list, RLS-enabled with **zero policies**
+  (service-role only, no screen ever writes to it — add a row by hand in
+  the SQL editor).
 - Email goes through `src/lib/email/send.ts`, a thin Resend HTTP wrapper.
   Without `RESEND_API_KEY`/`EMAIL_FROM` set, sends are logged to the
   console instead of failing — convenient for local testing, not for
-  production.
+  production. Team invites never send email (copy/share manually, same as
+  before this layer existed) — only owner accounts created via `/admin` do.
+- The brand name used in admin-issued emails and "Copy login details" text
+  is one setting, `PLATFORM_BRAND_NAME` in `src/lib/platform-config.ts` —
+  currently "Cab Invoicing" as a placeholder, independent of the
+  TaxiMunshi-branded public marketing site.
 
 ## Known environment quirks
 
@@ -126,15 +147,17 @@ library — Server Components + `useState`, Supabase JS client directly.
 - **`feat/bulk-select-share-invoices`** (1 commit ahead of main, **not
   yet pushed**) — multi-select to bulk-share invoices via the share
   sheet. Done.
-- **`feat/invite-only-admin`** (currently **uncommitted** — exists only
-  as working-tree changes, stashed when not actively being worked on)
-  — the invite-only SaaS + `/admin` platform panel described above:
-  closes public signup, locks the old self-serve onboarding page, adds
-  the company switcher, suspend/reactivate, create-company-and-invite
-  flow. Built and self-verified (typecheck/tests/lint clean against
-  baseline) but **awaiting the user's manual click-through confirmation
-  before it gets committed** — do not commit this branch's changes
-  without that confirmation.
+- **`feat/invite-only-admin`** — superseded by `feat/saas-access` below,
+  kept only for reference (stashed, never committed).
+- **`feat/saas-access`** (currently **uncommitted** — exists only as
+  working-tree changes; merged up to date with `main` as of this entry)
+  — the invite-only SaaS + `/admin` platform panel described above, on
+  the temporary-password model (no invite links). Built and
+  self-verified (typecheck/tests/lint clean against baseline) but
+  **awaiting the user's manual click-through confirmation before it gets
+  committed** — do not commit this branch's changes without that
+  confirmation. The migration (`0015_saas_access.sql`) has not been run
+  against the real Supabase project yet.
 - **`fix/invoice-page-packing-and-charge-memory`** — identical to main,
   effectively merged/stale; matches `origin`.
 
