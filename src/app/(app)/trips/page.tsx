@@ -18,8 +18,10 @@ import type {
 } from "@/lib/supabase/types";
 import { tripToLines, tripTotal } from "@/lib/trip-lines";
 import { formatINR } from "@/lib/format";
+import { getUnbilledTripsByClient } from "@/lib/unbilled-trips";
 import { AddTripButton } from "./add-trip-button";
 import { TripRowActions } from "./trip-row-actions";
+import { ReadyToBill } from "./ready-to-bill";
 
 export const metadata = { title: "Trips" };
 
@@ -75,7 +77,7 @@ function computeAmount(trip: Trip, rate: RateCard | undefined): number | null {
 export default async function TripsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; justLogged?: string }>;
 }) {
   const { supabase, membership } = await requireMembership();
   const params = await searchParams;
@@ -83,6 +85,7 @@ export default async function TripsPage({
     params.status === "all" || params.status === "invoiced"
       ? params.status
       : "uninvoiced";
+  const unbilledByClient = await getUnbilledTripsByClient(supabase, membership.company_id);
 
   const tripsQuery = supabase
     .from("trips")
@@ -212,6 +215,8 @@ export default async function TripsPage({
           </div>
         )}
       </ListHeader>
+
+      <ReadyToBill clients={unbilledByClient} justLoggedClientId={params.justLogged} />
 
       {noPrereqs && (
         <Card>
