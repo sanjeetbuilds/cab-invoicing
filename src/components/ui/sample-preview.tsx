@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Upload } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { HowItWorksCard } from "@/components/help/how-it-works-card";
 
 /**
  * Empty-state preview used on Clients, Vehicles, Rate cards, Trips,
@@ -30,6 +31,7 @@ export function SamplePreview({
   primary,
   importHref,
   setupHint,
+  howItWorksStep,
   children,
 }: {
   icon?: ReactNode;
@@ -43,6 +45,9 @@ export function SamplePreview({
   primary: { label: string; href: string };
   importHref?: string;
   setupHint?: { step: number; total: number };
+  /** Shows the compact 4-step "how it works" strip below the faded
+   *  sample rows, with this step id highlighted ("" for no highlight). */
+  howItWorksStep?: string;
   children: ReactNode;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -55,6 +60,7 @@ export function SamplePreview({
   }, []);
 
   return (
+    <div className="flex flex-col gap-4">
     <div className="relative">
       {/* Faded sample rows beneath the floating card. Natural
           opacity + downward gradient, with a soft blur so anything
@@ -130,6 +136,8 @@ export function SamplePreview({
           </Link>
         )}
       </div>
+    </div>
+    {howItWorksStep !== undefined && <HowItWorksCard highlightStep={howItWorksStep || undefined} />}
     </div>
   );
 }

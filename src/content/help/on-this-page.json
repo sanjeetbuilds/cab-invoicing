@@ -1,0 +1,65 @@
+[
+  { "path": "/dashboard", "tips": [
+    "The 4 steps show where you are.",
+    "Unbilled trips are waiting to be invoiced.",
+    "Switch company from the top menu."
+  ]},
+  { "path": "/trips/new", "tips": [
+    "Pick a car or add a new one from the list.",
+    "Closing km must be more than opening km.",
+    "Use \"Save & add another\" for many trips."
+  ]},
+  { "path": "/trips/bulk", "tips": [
+    "Your entries save automatically as you type.",
+    "Only local and outstation trips can be entered here.",
+    "Use \"Log trip\" for a named or fixed package."
+  ]},
+  { "path": "/trips", "tips": [
+    "One trip = one duty slip.",
+    "Duty date decides which month it's billed in.",
+    "Toll, tax and parking are added on the invoice.",
+    "Billed trips are locked."
+  ]},
+  { "path": "/invoices/build", "tips": [
+    "Invoices are built from trips.",
+    "Invoice date is printed on the bill; billing period picks the trips.",
+    "Add toll, state tax and parking as an extra charge.",
+    "Check the preview before issuing."
+  ]},
+  { "path": "/invoices/quick", "tips": [
+    "Quick invoice logs one trip and issues its invoice in one step.",
+    "Use Build invoice instead when billing several trips together."
+  ]},
+  { "path": "/invoices", "tips": [
+    "⋮ menu has Download, Share, Edit, Mark paid, Undo.",
+    "Paid and undone invoices can't be edited.",
+    "Share sends the PDF straight from your device."
+  ]},
+  { "path": "/vehicles", "tips": [
+    "Vehicles used in trips can't be deleted — mark them inactive instead.",
+    "You can add a vehicle right from the trip form too."
+  ]},
+  { "path": "/clients", "tips": [
+    "State decides CGST+SGST or IGST.",
+    "Tick RCM only if the client pays GST themselves.",
+    "You can add a client right from the trip form too."
+  ]},
+  { "path": "/rate-cards", "tips": [
+    "One rate card per client per car type.",
+    "Changing rates never changes issued invoices — but it does affect any invoice you build afterward, even for older trips."
+  ]},
+  { "path": "/bulk-import", "tips": [
+    "Download the template first.",
+    "Don't rename the column headings.",
+    "Only .xlsx, up to 10 MB."
+  ]},
+  { "path": "/settings", "tips": [
+    "Company state decides GST.",
+    "Branding controls how your logo appears on invoices.",
+    "Next invoice number continues your old numbering."
+  ]},
+  { "path": "/quotations", "tips": [
+    "Accepting a quotation saves its rates as a rate card.",
+    "A quotation can be edited at any time, even after it's accepted."
+  ]}
+]

@@ -3,11 +3,24 @@ import { Input as InputPrimitive } from "@base-ui/react/input"
 
 import { cn } from "@/lib/utils"
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+function Input({ className, type, onWheel, ...props }: React.ComponentProps<"input">) {
   return (
     <InputPrimitive
       type={type}
       data-slot="input"
+      // Number inputs otherwise treat scroll/trackpad-swipe over a
+      // focused field as "spin the value" in most browsers — easy to
+      // trigger by accident while scrolling past a count field on a
+      // form. Blurring on wheel turns that into an ordinary page
+      // scroll instead of a silent value change.
+      onWheel={
+        type === "number"
+          ? (e) => {
+              e.currentTarget.blur();
+              onWheel?.(e);
+            }
+          : onWheel
+      }
       className={cn(
         // Base. text-base on mobile (16px) suppresses iOS Safari's
         // auto-zoom on focus; tighter text-sm at sm+ keeps desktop density.

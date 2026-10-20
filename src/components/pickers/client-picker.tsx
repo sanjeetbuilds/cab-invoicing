@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronsUpDown, Search } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/lib/supabase/types";
 
@@ -11,6 +11,12 @@ export interface ClientPickerProps {
   clients: ClientPickerItem[];
   value: string | "";
   onValueChange: (id: string) => void;
+  /**
+   * Called when the user clicks "+ Add client…". Receives whatever the
+   * user has typed into the search box so the inline form can pre-fill
+   * the name field.
+   */
+  onAddNew?: (typedName: string) => void;
   id?: string;
   placeholder?: string;
   className?: string;
@@ -24,6 +30,7 @@ export function ClientPicker({
   clients,
   value,
   onValueChange,
+  onAddNew,
   id,
   placeholder = "Pick a client",
   className,
@@ -81,7 +88,12 @@ export function ClientPicker({
       setHighlight((h) => Math.max(0, h - 1));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      selectAt(highlight);
+      if (filtered.length === 0 && onAddNew) {
+        onAddNew(query);
+        setOpen(false);
+      } else {
+        selectAt(highlight);
+      }
     } else if (e.key === "Escape") {
       setOpen(false);
     }
@@ -164,6 +176,19 @@ export function ClientPicker({
               })
             )}
           </div>
+          {onAddNew && (
+            <button
+              type="button"
+              onClick={() => {
+                onAddNew(query);
+                setOpen(false);
+              }}
+              className="flex w-full items-center gap-2 border-t border-border bg-muted/30 px-3 py-2 text-sm font-medium text-primary hover:bg-muted/50"
+            >
+              <Plus className="h-4 w-4" />
+              {query.trim() ? `Add client: ${query.trim()}` : "Add new client"}
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 [
+  { "id": "f00", "category": "getting-started", "question": "Where can I get help on any screen?", "answer": "Click the Help button in the bottom corner of any page for tips on that screen, search, or to email support.", "guideSlug": "a0-how-it-works" },
   { "id": "f01", "category": "getting-started", "question": "How do I log in the first time?", "answer": "Use the link and temporary password from your welcome email, then set your own password.", "guideSlug": "a1-logging-in-first-time" },
   { "id": "f02", "category": "getting-started", "question": "Which steps should I finish first?", "answer": "Company details, then clients, vehicles and rate cards, then your first trip and invoice.", "guideSlug": "a3-finish-your-setup" },
   { "id": "f03", "category": "getting-started", "question": "Can I use it on my phone?", "answer": "Yes, for everything except Bulk add trips, which needs a laptop or desktop.", "guideSlug": "a4-use-on-phone" },

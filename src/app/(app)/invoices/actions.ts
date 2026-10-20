@@ -588,6 +588,8 @@ export async function deleteInvoiceAction(
 const MarkPaidSchema = z.object({
   id: z.string().uuid(),
   paid: z.boolean(),
+  /** Optional — when marking paid, defaults to today if omitted. */
+  paidDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export type MarkPaidResult =
@@ -595,7 +597,7 @@ export type MarkPaidResult =
   | { ok: false; error: string };
 
 export async function markInvoicePaidAction(
-  raw: { id: string; paid: boolean },
+  raw: { id: string; paid: boolean; paidDate?: string },
 ): Promise<MarkPaidResult> {
   const parsed = MarkPaidSchema.safeParse(raw);
   if (!parsed.success) {
@@ -627,7 +629,7 @@ export async function markInvoicePaidAction(
     .from("invoices")
     .update({
       status: nextStatus,
-      paid_date: parsed.data.paid ? today : null,
+      paid_date: parsed.data.paid ? (parsed.data.paidDate ?? today) : null,
     })
     .eq("id", parsed.data.id)
     .eq("company_id", ctx.companyId);

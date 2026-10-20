@@ -22,11 +22,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { Company, Invoice } from "@/lib/supabase/types";
+import type { Client, Company, Invoice, RateCard, Trip } from "@/lib/supabase/types";
 import { formatINR } from "@/lib/format";
+import { hasMatchingRate } from "@/lib/invoice-builder";
 import { SeedBanner } from "../seed/seed-banner";
 import { SetupChecklist, type SetupStatus } from "./setup-checklist";
 import { NeedHelpCard } from "./need-help-card";
+import { SmartReminders, type UnbilledClientRow } from "./smart-reminders";
+import { HowItWorksStrip } from "@/components/help/how-it-works-strip";
 
 export const metadata = {
   title: "Dashboard",
@@ -47,6 +50,11 @@ function firstOfFinancialYearIso(): string {
   // getMonth() is zero based, so April is 3.
   const fyStartYear = d.getMonth() >= 3 ? y : y - 1;
   return `${fyStartYear}-04-01`;
+}
+
+/** ISO date 30 days before now, for the "unpaid over 30 days" reminder. */
+function thirtyDaysAgoIso(): string {
+  return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 /** Friendly long date for the welcome strip, e.g. "Monday, 2 June 2026". */
@@ -79,10 +87,14 @@ export default async function DashboardPage() {
     { count: rateCardCount },
     { count: tripCount },
     { count: invoiceCount },
+    { count: paidInvoiceCount },
     { data: unpaidInvoices },
     { data: billedInvoices },
     { data: recentInvoices },
     { data: companyMeta },
+    { data: clientRows },
+    { data: unbilledTrips },
+    { data: rateCardRows },
   ] = await Promise.all([
     supabase
       .from("clients")
@@ -106,10 +118,15 @@ export default async function DashboardPage() {
       .eq("company_id", membership.company_id),
     supabase
       .from("invoices")
-      .select("net_amount")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", membership.company_id)
+      .eq("status", "paid"),
+    supabase
+      .from("invoices")
+      .select("invoice_date, net_amount")
       .eq("company_id", membership.company_id)
       .eq("status", "unpaid")
-      .returns<Pick<Invoice, "net_amount">[]>(),
+      .returns<Pick<Invoice, "invoice_date" | "net_amount">[]>(),
     supabase
       .from("invoices")
       .select("invoice_date, net_amount")
@@ -135,6 +152,27 @@ export default async function DashboardPage() {
       .select("name, address, phone, gstin")
       .eq("id", membership.company_id)
       .maybeSingle<Pick<Company, "name" | "address" | "phone" | "gstin">>(),
+    supabase
+      .from("clients")
+      .select("id, name")
+      .eq("company_id", membership.company_id)
+      .returns<Pick<Client, "id" | "name">[]>(),
+    // Smart reminders read raw uninvoiced trips and rate cards directly
+    // (not through buildInvoiceDraft, which is scoped to one client at a
+    // time) so the dashboard can summarise across every client at once.
+    supabase
+      .from("trips")
+      .select("id, client_id, car_type, mode, plan_name, billing_method, date")
+      .eq("company_id", membership.company_id)
+      .eq("invoiced", false)
+      .returns<
+        Pick<Trip, "id" | "client_id" | "car_type" | "mode" | "plan_name" | "billing_method" | "date">[]
+      >(),
+    supabase
+      .from("rate_cards")
+      .select("client_id, car_type, mode, plan_name")
+      .eq("company_id", membership.company_id)
+      .returns<Pick<RateCard, "client_id" | "car_type" | "mode" | "plan_name">[]>(),
   ]);
 
   const setupStatus: SetupStatus = {
@@ -150,6 +188,36 @@ export default async function DashboardPage() {
     (s, i) => s + Number(i.net_amount ?? 0),
     0,
   );
+
+  // Smart reminders: group uninvoiced trips by client, and split out the
+  // ones that have no matching rate card at all (hasMatchingRate mirrors
+  // the exact lookup rule the real invoice builder uses).
+  const clientNameById = new Map((clientRows ?? []).map((c) => [c.id, c.name]));
+  const rateMissingCount = (unbilledTrips ?? []).filter(
+    (t) => !hasMatchingRate(t, rateCardRows ?? []),
+  ).length;
+  const byClient = new Map<string, { count: number; oldestDate: string }>();
+  for (const t of unbilledTrips ?? []) {
+    const existing = byClient.get(t.client_id);
+    if (!existing) {
+      byClient.set(t.client_id, { count: 1, oldestDate: t.date });
+    } else {
+      existing.count += 1;
+      if (t.date < existing.oldestDate) existing.oldestDate = t.date;
+    }
+  }
+  const unbilledByClient: UnbilledClientRow[] = Array.from(byClient.entries())
+    .map(([clientId, v]) => ({
+      clientId,
+      clientName: clientNameById.get(clientId) ?? "Unknown client",
+      count: v.count,
+      oldestDate: v.oldestDate,
+    }))
+    .sort((a, b) => a.oldestDate.localeCompare(b.oldestDate));
+
+  const unpaidOver30Count = (unpaidInvoices ?? []).filter(
+    (i) => i.invoice_date < thirtyDaysAgoIso(),
+  ).length;
 
   // Billed figures, both from the one issued-invoice set above.
   const billed = billedInvoices ?? [];
@@ -200,7 +268,22 @@ export default async function DashboardPage() {
       </div>
 
       {isFresh && <SeedBanner />}
+      <HowItWorksStrip
+        status={{
+          setup: setupStatus.hasClient && setupStatus.hasVehicle,
+          trips: setupStatus.hasTrip,
+          invoice: setupStatus.hasInvoice,
+          share: (paidInvoiceCount ?? 0) > 0,
+        }}
+      />
       <SetupChecklist status={setupStatus} />
+      <SmartReminders
+        unbilled={unbilledByClient}
+        rateMissingCount={rateMissingCount}
+        unpaidCount={(unpaidInvoices ?? []).length}
+        unpaidTotal={outstanding}
+        unpaidOver30Count={unpaidOver30Count}
+      />
 
       {/* Four metric boxes. Two columns on phones, four in a row on
           desktop. White cards with a soft shadow, coloured title and

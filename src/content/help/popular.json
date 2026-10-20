@@ -1,4 +1,5 @@
 [
+  { "label": "How TaxiMunshi works", "guideSlug": "a0-how-it-works" },
   { "label": "Build your first invoice", "guideSlug": "h1-build-invoice" },
   { "label": "How GST is calculated", "guideSlug": "k1-how-gst-is-calculated" },
   { "label": "Upload data with Excel", "guideSlug": "f1-excel-import" },

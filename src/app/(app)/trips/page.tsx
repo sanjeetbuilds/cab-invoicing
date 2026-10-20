@@ -245,10 +245,11 @@ export default async function TripsPage({
           icon={<Route className="h-4 w-4" />}
           iconChipBg="#EEEDFE"
           iconChipFg="#3C3489"
-          title="This is where your trips live."
-          body="Add each trip here. Trips become lines on the next bill."
+          title="No trips yet"
+          body="Every invoice is made from trips. Add your duties here first."
           primary={{ label: "Log trip", href: "/trips/new" }}
           setupHint={{ step: 5, total: 6 }}
+          howItWorksStep="trips"
         >
           <TripsSampleRows />
         </SamplePreview>

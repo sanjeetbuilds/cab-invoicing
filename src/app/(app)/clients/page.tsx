@@ -155,11 +155,12 @@ export default async function ClientsPage({
           icon={<Users className="h-4 w-4" />}
           iconChipBg="#E6F1FB"
           iconChipFg="#0C447C"
-          title="This is where your clients live."
-          body="Add the companies you bill. We use their state to work out the GST."
+          title="No clients yet"
+          body="Add the companies you bill. Their state decides the GST."
           primary={{ label: "Add your first client", href: "/clients/new" }}
           importHref="/bulk-import?scope=clients"
           setupHint={{ step: 2, total: 6 }}
+          howItWorksStep="setup"
         >
           <ClientsSampleRows />
         </SamplePreview>

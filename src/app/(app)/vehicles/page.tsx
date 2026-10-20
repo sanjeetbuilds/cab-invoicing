@@ -64,11 +64,12 @@ export default async function VehiclesPage() {
           icon={<Truck className="h-4 w-4" />}
           iconChipBg="#F1EAFE"
           iconChipFg="#4A2D7B"
-          title="This is where your vehicles live."
-          body="Add the cars you use for trips. Every trip is linked to one car."
+          title="No cars yet"
+          body="Add the cars you run. You'll pick them when adding trips."
           primary={{ label: "Add vehicle", href: "/vehicles/new" }}
           importHref="/bulk-import?scope=vehicles"
           setupHint={{ step: 3, total: 6 }}
+          howItWorksStep="setup"
         >
           <VehiclesSampleRows />
         </SamplePreview>

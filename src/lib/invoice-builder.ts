@@ -222,3 +222,25 @@ function fmtTripDate(iso: string): string {
   if (!y || !m || !d) return iso;
   return `${Number(d)}/${Number(m)}/${y.slice(2)}`;
 }
+
+/**
+ * Standalone rate-match check, mirroring resolveRate()'s lookup rule
+ * exactly (including the "outstation billed at the local slab borrows
+ * the local rate card" case) without touching buildInvoiceDraft itself —
+ * for places that only need a yes/no (e.g. the dashboard's "rate
+ * missing" count), not a full invoice draft.
+ */
+export function hasMatchingRate(
+  trip: Pick<Trip, "client_id" | "car_type" | "mode" | "plan_name" | "billing_method">,
+  rateCards: Pick<RateCard, "client_id" | "car_type" | "mode" | "plan_name">[],
+): boolean {
+  const keys = new Set(
+    rateCards.map((r) => `${r.client_id}|${r.car_type}|${r.mode}|${r.plan_name ?? ""}`),
+  );
+  if (trip.mode === "transfer" || trip.mode === "package") {
+    return keys.has(`${trip.client_id}|${trip.car_type}|${trip.mode}|${trip.plan_name ?? ""}`);
+  }
+  const lookupMode =
+    trip.mode === "local" || trip.billing_method === "slab" ? "local" : "outstation";
+  return keys.has(`${trip.client_id}|${trip.car_type}|${lookupMode}|`);
+}
