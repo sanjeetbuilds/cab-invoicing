@@ -76,6 +76,7 @@ export default async function RateCardsPage() {
         <PageHeader
           title="Rate cards"
           description="Your prices for each client. They update when a client accepts a quotation."
+          helpSlug="e1-what-is-a-rate-card"
         >
           <Link
             href="/bulk-import?scope=rate_cards"

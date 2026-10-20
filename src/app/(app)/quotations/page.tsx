@@ -67,12 +67,12 @@ export default async function QuotationsPage() {
   // populated list gets a title-only header and renders the action row
   // with the filter so they share one line.
   const fullHeader = (
-    <PageHeader title="Quotations" description={description}>
+    <PageHeader title="Quotations" description={description} helpSlug="i1-create-quotation">
       {actions}
     </PageHeader>
   );
   const titleHeader = (
-    <PageHeader title="Quotations" description={description} />
+    <PageHeader title="Quotations" description={description} helpSlug="i1-create-quotation" />
   );
 
   return (

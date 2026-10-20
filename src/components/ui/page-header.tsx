@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { HelpIconLink } from "@/components/help/help-icon-link";
 
 /**
  * Standard page header. Mobile: smaller title, hidden subtitle, action
@@ -17,12 +18,16 @@ export function PageHeader({
   children,
   bordered = false,
   className,
+  helpSlug,
 }: {
   title: React.ReactNode;
   description?: React.ReactNode;
   children?: React.ReactNode;
   bordered?: boolean;
   className?: string;
+  /** Guide slug for the "?" help icon shown next to the title. Omit on
+   *  pages with no matching guide. */
+  helpSlug?: string;
 }) {
   return (
     <div
@@ -33,9 +38,12 @@ export function PageHeader({
       )}
     >
       <div className="min-w-0">
-        <h1 className="text-lg sm:text-2xl font-semibold tracking-tight text-foreground leading-tight">
-          {title}
-        </h1>
+        <div className="flex items-center gap-1.5">
+          <h1 className="text-lg sm:text-2xl font-semibold tracking-tight text-foreground leading-tight">
+            {title}
+          </h1>
+          {helpSlug && <HelpIconLink guideSlug={helpSlug} />}
+        </div>
         {description && (
           <p className="hidden sm:block mt-1 text-sm text-muted-foreground">
             {description}

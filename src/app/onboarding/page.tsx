@@ -7,7 +7,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
-import { SUPPORT_CONTACT, supportWhatsAppLink } from "@/lib/platform-config";
+import { SUPPORT_CONTACT } from "@/lib/platform-config";
+import { plainSupportMailto } from "@/lib/support-mailto";
 
 export const metadata = {
   title: "No company yet",
@@ -47,12 +48,10 @@ export default async function OnboardingPage() {
         </CardHeader>
         <CardContent>
           <a
-            href={supportWhatsAppLink("Hi, I need access to Cab Invoicing.")}
-            target="_blank"
-            rel="noreferrer"
+            href={plainSupportMailto()}
             className="text-sm font-medium text-primary hover:text-primary-hover underline"
           >
-            Contact us on WhatsApp
+            Email {SUPPORT_CONTACT}
           </a>
         </CardContent>
       </Card>

@@ -1,0 +1,57 @@
+[
+  { "id": "f01", "category": "getting-started", "question": "How do I log in the first time?", "answer": "Use the link and temporary password from your welcome email, then set your own password.", "guideSlug": "a1-logging-in-first-time" },
+  { "id": "f02", "category": "getting-started", "question": "Which steps should I finish first?", "answer": "Company details, then clients, vehicles and rate cards, then your first trip and invoice.", "guideSlug": "a3-finish-your-setup" },
+  { "id": "f03", "category": "getting-started", "question": "Can I use it on my phone?", "answer": "Yes, for everything except Bulk add trips, which needs a laptop or desktop.", "guideSlug": "a4-use-on-phone" },
+  { "id": "f04", "category": "getting-started", "question": "Is there an Android/iPhone app?", "answer": "It works in your phone's browser, and you can install it to your home screen so it opens like an app.", "guideSlug": "a4-use-on-phone" },
+  { "id": "f05", "category": "getting-started", "question": "How do I switch companies?", "answer": "Click the company name at the top and choose from the list.", "guideSlug": "a5-multiple-companies" },
+  { "id": "f06", "category": "getting-started", "question": "Do I need internet?", "answer": "Yes, TaxiMunshi needs an internet connection to work.", "guideSlug": null },
+
+  { "id": "f07", "category": "company-setup", "question": "Where do I enter my GSTIN?", "answer": "Settings → Company.", "guideSlug": "b1-company-gst-details" },
+  { "id": "f08", "category": "company-setup", "question": "I'm not GST registered. Can I use TaxiMunshi?", "answer": "Yes — just leave the GSTIN field blank in Settings → Company.", "guideSlug": "b1-company-gst-details" },
+  { "id": "f09", "category": "company-setup", "question": "How do I add my logo?", "answer": "Settings → Branding → Upload logo.", "guideSlug": "b3-logo-branding" },
+  { "id": "f10", "category": "company-setup", "question": "Can I continue my old invoice numbers?", "answer": "Yes — set the next number in Settings → Numbering before your first invoice.", "guideSlug": "b4-invoice-numbering" },
+  { "id": "f11", "category": "company-setup", "question": "Can I change the invoice number later?", "answer": "You can change it any time in Settings → Numbering, but avoid lowering it once invoices exist — that risks confusing or duplicate numbers.", "guideSlug": "b4-invoice-numbering" },
+
+  { "id": "f12", "category": "vehicles", "question": "How do I add vehicles?", "answer": "Vehicles → Add vehicle, or import several at once with Excel.", "guideSlug": "c1-add-vehicle" },
+  { "id": "f13", "category": "vehicles", "question": "Why can't I delete a vehicle?", "answer": "It's used in one or more trips, so deleting it is blocked to keep your records correct.", "guideSlug": "c2-edit-remove-vehicle" },
+
+  { "id": "f14", "category": "clients", "question": "Why does a client's state matter?", "answer": "It decides whether GST is charged as CGST+SGST or IGST on their invoices.", "guideSlug": "k1-how-gst-is-calculated" },
+  { "id": "f15", "category": "clients", "question": "What is RCM?", "answer": "Reverse charge — the client pays GST directly instead of you. Only turn it on if your CA confirms it applies.", "guideSlug": "k2-when-to-use-rcm" },
+  { "id": "f16", "category": "clients", "question": "I changed a client's details. Will old invoices change?", "answer": "No — only invoices you build after the change use the new details.", "guideSlug": "d2-edit-client" },
+
+  { "id": "f17", "category": "rate-cards", "question": "What's an extra km / extra hour charge?", "answer": "The rate you charge once a local trip goes beyond its package's included kilometres or hours.", "guideSlug": "e1-what-is-a-rate-card" },
+  { "id": "f18", "category": "rate-cards", "question": "How do I set outstation rates?", "answer": "Open the rate card for that client and car type, and fill in the Outstation section.", "guideSlug": "e2-create-rate-card" },
+  { "id": "f19", "category": "rate-cards", "question": "Can one client have different rates per car type?", "answer": "Yes — each car type gets its own rate card.", "guideSlug": "e2-create-rate-card" },
+  { "id": "f20", "category": "rate-cards", "question": "I changed rates. Do old invoices change?", "answer": "Already-issued invoices never change. But any invoice you build afterward uses the new rates, even for older trips that haven't been invoiced yet.", "guideSlug": "e3-change-rates" },
+
+  { "id": "f21", "category": "excel-import", "question": "Where's the sample Excel file?", "answer": "Bulk import → Download template (.xlsx).", "guideSlug": "f1-excel-import" },
+  { "id": "f22", "category": "excel-import", "question": "Can I upload CSV?", "answer": "No, only .xlsx files.", "guideSlug": "f1-excel-import" },
+  { "id": "f23", "category": "excel-import", "question": "Why were some rows skipped?", "answer": "They matched an existing client, vehicle, or rate card — see what happens to duplicates.", "guideSlug": "f2-import-duplicates" },
+  { "id": "f24", "category": "excel-import", "question": "My data is in old PDF bills.", "answer": "Email them to hello@taximunshi.com with your company name and we'll help.", "guideSlug": "f4-old-data-migration" },
+
+  { "id": "f25", "category": "trips", "question": "How do I log a trip?", "answer": "Trips → Log trip.", "guideSlug": "g1-log-a-trip" },
+  { "id": "f26", "category": "trips", "question": "Can I add many trips quickly?", "answer": "Yes — Trips → Bulk add, on a laptop or desktop.", "guideSlug": "g3-bulk-add-trips" },
+  { "id": "f27", "category": "trips", "question": "Why can't I edit a trip?", "answer": "It's already on an issued invoice — undo the invoice first, or edit it if it's still unpaid.", "guideSlug": "g2-edit-delete-trip" },
+  { "id": "f28", "category": "trips", "question": "Why is my trip missing from the invoice?", "answer": "Usually there's no rate card yet for that client, car type and rate plan.", "guideSlug": "g4-trip-missing-from-invoice" },
+
+  { "id": "f29", "category": "invoices", "question": "How do I build an invoice?", "answer": "Invoices → Build invoice.", "guideSlug": "h1-build-invoice" },
+  { "id": "f30", "category": "invoices", "question": "How is GST calculated?", "answer": "Automatically, from your company's state, the client's state, and their RCM setting.", "guideSlug": "k1-how-gst-is-calculated" },
+  { "id": "f31", "category": "invoices", "question": "Can I edit an invoice?", "answer": "Drafts and issued-unpaid invoices can be edited. Paid and undone invoices can't.", "guideSlug": "h4-edit-invoice" },
+  { "id": "f32", "category": "invoices", "question": "Undo vs delete — what's the difference?", "answer": "Undo cancels an issued invoice but keeps it on record as \"Undone.\" Delete removes a draft, or an already-undone invoice, completely.", "guideSlug": "h5-undo-invoice" },
+  { "id": "f33", "category": "invoices", "question": "Can an undone invoice's number be reused?", "answer": "Not while it stays marked Undone — but deleting the undone invoice frees its number for reuse.", "guideSlug": "h6-delete-invoice" },
+  { "id": "f34", "category": "invoices", "question": "How do I mark an invoice as paid?", "answer": "Open the ⋮ menu on the invoice and choose Mark paid.", "guideSlug": "h3-mark-paid-unpaid" },
+  { "id": "f35", "category": "invoices", "question": "How do I share an invoice?", "answer": "Open it and click Share to use your device's own share menu.", "guideSlug": "h2-download-share-invoice" },
+  { "id": "f36", "category": "invoices", "question": "The total looks wrong.", "answer": "Check the trip's details, the rate card, and your GST settings.", "guideSlug": "n5-total-looks-wrong" },
+
+  { "id": "f37", "category": "quotations", "question": "How do I send a quote?", "answer": "Quotations → New quotation.", "guideSlug": "i1-create-quotation" },
+  { "id": "f38", "category": "quotations", "question": "What happens when a quote is accepted?", "answer": "Its rates are saved as a rate card for that client, ready to bill against.", "guideSlug": "i3-quotation-accepted" },
+
+  { "id": "f39", "category": "login-security", "question": "Forgot password?", "answer": "Click Forgot password? on the login page.", "guideSlug": "m1-forgot-password" },
+  { "id": "f40", "category": "login-security", "question": "\"Too many attempts\"?", "answer": "Wait 15 minutes, or use Forgot password? right away.", "guideSlug": "m3-too-many-attempts" },
+  { "id": "f41", "category": "login-security", "question": "Temporary password expired?", "answer": "Email hello@taximunshi.com for a new one.", "guideSlug": "m4-temp-password-expired" },
+  { "id": "f42", "category": "login-security", "question": "\"Account paused\"?", "answer": "Your data is safe — email hello@taximunshi.com to restore access.", "guideSlug": "m6-account-paused" },
+
+  { "id": "f43", "category": "data-privacy", "question": "Can others see my data?", "answer": "No — only your own company's team can see your data.", "guideSlug": "o1-who-can-see-my-data" },
+  { "id": "f44", "category": "data-privacy", "question": "Can TaxiMunshi staff see my invoices?", "answer": "No — we only see your company name and account status.", "guideSlug": "o2-can-taximunshi-staff-see-data" },
+  { "id": "f45", "category": "data-privacy", "question": "How do I delete my account?", "answer": "Email hello@taximunshi.com from your registered email.", "guideSlug": "o5-delete-account" }
+]

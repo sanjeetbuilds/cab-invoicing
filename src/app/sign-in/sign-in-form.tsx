@@ -7,12 +7,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, MessageCircle } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supportWhatsAppLink } from "@/lib/platform-config";
+import { SUPPORT_CONTACT } from "@/lib/platform-config";
+import { plainSupportMailto } from "@/lib/support-mailto";
 import { signInAction, resendConfirmationAction, type AuthFailReason } from "./actions";
 
 const SignInSchema = z.object({
@@ -157,15 +158,13 @@ export function SignInForm() {
         {fail && (
           <div className="rounded-md bg-destructive-soft px-3 py-2 text-sm text-destructive">
             <p>{fail.message}</p>
-            {(fail.reason === "unregistered" || fail.reason === "expired") && (
+            {(fail.reason === "unregistered" || fail.reason === "expired" || fail.reason === "locked") && (
               <a
-                href={supportWhatsAppLink("Hi, I need access to Cab Invoicing.")}
-                target="_blank"
-                rel="noreferrer"
+                href={plainSupportMailto()}
                 className="mt-2 inline-flex items-center gap-1.5 font-medium underline"
               >
-                <MessageCircle className="h-3.5 w-3.5" />
-                Contact us
+                <Mail className="h-3.5 w-3.5" />
+                Email {SUPPORT_CONTACT}
               </a>
             )}
             {fail.reason === "unverified" && (
@@ -200,6 +199,13 @@ export function SignInForm() {
           )}
         </Button>
       </form>
+
+      <p className="text-center text-xs text-muted-foreground">
+        Trouble signing in? Email{" "}
+        <a href={plainSupportMailto()} className="font-medium text-primary hover:text-primary-hover">
+          {SUPPORT_CONTACT}
+        </a>
+      </p>
     </div>
   );
 }

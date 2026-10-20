@@ -80,6 +80,7 @@ export default async function ClientsPage({
         <PageHeader
           title="Clients"
           description="The companies you bill. We use their state to work out the GST."
+          helpSlug="d1-add-client"
         >
           {/* Desktop keeps all three buttons. On a phone Import and Bulk
               edit rates move into the overflow menu so Add client stays

@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/components/ui/page-header";
 import type { Company, Membership, Role } from "@/lib/supabase/types";
 import { SettingsTabs } from "./settings-tabs";
+import { HelpSupportSection } from "./help-support-section";
 
 export const metadata = { title: "Settings" };
 
@@ -74,11 +75,17 @@ export default async function SettingsPage() {
       <PageHeader
         title="Settings"
         description="Your company details, branding, numbering, terms, and team."
+        helpSlug="b1-company-gst-details"
       />
       <SettingsTabs
         company={company}
         currentRole={membership.role}
         members={memberRows}
+      />
+      <HelpSupportSection
+        companyName={company.name}
+        userName={user.email?.split("@")[0] ?? "-"}
+        userEmail={user.email ?? "-"}
       />
     </div>
   );

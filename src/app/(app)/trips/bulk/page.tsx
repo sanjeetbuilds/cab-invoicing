@@ -6,6 +6,7 @@ import type {
   RateCard,
   Vehicle,
 } from "@/lib/supabase/types";
+import { HelpIconLink } from "@/components/help/help-icon-link";
 import { BulkAddClient } from "./bulk-add-client";
 import { emptyDraftRow, type BulkDraftRow } from "./draft";
 
@@ -64,9 +65,12 @@ export default async function BulkAddPage() {
         <p className="text-xs text-muted-foreground">
           <Link href="/trips" className="underline">← Trips</Link>
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight mt-1">
-          Bulk add trips
-        </h1>
+        <div className="flex items-center gap-1.5 mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Bulk add trips
+          </h1>
+          <HelpIconLink guideSlug="g3-bulk-add-trips" />
+        </div>
         <p className="text-sm text-muted-foreground">
           Enter many trips in one go. Your work auto-saves while you type.
           Complete rows save as trips; incomplete rows stay in the draft.

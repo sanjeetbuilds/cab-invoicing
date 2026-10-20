@@ -1,0 +1,688 @@
+[
+  {
+    "slug": "a1-logging-in-first-time",
+    "title": "Logging in for the first time",
+    "category": "getting-started",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Open the login link from your welcome email or WhatsApp message.",
+      "Enter your email and the temporary password exactly as sent. Copy-paste it to avoid typing mistakes.",
+      "You'll see **Set your own password**. Choose at least 8 characters, with at least 1 letter and 1 number. It must be different from the temporary password.",
+      "Click **Save & continue**. You'll land on your dashboard.",
+      "The temporary password works for 7 days. If it has expired, email hello@taximunshi.com for a new one."
+    ],
+    "related": ["m1-forgot-password", "m4-temp-password-expired", "a3-finish-your-setup"]
+  },
+  {
+    "slug": "a2-dashboard-overview",
+    "title": "Your dashboard at a glance",
+    "category": "getting-started",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Four numbers at the top: **Billed, {month}**, **Billed this year**, **Outstanding**, and **Clients and cars**.",
+      "A 12-month chart of how much you've billed each month.",
+      "**Recent invoices** — your last 5 invoices, with a **See all** link.",
+      "If your company is new, a setup checklist appears first — see guide A3.",
+      "The company name at the top shows which company you're working in (see guide A5 if you have more than one)."
+    ],
+    "related": ["a3-finish-your-setup", "h7-billing-dashboard-chart", "a5-multiple-companies"]
+  },
+  {
+    "slug": "a3-finish-your-setup",
+    "title": "Finish your setup (recommended order)",
+    "category": "getting-started",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "**Add your company details** — your GST and contact information (guide B1).",
+      "**Add your first client**, or import several from Excel (guides D1 and F1).",
+      "**Add your vehicles**, or import them (guides C1 and F1).",
+      "**Set rates for a client** — what you charge them per car type (guides E1–E2, or F1 to import).",
+      "**Add your first trip** (guide G1).",
+      "**Make your first invoice** (guide H1).",
+      "Steps 2–4 can all be done in one go with the Excel upload — see guide F1."
+    ],
+    "related": ["b1-company-gst-details", "f1-excel-import", "h1-build-invoice"]
+  },
+  {
+    "slug": "a4-use-on-phone",
+    "title": "Use TaxiMunshi on your phone like an app",
+    "category": "getting-started",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Android (Chrome): open TaxiMunshi, then tap **Install** when prompted (or tap ⋮ → Install app).",
+      "iPhone (Safari): open TaxiMunshi, tap the Share icon, then **Add to Home Screen**.",
+      "The icon now opens TaxiMunshi like an app. You still need internet to use it.",
+      "**Bulk add trips** needs a wider screen and only works on a laptop or desktop — on a phone, use **Log trip** instead (guide G1)."
+    ],
+    "related": ["g1-log-a-trip", "g3-bulk-add-trips"]
+  },
+  {
+    "slug": "a5-multiple-companies",
+    "title": "Working with more than one company",
+    "category": "getting-started",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Click the company name at the top and choose a company from the list.",
+      "Everything you see — clients, trips, invoices — belongs only to the company you've selected.",
+      "Before building an invoice, check you're in the right company."
+    ],
+    "related": ["a2-dashboard-overview"]
+  },
+
+  {
+    "slug": "b1-company-gst-details",
+    "title": "Company & GST details",
+    "category": "company-setup",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Go to **Settings → Company**.",
+      "Fill in your company name, address, phone numbers, account email and invoice email.",
+      "Add your **GSTIN** if you're GST registered.",
+      "Set your **state** carefully — it decides whether GST is charged as CGST+SGST or IGST on every invoice (see guide K1).",
+      "Click **Save**.",
+      "Changes apply to new invoices only. Invoices already issued keep the details they were issued with."
+    ],
+    "related": ["k1-how-gst-is-calculated", "b4-invoice-numbering"]
+  },
+  {
+    "slug": "b3-logo-branding",
+    "title": "Logo and invoice branding",
+    "category": "company-setup",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Go to **Settings → Branding**.",
+      "Click **Upload logo**. PNG or JPG only, up to 2 MB — it's automatically resized to fit.",
+      "Choose how it appears on invoices: **Text only**, **Logo only**, or **Logo and text** (recommended).",
+      "Use **Replace logo** to change it later, or **Remove logo** to go back to text only.",
+      "Check the live preview on the page to see how your invoice header will look."
+    ],
+    "related": ["b1-company-gst-details"]
+  },
+  {
+    "slug": "b4-invoice-numbering",
+    "title": "Set where your invoice numbers continue from",
+    "category": "company-setup",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Go to **Settings → Numbering**.",
+      "Optionally set a **Prefix**, e.g. KC/26-27/ — it appears in front of every invoice number.",
+      "Set **Next number** to the number after your last old invoice. If your last bill was 148, enter 149.",
+      "Click **Save**.",
+      "Do this once, before issuing your first invoice. Each issued number is used once and is never reused, even if an invoice is later undone."
+    ],
+    "related": ["h1-build-invoice", "n7-duplicate-invoice-number-worry"]
+  },
+
+  {
+    "slug": "c1-add-vehicle",
+    "title": "Add a vehicle",
+    "category": "vehicles",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Go to **Vehicles** and click **Add vehicle**.",
+      "Enter the vehicle number (e.g. HR26AB1234) — it's formatted automatically as you type.",
+      "Choose the **Type** (Dzire, Sonet, Crysta, Innova, Ertiga, or Other).",
+      "Choose **Ownership**: Own, or Attached. If Attached, enter the vendor's name.",
+      "Leave **Active** on so it shows up when logging trips.",
+      "Click **Add vehicle**."
+    ],
+    "related": ["c2-edit-remove-vehicle", "f1-excel-import"]
+  },
+  {
+    "slug": "c2-edit-remove-vehicle",
+    "title": "Edit or remove a vehicle",
+    "category": "vehicles",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Open the vehicle, make your changes, and click **Save changes**.",
+      "To remove one, use the **Delete** option and confirm.",
+      "If a vehicle is used in any trips, it can't be deleted — switch it to inactive instead if you've stopped using it, so your records stay correct."
+    ],
+    "related": ["c1-add-vehicle"]
+  },
+
+  {
+    "slug": "d1-add-client",
+    "title": "Add a client",
+    "category": "clients",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Go to **Clients** and click **Add client**.",
+      "Enter the client's name as it should appear on invoices, their address, state, and GSTIN if they're registered.",
+      "Add a **Default contact** — the person, phone or email you deal with there.",
+      "Turn on **Reverse charge (RCM)** only if this client pays GST themselves under reverse charge (see guide K2).",
+      "Click **Save**."
+    ],
+    "related": ["k2-when-to-use-rcm", "e2-create-rate-card"]
+  },
+  {
+    "slug": "d2-edit-client",
+    "title": "Edit a client",
+    "category": "clients",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Open the client, make your changes, and click **Save**.",
+      "Changes apply to future invoices only — invoices you've already issued keep the details they were issued with.",
+      "If you change a client's state or RCM setting, double-check any draft invoices for them before issuing."
+    ],
+    "related": ["d1-add-client"]
+  },
+  {
+    "slug": "d3-remove-client",
+    "title": "Remove a client",
+    "category": "clients",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Open the client and choose **Delete**.",
+      "This also deletes any rate cards and quotations linked to that client — make sure that's what you want first.",
+      "A client with trips or invoices against them can't be deleted."
+    ],
+    "related": ["d1-add-client"]
+  },
+
+  {
+    "slug": "e1-what-is-a-rate-card",
+    "title": "What a rate card is",
+    "category": "rate-cards",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "A rate card is what you charge one client for one car type.",
+      "**Local**: a base rate for a package (e.g. 80 km / 8 hrs), plus extra km and extra hour charges, a night charge, and a driver allowance.",
+      "**Outstation**: a rate per km, plus a driver allowance.",
+      "**Packages**: a named, fixed-price trip, e.g. Airport drop or a round trip — enter a name and a fixed price.",
+      "Fill in only the sections you actually offer that client for that car type."
+    ],
+    "related": ["e2-create-rate-card", "e3-change-rates"]
+  },
+  {
+    "slug": "e2-create-rate-card",
+    "title": "Create a rate card",
+    "category": "rate-cards",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Go to **Rate cards → Add rate card**, or open a client and use **Add for this client**.",
+      "Choose the client and car type.",
+      "Fill in Local, Outstation and Package rates as needed (see guide E1).",
+      "Click **Save rates**."
+    ],
+    "related": ["e1-what-is-a-rate-card", "e3-change-rates"]
+  },
+  {
+    "slug": "e3-change-rates",
+    "title": "Change rates",
+    "category": "rate-cards",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Open the rate card, make your changes, and click **Save rates**.",
+      "Important: a rate change applies to **every invoice you build from now on** — even for older trips that were logged before the change but haven't been invoiced yet.",
+      "Invoices you've already issued are frozen and never change, no matter what you do to the rate card afterwards.",
+      "If you're about to change a client's rates, build and issue invoices for their outstanding trips first, so older work gets billed at the old rate."
+    ],
+    "related": ["e1-what-is-a-rate-card", "g4-trip-missing-from-invoice"]
+  },
+
+  {
+    "slug": "f1-excel-import",
+    "title": "Upload vehicles, clients and rate cards from Excel",
+    "category": "excel-import",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Go to **Bulk import**.",
+      "Click **Download template (.xlsx)**. It has sheets for Clients, Vehicles, Rate Cards, and a Notes sheet explaining each column.",
+      "Fill in one, two, or all three data sheets. Keep the column headings exactly as they are.",
+      "Save as .xlsx (not CSV), under 10 MB.",
+      "Click **Choose file**, pick your file, then **Upload and preview**.",
+      "Check the preview: rows with a problem are flagged with the reason next to them. Some typos, like state spellings, are corrected automatically and marked.",
+      "Click **Import {N} items** to save the clean rows (if some rows have errors, it shows as **Import {N} items (skip {M} errors)**).",
+      "Fix the flagged rows in your Excel file and upload again. Rows already imported won't be duplicated."
+    ],
+    "related": ["f2-import-duplicates", "f3-excel-errors"]
+  },
+  {
+    "slug": "f2-import-duplicates",
+    "title": "What happens to duplicates",
+    "category": "excel-import",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "If your file has the same client or vehicle twice, it's flagged so you can check before importing.",
+      "A rate card that matches an existing client and car type is updated with the new rates from your file."
+    ],
+    "related": ["f1-excel-import"]
+  },
+  {
+    "slug": "f3-excel-errors",
+    "title": "Common Excel errors and fixes",
+    "category": "excel-import",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "**\"State isn't a valid Indian state\"**: use the full name, e.g. Haryana, Uttar Pradesh, Delhi — check the Notes sheet for the full list.",
+      "**\"[Field] is required\"**: every column marked required in the template needs a value for that row.",
+      "**\"Client not found in your existing clients or in this upload's Clients sheet\"** (Rate Cards sheet): the client name must exactly match one in the Clients sheet, or one already saved in TaxiMunshi.",
+      "Contact person, phone and email from the Clients sheet are combined into one **Default contact** field once imported — that's expected.",
+      "File won't upload at all: check it's .xlsx and under 10 MB. If it still fails, email it to hello@taximunshi.com and we'll help."
+    ],
+    "related": ["f1-excel-import", "f4-old-data-migration"]
+  },
+  {
+    "slug": "f4-old-data-migration",
+    "title": "Your data is in old bills or a different format",
+    "category": "excel-import",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Email your old bills or spreadsheet to hello@taximunshi.com with your company name.",
+      "We'll help you get it into TaxiMunshi."
+    ],
+    "related": ["f1-excel-import"]
+  },
+
+  {
+    "slug": "g1-log-a-trip",
+    "title": "Log a trip",
+    "category": "trips",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Go to **Trips** and click **Log trip**.",
+      "Fill in the date (and an end date for multi-day trips), client, vehicle and car type.",
+      "Choose the rate plan — local package, outstation, or a named package.",
+      "Enter the kilometres and hours run (fields shown depend on the rate plan).",
+      "Add driver allowance or night charges if they apply.",
+      "Toll, parking and other charges aren't entered here — add them when you build the invoice instead.",
+      "Click **Log trip**. The amount is worked out automatically from the client's rate card."
+    ],
+    "related": ["g2-edit-delete-trip", "g4-trip-missing-from-invoice", "g3-bulk-add-trips"]
+  },
+  {
+    "slug": "g2-edit-delete-trip",
+    "title": "Edit or delete a trip",
+    "category": "trips",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "A trip can be edited or deleted freely until it's on an **issued** invoice.",
+      "Once a trip is on an issued invoice, it's locked — you'll see \"On an invoice. Undo it first.\"",
+      "To change a locked trip: edit the invoice if it's unpaid (guide H4), or undo the invoice (guide H5)."
+    ],
+    "related": ["h4-edit-invoice", "h5-undo-invoice"]
+  },
+  {
+    "slug": "g3-bulk-add-trips",
+    "title": "Bulk add trips (laptop or desktop only)",
+    "category": "trips",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Go to **Trips → Bulk add**. This needs a wider screen — it isn't available on a phone.",
+      "Type trips row by row like a spreadsheet.",
+      "Your entries save automatically as you type — you can close the page and come back later without losing anything.",
+      "Click **Save** to add the completed rows. Rows with a problem are highlighted.",
+      "Bulk add covers local and outstation trips — use **Log trip** for named/fixed packages."
+    ],
+    "related": ["g1-log-a-trip", "a4-use-on-phone"]
+  },
+  {
+    "slug": "g4-trip-missing-from-invoice",
+    "title": "Why a trip doesn't appear when building an invoice",
+    "category": "trips",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "There's no rate card for that client, car type and rate plan — this is the most common reason. Add or fix the rate card (guide E2) and it will appear.",
+      "It's already on another invoice.",
+      "You're building the invoice for a different client — the trip list only shows one client at a time.",
+      "You're in a different company — check the company name at the top (guide A5).",
+      "Note: the billing period you pick doesn't hide trips by date — every un-invoiced trip for that client shows, regardless of its date."
+    ],
+    "related": ["e2-create-rate-card", "h1-build-invoice"]
+  },
+
+  {
+    "slug": "h1-build-invoice",
+    "title": "Build an invoice",
+    "category": "invoices",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Go to **Invoices** and click **Build invoice**.",
+      "Choose the client and billing period.",
+      "All un-invoiced trips for that client are listed and ticked — untick any you don't want on this invoice.",
+      "Add extra charges if needed — toll, tax, or parking.",
+      "Check the preview: lines, GST, total and amount in words.",
+      "Click **Issue invoice** to give it the next invoice number, or **Save as draft** to come back to it later.",
+      "For a single trip, **Quick invoice** (next to Build invoice) logs the trip and issues its invoice in one step."
+    ],
+    "related": ["g4-trip-missing-from-invoice", "h4-edit-invoice", "k1-how-gst-is-calculated"]
+  },
+  {
+    "slug": "h2-download-share-invoice",
+    "title": "Download and share an invoice",
+    "category": "invoices",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Open the invoice and click **Download** to save the PDF.",
+      "Click **Share** to send it straight from your phone or laptop's own share menu — WhatsApp, email, or wherever you choose.",
+      "If your browser doesn't support that, it downloads the PDF instead so you can attach it yourself."
+    ],
+    "related": ["h1-build-invoice"]
+  },
+  {
+    "slug": "h3-mark-paid-unpaid",
+    "title": "Mark an invoice as paid or unpaid",
+    "category": "invoices",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "In the invoice list, open the **⋮** menu on the invoice and choose **Mark paid**.",
+      "Marked by mistake? Open **⋮** again and choose **Mark unpaid**."
+    ],
+    "related": ["h4-edit-invoice", "h7-billing-dashboard-chart"]
+  },
+  {
+    "slug": "h4-edit-invoice",
+    "title": "Edit an invoice",
+    "category": "invoices",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Open the **⋮** menu on the invoice and choose **Edit**.",
+      "You can change the date, billing period, trips and extra charges. The invoice number stays the same, and GST is recalculated.",
+      "**Draft**: opens straight away, no confirmation needed.",
+      "**Issued, unpaid**: you'll be asked to confirm first, since the client may already have a copy.",
+      "**Paid** or **Undone**: can't be edited. Mark it unpaid first, or undo it and issue a new one.",
+      "Viewers can't edit invoices."
+    ],
+    "related": ["h5-undo-invoice", "h3-mark-paid-unpaid", "k3-fixing-gst-mistake"]
+  },
+  {
+    "slug": "h5-undo-invoice",
+    "title": "Undo an invoice",
+    "category": "invoices",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Use this when an issued invoice was wrong and shouldn't count.",
+      "In the invoice list, open **⋮** and choose **Undo invoice**, then confirm.",
+      "It stays on record marked **Undone** — its number is never reused while it's in this state.",
+      "Its trips become free to put on a new invoice.",
+      "To free up the number itself, delete the undone invoice (guide H6).",
+      "Let your client know the old invoice no longer counts, and send them the new one."
+    ],
+    "related": ["h6-delete-invoice", "g2-edit-delete-trip"]
+  },
+  {
+    "slug": "h6-delete-invoice",
+    "title": "Delete an invoice",
+    "category": "invoices",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Only **drafts** and already-**undone** invoices can be deleted.",
+      "Open **⋮** and choose **Delete draft** or **Delete invoice**.",
+      "Deleting an undone invoice frees its number so it can be used again. A draft's number was never reserved, so nothing else changes.",
+      "Issued or paid invoices can't be deleted — undo them first (guide H5)."
+    ],
+    "related": ["h5-undo-invoice", "n7-duplicate-invoice-number-worry"]
+  },
+  {
+    "slug": "h7-billing-dashboard-chart",
+    "title": "Read your billing on the dashboard",
+    "category": "invoices",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "The chart on your dashboard shows how much you've billed each month.",
+      "Draft and undone invoices are left out — only issued (paid or unpaid) invoices count.",
+      "It shows one combined total per month, not split into paid and unpaid."
+    ],
+    "related": ["a2-dashboard-overview", "h3-mark-paid-unpaid"]
+  },
+
+  {
+    "slug": "i1-create-quotation",
+    "title": "Create a quotation",
+    "category": "quotations",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Go to **Quotations** and click **New quotation**.",
+      "Choose or add the client, then add rate lines — car type, package, price.",
+      "Save it, then click **Download** to send it to your client."
+    ],
+    "related": ["i3-quotation-accepted"]
+  },
+  {
+    "slug": "i2-edit-quotation",
+    "title": "Edit a quotation",
+    "category": "quotations",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Open the quotation, make your changes, and save — this works at any stage, even on one already marked accepted.",
+      "If you edit a quotation after accepting it, remember the rate cards it already created won't update automatically — check them too (guide E3)."
+    ],
+    "related": ["i3-quotation-accepted", "e3-change-rates"]
+  },
+  {
+    "slug": "i3-quotation-accepted",
+    "title": "Client accepted the quote",
+    "category": "quotations",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Open the quotation and click **Accept & create rate cards**, then confirm.",
+      "Its rates are saved as a rate card for that client, ready for billing trips straight away."
+    ],
+    "related": ["e2-create-rate-card", "i2-edit-quotation"]
+  },
+
+  {
+    "slug": "k1-how-gst-is-calculated",
+    "title": "How TaxiMunshi decides GST",
+    "category": "gst-explained",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Client in the **same state** as your company → CGST 2.5% + SGST 2.5%.",
+      "Client in a **different state** → IGST 5%.",
+      "Client marked **Reverse charge (RCM)** → no GST on the invoice; the client accounts for it themselves.",
+      "GST is worked out automatically. Your part is keeping your company's state, each client's state, and the RCM setting correct.",
+      "This is general help on how TaxiMunshi calculates GST. For your tax filing, check with your CA."
+    ],
+    "related": ["b1-company-gst-details", "k2-when-to-use-rcm", "k3-fixing-gst-mistake"]
+  },
+  {
+    "slug": "k2-when-to-use-rcm",
+    "title": "When to use RCM",
+    "category": "gst-explained",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Under reverse charge, the client — usually a registered business — pays the GST directly instead of you.",
+      "Turn on RCM for a client only if you've agreed this with them and your accountant confirms it applies.",
+      "If you're unsure, ask your CA. TaxiMunshi applies whatever you set on the client."
+    ],
+    "related": ["d1-add-client", "k1-how-gst-is-calculated"]
+  },
+  {
+    "slug": "k3-fixing-gst-mistake",
+    "title": "Correcting a GST mistake",
+    "category": "gst-explained",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Fix the setting that's wrong — your company's state, the client's state, or the RCM tick.",
+      "**Unpaid invoice**: edit it (guide H4) — GST recalculates from the corrected settings automatically.",
+      "**Paid invoice**: mark it unpaid and edit, or undo it and issue a new one (guide H5)."
+    ],
+    "related": ["h4-edit-invoice", "h5-undo-invoice"]
+  },
+
+  {
+    "slug": "m1-forgot-password",
+    "title": "Forgot password",
+    "category": "login-security",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "On the login page, click **Forgot password?** and enter your email.",
+      "Open the reset link from your email soon after requesting it (check Spam/Promotions if you don't see it) and set a new password.",
+      "This is also the way to change your password at any time — there's no separate \"change password\" setting, just request a reset whenever you want a new one."
+    ],
+    "related": ["a1-logging-in-first-time", "m3-too-many-attempts"]
+  },
+  {
+    "slug": "m3-too-many-attempts",
+    "title": "\"Too many attempts\"",
+    "category": "login-security",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "After 5 wrong passwords, login pauses for that email for 15 minutes.",
+      "You can still use **Forgot password?** during that time."
+    ],
+    "related": ["m1-forgot-password"]
+  },
+  {
+    "slug": "m4-temp-password-expired",
+    "title": "Temporary password expired",
+    "category": "login-security",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "A temporary password works for 7 days from when it was issued.",
+      "If it's expired, email hello@taximunshi.com and we'll send you a new one."
+    ],
+    "related": ["a1-logging-in-first-time"]
+  },
+  {
+    "slug": "m5-signing-out",
+    "title": "Shared or office computers",
+    "category": "login-security",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Always sign out when you're done on a shared computer: click **Sign out** in the sidebar (or the menu on mobile)."
+    ],
+    "related": []
+  },
+  {
+    "slug": "m6-account-paused",
+    "title": "\"Account paused\"",
+    "category": "login-security",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Your company's access has been paused. Your data is safe and unchanged — nothing is deleted.",
+      "Email hello@taximunshi.com to restore access."
+    ],
+    "related": []
+  },
+
+  {
+    "slug": "n1-page-not-loading",
+    "title": "The page isn't loading or looks broken",
+    "category": "troubleshooting",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Refresh the page.",
+      "Check your internet connection.",
+      "Try another browser — Chrome is recommended.",
+      "Still broken? Email us a screenshot and the error code, if one is shown."
+    ],
+    "related": []
+  },
+  {
+    "slug": "n2-dont-see-new-feature",
+    "title": "I don't see a new feature or a change",
+    "category": "troubleshooting",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Refresh the page.",
+      "If you installed TaxiMunshi on your phone, close it fully and reopen it."
+    ],
+    "related": ["a4-use-on-phone"]
+  },
+  {
+    "slug": "n3-pdf-wont-download",
+    "title": "PDF won't download or open",
+    "category": "troubleshooting",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Allow downloads and pop-ups for TaxiMunshi in your browser settings.",
+      "On a phone, check your Downloads folder or notification bar.",
+      "Try again on Chrome."
+    ],
+    "related": ["h2-download-share-invoice"]
+  },
+  {
+    "slug": "n4-no-email-received",
+    "title": "I didn't receive an email from TaxiMunshi",
+    "category": "troubleshooting",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Check Spam or Promotions.",
+      "Add hello@taximunshi.com to your contacts.",
+      "Make sure the email address on your account is correct."
+    ],
+    "related": ["m1-forgot-password"]
+  },
+  {
+    "slug": "n5-total-looks-wrong",
+    "title": "The total or amount in words looks wrong",
+    "category": "troubleshooting",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Check each trip's kilometres, hours and extra charges.",
+      "Check the rate card for that client and car type.",
+      "Check your GST settings (guide K1).",
+      "Still wrong? Email us the invoice number and a screenshot."
+    ],
+    "related": ["k1-how-gst-is-calculated", "e1-what-is-a-rate-card"]
+  },
+  {
+    "slug": "n6-cant-see-menu-option",
+    "title": "I can't see Edit, Bulk add, or some other option",
+    "category": "troubleshooting",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "**Edit** is hidden for paid and undone invoices, and for Viewers.",
+      "**Bulk add trips** only works on a laptop or desktop, not a phone.",
+      "Some options need an Owner or Admin — ask your company owner."
+    ],
+    "related": ["h4-edit-invoice", "g3-bulk-add-trips"]
+  },
+  {
+    "slug": "n7-duplicate-invoice-number-worry",
+    "title": "I'm worried two invoices have the same number",
+    "category": "troubleshooting",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "TaxiMunshi gives each issued invoice a unique number, one after another, so duplicates can't happen.",
+      "If you ever see what looks like a duplicate, email us right away and we'll look into it."
+    ],
+    "related": ["b4-invoice-numbering"]
+  },
+  {
+    "slug": "n8-unsaved-changes-lost",
+    "title": "I closed the page while filling something in",
+    "category": "troubleshooting",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "**Bulk add trips** saves your entries automatically as you type.",
+      "Other forms — adding a trip, client, vehicle, and so on — don't save until you click the **Save** button, so re-check before closing the page."
+    ],
+    "related": ["g3-bulk-add-trips"]
+  },
+
+  {
+    "slug": "o1-who-can-see-my-data",
+    "title": "Who can see my data?",
+    "category": "data-privacy",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Only people on your company's own team can see your clients, vehicles, trips and invoices.",
+      "Other companies using TaxiMunshi can't see anything of yours."
+    ],
+    "related": ["o2-can-taximunshi-staff-see-data"]
+  },
+  {
+    "slug": "o2-can-taximunshi-staff-see-data",
+    "title": "Can TaxiMunshi staff see my invoices?",
+    "category": "data-privacy",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Our team can see your company name and account status.",
+      "We don't see your clients, trips, rate cards or invoices."
+    ],
+    "related": ["o1-who-can-see-my-data"]
+  },
+  {
+    "slug": "o5-delete-account",
+    "title": "Can I delete my account?",
+    "category": "data-privacy",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "Email hello@taximunshi.com from your registered email address and we'll take care of it."
+    ],
+    "related": ["o1-who-can-see-my-data"]
+  }
+]

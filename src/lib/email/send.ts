@@ -1,5 +1,6 @@
 import "server-only";
 import { PLATFORM_BRAND_NAME } from "@/lib/platform-config";
+import { HELP_CONTACT } from "@/lib/help-content";
 
 /**
  * Thin wrapper around Resend's HTTP API (no SDK dependency — one fetch
@@ -15,6 +16,12 @@ export interface SendResult {
   error?: string;
 }
 
+/** Appended to every email this app sends, so there's always a way back
+ *  to a human regardless of which template produced the email. */
+function withFooter(html: string): string {
+  return `${html}<p style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;">${HELP_CONTACT.placements.emailFooter}</p>`;
+}
+
 export async function sendEmail(args: {
   to: string;
   subject: string;
@@ -22,6 +29,7 @@ export async function sendEmail(args: {
 }): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
+  const html = withFooter(args.html);
 
   if (!apiKey || !from) {
     console.warn(
@@ -37,7 +45,7 @@ export async function sendEmail(args: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ from, to: args.to, subject: args.subject, html: args.html }),
+      body: JSON.stringify({ from, to: args.to, subject: args.subject, html }),
     });
     if (!res.ok) {
       const body = await res.text();

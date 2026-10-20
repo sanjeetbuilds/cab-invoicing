@@ -42,6 +42,7 @@ export default async function VehiclesPage() {
         <PageHeader
           title="Vehicles"
           description="Your cars, both your own and attached vendor cars."
+          helpSlug="c1-add-vehicle"
         >
           <Link
             href="/bulk-import?scope=vehicles"

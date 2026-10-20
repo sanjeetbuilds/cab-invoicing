@@ -1,0 +1,12 @@
+{
+  "intro": "Email hello@taximunshi.com for:",
+  "reasons": [
+    "Anything not covered here.",
+    "A new temporary password, or restoring a paused account.",
+    "Help importing data from old bills or Excel.",
+    "Numbers that look wrong, after checking guide N5.",
+    "Errors that keep happening — include the error code.",
+    "Feature ideas."
+  ],
+  "alwaysInclude": "Always include: your company name, what you were trying to do, what happened, and a screenshot."
+}

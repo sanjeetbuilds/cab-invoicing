@@ -14,6 +14,7 @@ import type {
   Trip,
   Vehicle,
 } from "@/lib/supabase/types";
+import { HelpIconLink } from "@/components/help/help-icon-link";
 import { InvoiceBuilderForm } from "./invoice-builder-form";
 
 export const metadata = { title: "Build invoice" };
@@ -60,7 +61,10 @@ export default async function BuildInvoicePage({
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Build invoice</h1>
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight">Build invoice</h1>
+            <HelpIconLink guideSlug="h1-build-invoice" />
+          </div>
           <p className="text-sm text-muted-foreground">
             Pick a client to bill. Only clients with trips waiting to be
             billed are listed.
@@ -160,9 +164,12 @@ export default async function BuildInvoicePage({
         <p className="text-xs text-muted-foreground">
           <Link href="/invoices/build" className="underline">← Pick a different client</Link>
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight mt-1">
-          Invoice for {client.name}
-        </h1>
+        <div className="flex items-center gap-1.5 mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Invoice for {client.name}
+          </h1>
+          <HelpIconLink guideSlug="h1-build-invoice" />
+        </div>
         <p className="text-sm text-muted-foreground">
           {trips.length} uninvoiced trip{trips.length === 1 ? "" : "s"}. Untick any you want to defer.
         </p>

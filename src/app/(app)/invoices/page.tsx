@@ -125,11 +125,11 @@ export default async function InvoicesPage({
   // populated list gets a title-only header and renders the action row
   // itself, so Quick invoice, Build invoice and the filter share a line.
   const fullHeader = (
-    <PageHeader title="Invoices" description={description}>
+    <PageHeader title="Invoices" description={description} helpSlug="h1-build-invoice">
       {actions}
     </PageHeader>
   );
-  const titleHeader = <PageHeader title="Invoices" description={description} />;
+  const titleHeader = <PageHeader title="Invoices" description={description} helpSlug="h1-build-invoice" />;
 
   return (
     <div className="flex flex-col gap-4">

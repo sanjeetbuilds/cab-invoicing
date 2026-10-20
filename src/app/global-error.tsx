@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { generateErrorRef } from "@/lib/error-ref";
 
 /**
  * Last-resort error boundary. Next.js renders this when the ROOT
@@ -17,12 +18,15 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [ref] = useState(generateErrorRef);
+
   useEffect(() => {
     // Surface the underlying problem in the console / function logs
     // so it remains debuggable even though the user only sees the
-    // friendly card.
-    console.error("[global-error]", error);
-  }, [error]);
+    // friendly card. The reference code lets a support email be matched
+    // back to this exact log line.
+    console.error(`[global-error] ${ref}`, error);
+  }, [error, ref]);
 
   return (
     <html lang="en">
@@ -136,18 +140,23 @@ export default function GlobalError({
               Go to home page
             </a>
           </div>
-          {error.digest && (
-            <p
-              style={{
-                marginTop: "16px",
-                fontSize: "11px",
-                color: "#9ca3af",
-                fontFamily: "ui-monospace, monospace",
-              }}
-            >
-              Reference: {error.digest}
-            </p>
-          )}
+          <p
+            style={{
+              marginTop: "16px",
+              fontSize: "12px",
+              color: "#6b7280",
+            }}
+          >
+            If it keeps happening, email{" "}
+            <a href="mailto:hello@taximunshi.com" style={{ color: "#4f46e5" }}>
+              hello@taximunshi.com
+            </a>{" "}
+            and mention code{" "}
+            <span style={{ fontFamily: "ui-monospace, monospace", fontWeight: 600, color: "#111827" }}>
+              {ref}
+            </span>
+            .
+          </p>
         </div>
       </body>
     </html>

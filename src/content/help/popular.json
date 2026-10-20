@@ -1,0 +1,8 @@
+[
+  { "label": "Build your first invoice", "guideSlug": "h1-build-invoice" },
+  { "label": "How GST is calculated", "guideSlug": "k1-how-gst-is-calculated" },
+  { "label": "Upload data with Excel", "guideSlug": "f1-excel-import" },
+  { "label": "Continue your old invoice numbers", "guideSlug": "b4-invoice-numbering" },
+  { "label": "Why a trip is missing from an invoice", "guideSlug": "g4-trip-missing-from-invoice" },
+  { "label": "Forgot password", "guideSlug": "m1-forgot-password" }
+]
