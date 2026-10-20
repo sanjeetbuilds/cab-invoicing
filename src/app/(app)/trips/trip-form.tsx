@@ -421,7 +421,9 @@ export function TripForm({
             ? "Trip updated."
             : `Trip saved. It will appear when you make ${clientName(localClients, values.client_id)}'s invoice for ${monthLabel(values.date)}.`,
         );
-        router.push("/trips");
+        // Flag which client to highlight on the Trips list's "Ready to
+        // bill" prompt — only for a brand-new trip, not an edit.
+        router.push(editing ? "/trips" : `/trips?justLogged=${values.client_id}`);
         router.refresh();
       }
     } else {
@@ -903,6 +905,14 @@ export function TripForm({
         />
       )}
 
+      {!editing && clientId && (
+        <p className="text-xs text-muted-foreground text-center">
+          Logging several trips for <span className="font-medium text-foreground">{clientName(localClients, clientId)}</span>?
+          Use <span className="font-medium text-foreground">Log &amp; add another</span> below — it keeps the
+          same client and car ready for the next one.
+        </p>
+      )}
+
       <SaveBarSpacer />
       <SaveBar
         formId="trip-form"
@@ -913,7 +923,7 @@ export function TripForm({
         saveLabel={editing ? "Save changes" : "Log trip"}
         {...(!editing
           ? {
-              secondaryLabel: "Add another",
+              secondaryLabel: "Log & add another",
               onSecondary: submitAddAnother,
               secondaryPending: addingAnother,
             }
