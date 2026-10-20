@@ -35,6 +35,7 @@ export default async function InvoicesPage({
     { data: clients },
     { data: company },
     { count: lifetimeInvoiceCount },
+    { count: tripCount },
   ] = await Promise.all([
     supabase
       .from("invoices")
@@ -68,6 +69,10 @@ export default async function InvoicesPage({
     // 2000), so the counter is never 1 even with zero invoices.
     supabase
       .from("invoices")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", membership.company_id),
+    supabase
+      .from("trips")
       .select("id", { count: "exact", head: true })
       .eq("company_id", membership.company_id),
   ]);
@@ -147,10 +152,15 @@ export default async function InvoicesPage({
             icon={<ReceiptIndianRupee className="h-4 w-4" />}
             iconChipBg="#E1F5EE"
             iconChipFg="#085041"
-            title="This is where your invoices live."
-            body="Pick a client's unbilled trips and turn them into one bill."
-            primary={{ label: "Build invoice", href: "/invoices/build" }}
+            title="No invoices yet"
+            body="Invoices are made from trips. Step 1: add trips. Step 2: make the invoice."
+            primary={
+              (tripCount ?? 0) === 0
+                ? { label: "Add trips", href: "/trips/new" }
+                : { label: "Make invoice", href: "/invoices/build" }
+            }
             setupHint={{ step: 6, total: 6 }}
+            howItWorksStep="invoice"
           >
             <InvoicesSampleRows />
           </SamplePreview>

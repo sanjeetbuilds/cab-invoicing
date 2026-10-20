@@ -1,0 +1,29 @@
+{
+  "intro": "Invoices are made from trips. Add trips first — then the invoice fills itself.",
+  "steps": [
+    {
+      "id": "setup",
+      "icon": "Car",
+      "title": "Add your cars & clients",
+      "line": "Add the cars you run and the companies you bill."
+    },
+    {
+      "id": "trips",
+      "icon": "Route",
+      "title": "Add trips (duties)",
+      "line": "Record every duty: date, car, client, km and hours."
+    },
+    {
+      "id": "invoice",
+      "icon": "FileCheck2",
+      "title": "Make the invoice",
+      "line": "Pick a client and month. Their trips come in by themselves. Add toll, state tax and parking."
+    },
+    {
+      "id": "share",
+      "icon": "Send",
+      "title": "Share & get paid",
+      "line": "Download or share the PDF, then mark it paid when the money comes."
+    }
+  ]
+}

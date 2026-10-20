@@ -21,6 +21,7 @@ import {
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -455,6 +456,7 @@ function InvoiceListItem({
   const [confirmPaid, setConfirmPaid] = useState<null | "mark" | "unmark">(
     null,
   );
+  const [paidDate, setPaidDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [confirmReverse, setConfirmReverse] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmIssue, setConfirmIssue] = useState(false);
@@ -530,6 +532,7 @@ function InvoiceListItem({
     const result = await markInvoicePaidAction({
       id: invoice.id,
       paid: target,
+      paidDate: target ? paidDate : undefined,
     });
     setPending(false);
     if (result.ok) {
@@ -761,6 +764,8 @@ function InvoiceListItem({
         invoice={invoice}
         fullNumber={fullNumber}
         pending={pending}
+        paidDate={paidDate}
+        onPaidDateChange={setPaidDate}
         onCancel={() => setConfirmPaid(null)}
         onConfirm={() => togglePaid(confirmPaid === "mark")}
       />
@@ -807,6 +812,8 @@ function PaidDialog({
   invoice,
   fullNumber,
   pending,
+  paidDate,
+  onPaidDateChange,
   onCancel,
   onConfirm,
 }: {
@@ -815,6 +822,8 @@ function PaidDialog({
   invoice: Invoice;
   fullNumber: string;
   pending: boolean;
+  paidDate: string;
+  onPaidDateChange: (date: string) => void;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -831,6 +840,19 @@ function PaidDialog({
             {formatINR(invoice.net_amount)}.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {mode === "mark" && (
+          <div className="flex flex-col gap-2 px-6">
+            <Label htmlFor="paid-date" className="text-xs">
+              Payment received on
+            </Label>
+            <Input
+              id="paid-date"
+              type="date"
+              value={paidDate}
+              onChange={(e) => onPaidDateChange(e.target.value)}
+            />
+          </div>
+        )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} disabled={pending}>

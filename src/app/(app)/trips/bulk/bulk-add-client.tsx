@@ -271,7 +271,12 @@ export function BulkAddClient({
         <table className="w-full border-collapse text-sm">
           <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur">
             <tr className="[&>th]:px-2 [&>th]:py-2 [&>th]:text-left [&>th]:font-medium [&>th]:border-b [&>th]:text-xs [&>th]:uppercase [&>th]:tracking-wider [&>th]:text-muted-foreground">
-              <th className="w-[120px]">Date</th>
+              <th
+                className="w-[120px]"
+                title="Duty date — the date the car went on duty. Decides which month's invoice the trip goes into."
+              >
+                Duty date
+              </th>
               <th className="w-[120px]">End</th>
               <th className="min-w-[180px]">Client</th>
               <th className="min-w-[160px]">Vehicle</th>

@@ -1,0 +1,22 @@
+[
+  { "term": "Duty / Trip", "definition": "One job a car does for a client — a duty slip's worth of driving." },
+  { "term": "Duty date", "definition": "The date the car went on duty. Decides which month's invoice the trip goes into." },
+  { "term": "Invoice date", "definition": "The date printed on the invoice itself." },
+  { "term": "Billing period", "definition": "The From/To dates used to pick which trips go on an invoice." },
+  { "term": "Rate card", "definition": "What you charge one client for one car type." },
+  { "term": "Local package", "definition": "A fixed-hours, fixed-km package for same-city driving, e.g. 80 km / 8 hrs." },
+  { "term": "Extra km", "definition": "The per-km charge once a local trip goes beyond its package's included kilometres." },
+  { "term": "Extra hour", "definition": "The per-hour charge once a local trip goes beyond its package's included hours." },
+  { "term": "Outstation", "definition": "Out-of-city travel, billed per kilometre instead of a fixed package." },
+  { "term": "Toll", "definition": "Road toll paid during a trip, added as a charge on the invoice." },
+  { "term": "State tax / Permit", "definition": "State entry tax or permit fee, added as a charge on the invoice." },
+  { "term": "Parking", "definition": "Parking fees paid during a trip, added as a charge on the invoice." },
+  { "term": "GSTIN", "definition": "A business's 15-character GST registration number." },
+  { "term": "CGST", "definition": "Central GST — half of the tax charged when the client is in your own state." },
+  { "term": "SGST", "definition": "State GST — the other half of the tax charged when the client is in your own state." },
+  { "term": "IGST", "definition": "Integrated GST — the tax charged when the client is in a different state." },
+  { "term": "RCM", "definition": "Reverse charge — the client pays GST themselves instead of you." },
+  { "term": "Issue", "definition": "To give an invoice its permanent number. Once issued, its lines are frozen." },
+  { "term": "Draft", "definition": "An invoice saved but not yet issued — no number given yet, fully editable." },
+  { "term": "Undo (invoice)", "definition": "Cancels an issued invoice. It stays on record marked Undone, and its trips become free to re-bill." }
+]

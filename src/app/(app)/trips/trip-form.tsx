@@ -38,6 +38,7 @@ import { formatINR } from "@/lib/format";
 import { ClientPicker } from "@/components/pickers/client-picker";
 import { VehiclePicker } from "@/components/pickers/vehicle-picker";
 import { createTripAction, updateTripAction } from "./actions";
+import { InlineClientForm } from "./inline-client-form";
 import { InlineVehicleForm } from "./inline-vehicle-form";
 import { InlineRateCardForm } from "./inline-rate-card-form";
 
@@ -114,6 +115,20 @@ const todayIso = () => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
+const nextDayIso = (iso: string) => {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + 1);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const monthLabel = (iso: string) => {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+};
+
 const toNum = (s: string | undefined) => {
   if (!s) return 0;
   const n = Number(s);
@@ -150,10 +165,14 @@ export function TripForm({
   const [showMore, setShowMore] = useState(false);
   const editing = !!trip;
 
-  // Track vehicles & rate cards in local state so inline-create flows
-  // can append new rows without re-rendering / losing the form.
+  // Track clients, vehicles & rate cards in local state so inline-create
+  // flows can append new rows without re-rendering / losing the form.
+  const [localClients, setLocalClients] = useState(clients);
   const [localVehicles, setLocalVehicles] = useState(vehicles);
   const [localRateCards, setLocalRateCards] = useState(rateCards);
+  // Open state + typed-name prefill for the client editor sheet, same
+  // pattern as the vehicle editor below.
+  const [clientEditorDefault, setClientEditorDefault] = useState<null | string>(null);
   // Open state + typed-number prefill for the vehicle editor sheet.
   // Closing the sheet sets defaultNumber back to null.
   const [vehicleEditorDefault, setVehicleEditorDefault] = useState<null | string>(null);
@@ -221,6 +240,8 @@ export function TripForm({
   const vehicleId = watch("vehicle_id");
   const carType = watch("car_type");
   const mode = watch("mode") as TripMode;
+  const dutyDate = watch("date");
+  const isFutureDutyDate = Boolean(dutyDate) && dutyDate > todayIso();
 
   // Smart mode default: when (client, car) changes, pick the most
   // recent mode the user used for that exact combo within the last
@@ -369,12 +390,13 @@ export function TripForm({
 
     if (result.ok) {
       if (addAnother) {
-        // Keep the client, vehicle, car, mode, plan and date so the next
-        // trip in this run starts ready. Clear only the ride-specific
-        // fields. This context lives only here, a normal new trip opened
-        // afresh still starts blank.
+        // Keep the client, vehicle, car, mode and plan so the next trip
+        // in this run starts ready, and move the duty date to the next
+        // day — logging trips is almost always one day after another.
+        // Clear only the ride-specific fields. This context lives only
+        // here, a normal new trip opened afresh still starts blank.
         reset({
-          date: values.date,
+          date: nextDayIso(values.date),
           end_date: "",
           client_id: values.client_id,
           vehicle_id: values.vehicle_id,
@@ -390,9 +412,15 @@ export function TripForm({
           duty_slip_no: "",
         });
         setAddingAnother(false);
-        toast.success("Trip logged. Add the next one.");
+        toast.success(
+          `Trip saved. It will appear when you make ${clientName(localClients, values.client_id)}'s invoice for ${monthLabel(values.date)}.`,
+        );
       } else {
-        toast.success(editing ? "Trip updated." : "Trip logged.");
+        toast.success(
+          editing
+            ? "Trip updated."
+            : `Trip saved. It will appear when you make ${clientName(localClients, values.client_id)}'s invoice for ${monthLabel(values.date)}.`,
+        );
         router.push("/trips");
         router.refresh();
       }
@@ -415,8 +443,17 @@ export function TripForm({
       <Card>
         <CardContent className="grid gap-4 md:grid-cols-3">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="date">Date *</Label>
+            <Label htmlFor="date">Duty date *</Label>
             <Input id="date" type="date" {...register("date")} />
+            <p className="text-xs text-muted-foreground">
+              The date the car went on duty. Decides which month&apos;s invoice the trip goes into.
+            </p>
+            {isFutureDutyDate && (
+              <p className="text-xs text-[#d97706] flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3 shrink-0" />
+                This duty date is in the future. Is that right?
+              </p>
+            )}
             {errors.date && (
               <p className="text-sm text-destructive">{errors.date.message}</p>
             )}
@@ -435,11 +472,12 @@ export function TripForm({
             <Label htmlFor="client_id">Client *</Label>
             <ClientPicker
               id="client_id"
-              clients={clients}
+              clients={localClients}
               value={clientId}
               onValueChange={(v) =>
                 setValue("client_id", v, { shouldValidate: true })
               }
+              onAddNew={(typed) => setClientEditorDefault(typed)}
             />
             {errors.client_id && (
               <p className="text-sm text-destructive">{errors.client_id.message}</p>
@@ -500,6 +538,9 @@ export function TripForm({
 
           <div className="md:col-span-3 flex flex-col gap-3">
             <Label htmlFor="mode">Rate plan *</Label>
+            <p className="text-xs text-muted-foreground -mt-2">
+              This picks the right rate from the client&apos;s rate card.
+            </p>
 
             {/* Neutral state until a client is picked, no point
                 alarming the user about a missing rate they have
@@ -595,7 +636,7 @@ export function TripForm({
                   </p>
                 ) : (
                   <MissingRateNotice
-                    clientName={clientName(clients, clientId)}
+                    clientName={clientName(localClients, clientId)}
                     carType={carType}
                     mode={rateLookupMode}
                     slabBorrowsLocal={
@@ -634,6 +675,22 @@ export function TripForm({
           )}
         </CardContent>
       </Card>
+
+      {/* Client editor, same Sheet pattern as the vehicle editor below —
+          never nested inside the outer trip <form>. */}
+      <InlineClientForm
+        open={clientEditorDefault !== null}
+        onOpenChange={(o) => {
+          if (!o) setClientEditorDefault(null);
+        }}
+        defaultName={clientEditorDefault ?? ""}
+        existingClients={localClients}
+        onSaved={(c) => {
+          setLocalClients((prev) => [...prev, c]);
+          setValue("client_id", c.id, { shouldValidate: true });
+          setClientEditorDefault(null);
+        }}
+      />
 
       {/* Vehicle editor in the same Sheet pattern as the rate-card
           editor. Portaled to document body so its content is NEVER
@@ -801,7 +858,7 @@ export function TripForm({
             if (!o) setRateEditor(null);
           }}
           clientId={clientId}
-          clientName={clientName(clients, clientId)}
+          clientName={clientName(localClients, clientId)}
           carType={carType}
           existing={availableRatePlans}
           onSaved={(result) => {

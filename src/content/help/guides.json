@@ -1,5 +1,19 @@
 [
   {
+    "slug": "a0-how-it-works",
+    "title": "How TaxiMunshi works",
+    "category": "getting-started",
+    "lastUpdated": "2026-10-20",
+    "steps": [
+      "**Add your cars & clients** — add the cars you run and the companies you bill.",
+      "**Add trips (duties)** — record every duty: date, car, client, km and hours.",
+      "**Make the invoice** — pick a client and month. Their trips come in by themselves. Add toll, state tax and parking.",
+      "**Share & get paid** — download or share the PDF, then mark it paid when the money comes.",
+      "**Invoices are made from trips.** Add trips first — then the invoice fills itself."
+    ],
+    "related": ["a3-finish-your-setup", "g1-log-a-trip", "h1-build-invoice"]
+  },
+  {
     "slug": "a1-logging-in-first-time",
     "title": "Logging in for the first time",
     "category": "getting-started",
@@ -282,7 +296,8 @@
     "lastUpdated": "2026-10-20",
     "steps": [
       "Go to **Trips** and click **Log trip**.",
-      "Fill in the date (and an end date for multi-day trips), client, vehicle and car type.",
+      "Fill in the **Duty date** — the date the car went on duty. This decides which month's invoice the trip goes into. Add an end date too for multi-day trips.",
+      "Pick the client and car. Don't see one in the list? Use **+ Add new client** or **+ Add new vehicle** right at the bottom of the dropdown — no need to leave this screen.",
       "Choose the rate plan — local package, outstation, or a named package.",
       "Enter the kilometres and hours run (fields shown depend on the rate plan).",
       "Add driver allowance or night charges if they apply.",

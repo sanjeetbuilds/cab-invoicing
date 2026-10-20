@@ -7,39 +7,11 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   HELP_CATEGORIES,
-  HELP_GUIDES,
-  HELP_FAQS,
   HELP_POPULAR,
   HELP_CONTACT,
-  type HelpGuide,
-  type HelpFaq,
+  searchHelp,
 } from "@/lib/help-content";
 import { renderBold } from "@/lib/simple-markdown";
-
-type Result =
-  | { type: "guide"; item: HelpGuide }
-  | { type: "faq"; item: HelpFaq };
-
-function matches(haystack: string, needle: string): boolean {
-  return haystack.toLowerCase().includes(needle);
-}
-
-function search(query: string): Result[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
-  const results: Result[] = [];
-  for (const g of HELP_GUIDES) {
-    if (matches(g.title, q) || g.steps.some((s) => matches(s, q))) {
-      results.push({ type: "guide", item: g });
-    }
-  }
-  for (const f of HELP_FAQS) {
-    if (matches(f.question, q) || matches(f.answer, q)) {
-      results.push({ type: "faq", item: f });
-    }
-  }
-  return results;
-}
 
 function CategoryIcon({ name }: { name: string }) {
   const Icon = (Icons as unknown as Record<string, Icons.LucideIcon>)[name] ?? Icons.CircleHelp;
@@ -48,7 +20,7 @@ function CategoryIcon({ name }: { name: string }) {
 
 export function HelpSearch() {
   const [query, setQuery] = useState("");
-  const results = useMemo(() => search(query), [query]);
+  const results = useMemo(() => searchHelp(query), [query]);
   const isSearching = query.trim().length > 0;
 
   return (
@@ -141,9 +113,14 @@ export function HelpSearch() {
             </div>
           </div>
 
-          <Link href="/help/faq" className="text-sm font-medium text-primary hover:text-primary-hover">
-            All FAQs →
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/help/faq" className="text-sm font-medium text-primary hover:text-primary-hover">
+              All FAQs →
+            </Link>
+            <Link href="/help/glossary" className="text-sm font-medium text-primary hover:text-primary-hover">
+              Glossary →
+            </Link>
+          </div>
         </>
       )}
     </div>

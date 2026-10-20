@@ -113,11 +113,12 @@ export default async function RateCardsPage() {
           icon={<IndianRupee className="h-4 w-4" />}
           iconChipBg="#FAEEDA"
           iconChipFg="#633806"
-          title="This is where your rates live."
-          body="Your prices for each client. Add Local rates, Outstation rates, or fixed-price packages."
+          title="No rates yet"
+          body="Set what you charge each client for each car type. Trips use these rates."
           primary={{ label: "Add rate card", href: "/rate-cards/new" }}
           importHref="/bulk-import?scope=rate_cards"
           setupHint={{ step: 4, total: 6 }}
+          howItWorksStep="setup"
         >
           <RateCardsSampleRows />
         </SamplePreview>

@@ -5,6 +5,7 @@ import { TopBar } from "@/components/shell/top-bar";
 import { PwaInstaller } from "@/components/shell/pwa-installer";
 import { AppShellProvider } from "@/components/shell/app-shell-context";
 import { TourLauncher } from "@/components/shell/tour-launcher";
+import { HelpButton } from "@/components/help/help-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SUPPORT_CONTACT } from "@/lib/platform-config";
 import { buildSupportMailto } from "@/lib/support-mailto";
@@ -130,6 +131,11 @@ export default async function AppLayout({
         <BottomNav />
         <PwaInstaller />
         <TourLauncher />
+        <HelpButton
+          companyName={companyName}
+          userName={user.email?.split("@")[0] ?? "-"}
+          userEmail={user.email ?? "-"}
+        />
       </div>
     </AppShellProvider>
   );

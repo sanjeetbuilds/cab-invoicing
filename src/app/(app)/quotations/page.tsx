@@ -84,9 +84,10 @@ export default async function QuotationsPage() {
             icon={<FileSignature className="h-4 w-4" />}
             iconChipBg="#E6F1FB"
             iconChipFg="#0C447C"
-            title="This is where your quotations live."
-            body="Send your prices to a client. When they accept, it saves as their rates."
+            title="No quotations yet"
+            body="Send a price quote to a new client. When accepted, its rates are saved."
             primary={{ label: "New quotation", href: "/quotations/new" }}
+            howItWorksStep=""
           >
             <QuotationsSampleRows />
           </SamplePreview>

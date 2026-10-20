@@ -4,6 +4,9 @@ import faqsData from "@/content/help/faqs.json";
 import popularData from "@/content/help/popular.json";
 import contactData from "@/content/help/contact.json";
 import whenToContactData from "@/content/help/when-to-contact.json";
+import onThisPageData from "@/content/help/on-this-page.json";
+import howItWorksData from "@/content/help/how-it-works.json";
+import glossaryData from "@/content/help/glossary.json";
 
 export interface HelpCategory {
   id: string;
@@ -44,6 +47,18 @@ export interface HelpContact {
   placements: Record<string, string>;
 }
 
+export interface HowItWorksStep {
+  id: string;
+  icon: string;
+  title: string;
+  line: string;
+}
+
+export interface GlossaryEntry {
+  term: string;
+  definition: string;
+}
+
 export const HELP_CATEGORIES = categoriesData as HelpCategory[];
 export const HELP_GUIDES = guidesData as HelpGuide[];
 export const HELP_FAQS = faqsData as HelpFaq[];
@@ -54,6 +69,23 @@ export const HELP_WHEN_TO_CONTACT = whenToContactData as {
   reasons: string[];
   alwaysInclude: string;
 };
+export const HOW_IT_WORKS = howItWorksData as { intro: string; steps: HowItWorksStep[] };
+export const GLOSSARY = glossaryData as GlossaryEntry[];
+
+const ON_THIS_PAGE = onThisPageData as { path: string; tips: string[] }[];
+
+/** Longest-prefix match against the current pathname, so "/trips/new"
+ *  gets its own tips instead of falling through to the generic "/trips"
+ *  entry. Falls back to an empty list rather than guessing. */
+export function getOnThisPageTips(pathname: string): string[] {
+  let best: { path: string; tips: string[] } | null = null;
+  for (const entry of ON_THIS_PAGE) {
+    if (pathname === entry.path || pathname.startsWith(entry.path + "/")) {
+      if (!best || entry.path.length > best.path.length) best = entry;
+    }
+  }
+  return best?.tips ?? [];
+}
 
 export function getGuide(slug: string): HelpGuide | undefined {
   return HELP_GUIDES.find((g) => g.slug === slug);
@@ -65,6 +97,32 @@ export function getGuidesByCategory(categoryId: string): HelpGuide[] {
 
 export function getFaqsByCategory(categoryId: string): HelpFaq[] {
   return HELP_FAQS.filter((f) => f.category === categoryId);
+}
+
+export type HelpSearchResult =
+  | { type: "guide"; item: HelpGuide }
+  | { type: "faq"; item: HelpFaq };
+
+function textMatches(haystack: string, needle: string): boolean {
+  return haystack.toLowerCase().includes(needle);
+}
+
+/** Shared by the public /help search box and the in-app Help panel. */
+export function searchHelp(query: string): HelpSearchResult[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const results: HelpSearchResult[] = [];
+  for (const g of HELP_GUIDES) {
+    if (textMatches(g.title, q) || g.steps.some((s) => textMatches(s, q))) {
+      results.push({ type: "guide", item: g });
+    }
+  }
+  for (const f of HELP_FAQS) {
+    if (textMatches(f.question, q) || textMatches(f.answer, q)) {
+      results.push({ type: "faq", item: f });
+    }
+  }
+  return results;
 }
 
 /** Resolves a guide/FAQ's "related" entries for display — related arrays

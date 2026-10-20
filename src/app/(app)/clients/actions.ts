@@ -21,6 +21,10 @@ export type ActionResult =
   | { ok: true }
   | { ok: false; error: string };
 
+export type CreateClientResult =
+  | { ok: true; client: { id: string; name: string } }
+  | { ok: false; error: string };
+
 function parse(formData: FormData) {
   return ClientSchema.safeParse({
     name: formData.get("name"),
@@ -35,27 +39,31 @@ function parse(formData: FormData) {
 
 export async function createClientAction(
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<CreateClientResult> {
   const parsed = parse(formData);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
 
   const ctx = await requireWriter();
   if (!ctx.ok) return ctx;
 
-  const { error } = await ctx.admin.from("clients").insert({
-    company_id: ctx.companyId,
-    name: parsed.data.name,
-    state: parsed.data.state,
-    gstin: parsed.data.gstin || null,
-    address: parsed.data.address || null,
-    default_booked_by: parsed.data.default_booked_by || null,
-    notes: parsed.data.notes || null,
-    is_rcm: parsed.data.is_rcm,
-  });
-  if (error) return { ok: false, error: error.message };
+  const { data, error } = await ctx.admin
+    .from("clients")
+    .insert({
+      company_id: ctx.companyId,
+      name: parsed.data.name,
+      state: parsed.data.state,
+      gstin: parsed.data.gstin || null,
+      address: parsed.data.address || null,
+      default_booked_by: parsed.data.default_booked_by || null,
+      notes: parsed.data.notes || null,
+      is_rcm: parsed.data.is_rcm,
+    })
+    .select("id, name")
+    .single<{ id: string; name: string }>();
+  if (error || !data) return { ok: false, error: error?.message ?? "Could not create client." };
 
   revalidatePath("/clients");
-  return { ok: true };
+  return { ok: true, client: data };
 }
 
 export async function updateClientAction(
