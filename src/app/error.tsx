@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { generateErrorRef } from "@/lib/error-ref";
+import { plainSupportMailto } from "@/lib/support-mailto";
+import { SUPPORT_CONTACT } from "@/lib/platform-config";
 
 /**
  * Route-level error boundary for every page in the (app) and
@@ -22,12 +25,16 @@ export default function GlobalRouteError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [ref] = useState(generateErrorRef);
+
   useEffect(() => {
-    // Log the real error so it's visible in the browser console and
-    // in Vercel function logs. The user only sees the friendly card.
-    // Swap this for Sentry / Logflare / whatever later if needed.
-    console.error("[route-error]", error);
-  }, [error]);
+    // Log the real error (with our own reference code, not just Next's
+    // own error.digest which isn't always present) so it's visible in
+    // the browser console and in Vercel function logs — support can grep
+    // for the code a user quotes in an email. Swap this for Sentry /
+    // Logflare / whatever later if needed.
+    console.error(`[route-error] ${ref}`, error);
+  }, [error, ref]);
 
   return (
     <div className="mx-auto w-full max-w-md py-12">
@@ -62,11 +69,14 @@ export default function GlobalRouteError({
               Go to dashboard
             </Link>
           </div>
-          {error.digest && (
-            <p className="text-[11px] text-muted-foreground font-mono">
-              Reference: {error.digest}
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground">
+            If it keeps happening, email{" "}
+            <a href={plainSupportMailto()} className="font-medium text-primary hover:text-primary-hover">
+              {SUPPORT_CONTACT}
+            </a>{" "}
+            and mention code{" "}
+            <span className="font-mono font-medium text-foreground">{ref}</span>.
+          </p>
         </CardContent>
       </Card>
     </div>

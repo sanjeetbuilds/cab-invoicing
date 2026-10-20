@@ -7,15 +7,8 @@ export const PLATFORM_BRAND_NAME = "Cab Invoicing";
 
 /**
  * Platform-operator contact shown to users who have no company, whose
- * company is suspended, or who aren't registered yet. Edit these to your
- * real details before going live.
+ * company is suspended, or who aren't registered yet. Kept in sync with
+ * src/content/help/contact.json's supportEmail — this one's for plain
+ * text mentions outside the help center itself.
  */
-export const SUPPORT_CONTACT = "support@yourcompany.example";
-
-/** Digits only, country code included, no "+" or spaces — e.g. "919876543210". */
-export const SUPPORT_WHATSAPP_NUMBER = "910000000000";
-
-export function supportWhatsAppLink(message?: string): string {
-  const base = `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}`;
-  return message ? `${base}?text=${encodeURIComponent(message)}` : base;
-}
+export const SUPPORT_CONTACT = "hello@taximunshi.com";

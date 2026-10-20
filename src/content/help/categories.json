@@ -1,0 +1,80 @@
+[
+  {
+    "id": "getting-started",
+    "name": "Getting started",
+    "description": "Your first login and first week.",
+    "icon": "Rocket"
+  },
+  {
+    "id": "company-setup",
+    "name": "Company setup",
+    "description": "GST details, branding, invoice numbering.",
+    "icon": "Building2"
+  },
+  {
+    "id": "vehicles",
+    "name": "Vehicles",
+    "description": "Add and manage your fleet.",
+    "icon": "Car"
+  },
+  {
+    "id": "clients",
+    "name": "Clients",
+    "description": "Add clients and their billing details.",
+    "icon": "Users"
+  },
+  {
+    "id": "rate-cards",
+    "name": "Rate cards",
+    "description": "What you charge each client.",
+    "icon": "ReceiptText"
+  },
+  {
+    "id": "excel-import",
+    "name": "Excel import",
+    "description": "Bring in clients, vehicles and rates at once.",
+    "icon": "FileSpreadsheet"
+  },
+  {
+    "id": "trips",
+    "name": "Trips",
+    "description": "Log duties, one at a time or in bulk.",
+    "icon": "Route"
+  },
+  {
+    "id": "quotations",
+    "name": "Quotations",
+    "description": "Send quotes and turn them into rate cards.",
+    "icon": "FileText"
+  },
+  {
+    "id": "invoices",
+    "name": "Invoices",
+    "description": "Build, share, undo and track invoices.",
+    "icon": "FileCheck2"
+  },
+  {
+    "id": "gst-explained",
+    "name": "GST explained",
+    "description": "How CGST, SGST, IGST and RCM are decided.",
+    "icon": "Percent"
+  },
+  {
+    "id": "login-security",
+    "name": "Login & security",
+    "description": "Passwords, lockouts and account access.",
+    "icon": "ShieldCheck"
+  },
+  {
+    "id": "troubleshooting",
+    "name": "Troubleshooting",
+    "description": "Fix the most common problems.",
+    "icon": "Wrench"
+  },
+  {
+    "id": "data-privacy",
+    "name": "Data & privacy",
+    "description": "Who can see your data, and your rights over it.",
+    "icon": "Lock"
+  }
+]

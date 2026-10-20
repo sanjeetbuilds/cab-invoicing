@@ -43,7 +43,7 @@ export default async function BulkImportPage({
 
   return (
     <div className="mx-auto w-full max-w-5xl flex flex-col gap-6">
-      <PageHeader title={copy.title} description={copy.description} />
+      <PageHeader title={copy.title} description={copy.description} helpSlug="f1-excel-import" />
       <BulkImportClient initialScope={scope} />
     </div>
   );

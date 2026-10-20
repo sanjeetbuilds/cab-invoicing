@@ -1,0 +1,24 @@
+{
+  "supportEmail": "hello@taximunshi.com",
+  "replyTime": "within 1 working day",
+  "standardBlock": "Still stuck? Email **hello@taximunshi.com** with your company name and a screenshot. We reply within 1 working day.",
+  "emailButtonLabel": "Email support",
+  "mailto": {
+    "subjectTemplate": "Support: {company} — {page}",
+    "bodyTemplate": "Company: {company}\nYour name: {name}\nYour email: {email}\nPage: {pageUrl}\n\nWhat were you trying to do?\n\nWhat happened instead?\n\n(Please attach a screenshot)"
+  },
+  "suggestFeature": {
+    "subjectTemplate": "Feature idea: {company}",
+    "bodyTemplate": "Company: {company}\n\nWhat would you like TaxiMunshi to do?"
+  },
+  "placements": {
+    "loginPage": "Trouble signing in? Email hello@taximunshi.com",
+    "searchNoResults": "No answers found for \"{query}\". Email **hello@taximunshi.com** with a screenshot and we'll help.",
+    "genericError": "Something went wrong. Please refresh the page. If it keeps happening, email **hello@taximunshi.com** and mention code {errorRef}.",
+    "accountPaused": "Your company's access has been paused. Your data is safe and unchanged. Email hello@taximunshi.com to restore access.",
+    "passwordExpired": "Your temporary password has expired. Email hello@taximunshi.com for a new one.",
+    "tooManyAttempts": "Too many attempts. Try again in 15 minutes, or use Forgot password.",
+    "bulkImportFileError": "We couldn't read this file. Check it's .xlsx or .xls and under 10 MB, or email it to hello@taximunshi.com and we'll help.",
+    "emailFooter": "Questions? Reply to this email or write to hello@taximunshi.com."
+  }
+}

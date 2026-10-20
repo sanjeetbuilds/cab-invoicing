@@ -26,6 +26,7 @@ import type { Company, Invoice } from "@/lib/supabase/types";
 import { formatINR } from "@/lib/format";
 import { SeedBanner } from "../seed/seed-banner";
 import { SetupChecklist, type SetupStatus } from "./setup-checklist";
+import { NeedHelpCard } from "./need-help-card";
 
 export const metadata = {
   title: "Dashboard",
@@ -315,6 +316,8 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </section>
+
+      <NeedHelpCard />
     </div>
   );
 }

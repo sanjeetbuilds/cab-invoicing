@@ -21,10 +21,18 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-dvh bg-background">
-      <header className="border-b border-border px-4 py-4 sm:px-6">
+      <header className="border-b border-border px-4 py-4 sm:px-6 flex items-center gap-6">
         <Link href="/admin" className="text-sm font-semibold text-foreground">
           Platform admin
         </Link>
+        <nav className="flex items-center gap-4">
+          <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground">
+            Companies
+          </Link>
+          <Link href="/admin/help-feedback" className="text-sm text-muted-foreground hover:text-foreground">
+            Help feedback
+          </Link>
+        </nav>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         {children}

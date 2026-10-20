@@ -6,7 +6,8 @@ import { PwaInstaller } from "@/components/shell/pwa-installer";
 import { AppShellProvider } from "@/components/shell/app-shell-context";
 import { TourLauncher } from "@/components/shell/tour-launcher";
 import { Card, CardContent } from "@/components/ui/card";
-import { SUPPORT_CONTACT, supportWhatsAppLink } from "@/lib/platform-config";
+import { SUPPORT_CONTACT } from "@/lib/platform-config";
+import { buildSupportMailto } from "@/lib/support-mailto";
 import { CompanySwitcher, type SwitcherCompany } from "@/components/shell/company-switcher";
 import type { BrandMode, Company } from "@/lib/supabase/types";
 
@@ -52,15 +53,19 @@ export default async function AppLayout({
           <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
             <p className="text-base font-medium text-foreground">Account paused</p>
             <p className="text-sm text-muted-foreground">
-              Access to {company.name} is paused. Contact us to restore it.
+              Your company&apos;s access has been paused. Your data is safe and unchanged.
             </p>
             <a
-              href={supportWhatsAppLink(`Hi, access to ${company.name} on Cab Invoicing is paused.`)}
-              target="_blank"
-              rel="noreferrer"
+              href={buildSupportMailto({
+                company: company.name,
+                name: user.email?.split("@")[0] ?? "-",
+                email: user.email ?? "-",
+                pageUrl: "Account paused screen",
+                pageLabel: "Account paused",
+              })}
               className="text-sm font-medium text-primary hover:text-primary-hover underline"
             >
-              Contact us ({SUPPORT_CONTACT})
+              Email {SUPPORT_CONTACT} to restore access
             </a>
             <form action="/sign-out" method="POST">
               <button

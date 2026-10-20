@@ -175,6 +175,7 @@ export default async function TripsPage({
         <PageHeader
           title="Trips"
           description="Your daily trips. Each trip becomes a line on a monthly bill."
+          helpSlug="g1-log-a-trip"
         >
           <Link
             href="/trips/bulk"

@@ -12,6 +12,7 @@ import type {
   Trip,
   Vehicle,
 } from "@/lib/supabase/types";
+import { HelpIconLink } from "@/components/help/help-icon-link";
 import { EditInvoiceForm } from "./edit-invoice-form";
 
 export const metadata = { title: "Edit invoice" };
@@ -185,9 +186,12 @@ export default async function EditInvoicePage({
             ← Back to invoice
           </Link>
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight mt-1">
-          Edit invoice {fullNumber}
-        </h1>
+        <div className="flex items-center gap-1.5 mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Edit invoice {fullNumber}
+          </h1>
+          <HelpIconLink guideSlug="h4-edit-invoice" />
+        </div>
         <p className="text-sm text-muted-foreground">
           {client.name}. Adjust the date, charges, or trips, then save.
         </p>

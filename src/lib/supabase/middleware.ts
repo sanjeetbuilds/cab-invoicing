@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   "/privacy",
   "/terms",
   "/contact",
+  "/help",
 ];
 
 function isPublic(pathname: string) {
@@ -22,7 +23,7 @@ function isPublic(pathname: string) {
 
 // Reachable even while a forced password change is pending: the page
 // itself, and signing out to abandon it instead.
-const PASSWORD_CHANGE_ALLOWED = ["/set-password", "/sign-out"];
+const PASSWORD_CHANGE_ALLOWED = ["/set-password", "/sign-out", "/help"];
 
 function isPasswordChangeAllowed(pathname: string) {
   if (pathname.startsWith("/api/")) return true;

@@ -1,21 +1,30 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * Marketing surface, no sidebar, no bottom nav, no auth wrapping. The
- * thin top bar shows just the wordmark and a Sign in link. The wider
- * page padding gives the landing room to breathe.
+ * thin top bar shows just the wordmark and a sign-in/dashboard link. The
+ * wider page padding gives the landing room to breathe.
  *
- * This layout wraps "/privacy", "/terms", "/contact" — the home page
- * ("/") lives in the (landing) route group instead, since it brings its
- * own full header and footer and would duplicate this one. Anything
- * inside (app)/* is a separate layout that adds the authenticated
- * shell.
+ * This layout wraps "/privacy", "/terms", "/contact", "/help" — the home
+ * page ("/") lives in the (landing) route group instead, since it brings
+ * its own full header and footer and would duplicate this one. Anything
+ * inside (app)/* is a separate layout that adds the authenticated shell.
+ *
+ * "/help" is reachable signed-in too (from the sidebar), so the top-right
+ * link switches to "Dashboard" rather than confusingly offering "Sign in"
+ * to someone who already is.
  */
-export default function MarketingLayout({
+export default async function MarketingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <div className="flex flex-1 min-h-0 flex-col bg-background">
       <header
@@ -30,10 +39,10 @@ export default function MarketingLayout({
             TaxiMunshi
           </Link>
           <Link
-            href="/sign-in"
+            href={user ? "/dashboard" : "/sign-in"}
             className="text-sm font-medium text-primary hover:text-primary-hover"
           >
-            Sign in
+            {user ? "Dashboard" : "Sign in"}
           </Link>
         </div>
       </header>

@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { plainSupportMailto } from "@/lib/support-mailto";
 import {
   Tabs,
   TabsContent,
@@ -1006,6 +1007,16 @@ function ImportErrorCard({
             {failure.message} You can try again, or download a fresh
             template and re-upload.
           </p>
+          {failure.step === "parse" && (
+            <p className="text-sm text-muted-foreground mt-2">
+              We couldn&apos;t read this file. Check it&apos;s .xlsx or .xls and under 10 MB, or
+              email it to{" "}
+              <a href={plainSupportMailto()} className="font-medium text-primary hover:text-primary-hover">
+                hello@taximunshi.com
+              </a>{" "}
+              and we&apos;ll help.
+            </p>
+          )}
         </div>
 
         {savedPartial && (

@@ -8,6 +8,7 @@ import {
   Truck,
   Upload,
   Settings,
+  CircleHelp,
   type LucideIcon,
 } from "lucide-react";
 
@@ -40,6 +41,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Vehicles",    href: "/vehicles",    icon: Truck },
   { label: "Bulk import", href: "/bulk-import", icon: Upload },
   { label: "Settings",    href: "/settings",    icon: Settings },
+  { label: "Help",        href: "/help",        icon: CircleHelp },
 ];
 
 export const MOBILE_PRIMARY = NAV_ITEMS.filter((n) => n.mobile);
